@@ -232,6 +232,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:5
     </div>
     <div class="tg">
       <button class="btn" id="calBtn">⊕ Kalibrer</button>
+      <button class="btn" id="rotBtn" title="Roter plantegning 90° med klokka">↻ Roter</button>
     </div>
     <div class="tg">
       <span class="lbl">Etg.høyde</span>
@@ -421,11 +422,20 @@ let calSnap=null;
 let pendingWin=null;
 
 // ── Floor state ───────────────────────────────────────────────
-// Each floor: {id, name, bgImg, pdfDoc, pdfPage, totalPages, mmPerImgPx, sc, offX, offY, zones, northI}
-let floors=[{id:1,name:'Etasje 1',bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1,mmPerImgPx:null,sc:1,offX:0,offY:0,zones:[],northI:0}];
+// Each floor: {id, name, bgImg, pdfDoc, pdfPage, totalPages, mmPerImgPx, sc, offX, offY, zones}
+// northAngle is GLOBAL — shared across all floors
+let globalNorth=0;
+let floors=[{id:1,name:'Etasje 1',bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1,mmPerImgPx:null,sc:1,offX:0,offY:0,zones:[]}];
 let activeFloor=0;
 let _nextFloorId=2;
 let _nextGroupId=1;
+
+function setGlobalNorth(nd){
+  globalNorth=((nd%360)+360)%360;
+  northI.value=globalNorth;
+  const lbl=document.getElementById('northLabel');
+  if(lbl)lbl.textContent=globalNorth+'°';
+}
 
 function curFloor(){return floors[activeFloor];}
 // Redirect zones to active floor
@@ -435,8 +445,8 @@ function syncFloorState(){
   mmPerImgPx=f.mmPerImgPx;
   zones=f.zones;
   pdfDoc=f.pdfDoc;curPage=f.pdfPage;totalPages=f.totalPages;
-  northI.value=f.northI??0;
-  const _nl=document.getElementById('northLabel');if(_nl)_nl.textContent=(f.northI??0)+'°';
+  northI.value=globalNorth;
+  const _nl=document.getElementById('northLabel');if(_nl)_nl.textContent=globalNorth+'°';
   updateScaleBadge();
 }
 function saveFloorState(){
@@ -444,7 +454,6 @@ function saveFloorState(){
   f.bgImg=bgImg;f.sc=sc;f.offX=offX;f.offY=offY;
   f.mmPerImgPx=mmPerImgPx;f.zones=zones;
   f.pdfDoc=pdfDoc;f.pdfPage=curPage;f.totalPages=totalPages;
-  f.northI=parseFloat(northI.value)||0;
 }
 
 // ── Floor UI ─────────────────────────────────────────────────
@@ -512,7 +521,7 @@ document.getElementById('addFloorBtn').onclick=async()=>{
     name:'Etasje '+(floors.length+1),
     bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1,
     mmPerImgPx:curFloor().mmPerImgPx, // inherit — can be overridden per floor
-    sc:1,offX:0,offY:0,zones:[],northI:parseFloat(northI.value)||0
+    sc:1,offX:0,offY:0,zones:[]
   };
   if(choice==='pdf-page'&&pdfDoc){
     // Pick next page from current PDF
@@ -864,15 +873,10 @@ document.addEventListener('mousemove', e=>{
   const cx=rect.left+rect.width/2;
   const cy=rect.top+rect.height/2;
   const dx=e.clientX-cx, dy=e.clientY-cy;
-  // atan2 gives angle from positive-x, CW in screen coords
-  // Convert to northI: northI = atan2_deg + 90
   let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
   if(angle<0)angle+=360;
   if(angle>=360)angle-=360;
-  const nd = Math.round(angle);
-  northI.value = nd;
-  curFloor().northI = nd;
-  document.getElementById('northLabel').textContent = nd + '°';
+  setGlobalNorth(Math.round(angle));
   updateResults(); renderTable(); draw();
 });
 document.addEventListener('mouseup', ()=>{
@@ -887,9 +891,7 @@ document.addEventListener('touchmove', e=>{
   const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
   let angle=Math.atan2(t.clientY-cy,t.clientX-cx)*180/Math.PI+90;
   if(angle<0)angle+=360;if(angle>=360)angle-=360;
-  const nd=Math.round(angle);
-  northI.value=nd;curFloor().northI=nd;
-  document.getElementById('northLabel').textContent=nd+'°';
+  setGlobalNorth(Math.round(angle));
   updateResults();renderTable();draw();
 },{passive:false});
 document.addEventListener('touchend',()=>{compassDragging=false;});
@@ -2337,9 +2339,7 @@ document.addEventListener('keydown',e=>{
 
 [northI,fhI].forEach(el=>el.addEventListener('input',()=>{
   if(el===northI){
-    curFloor().northI=parseFloat(northI.value)||0;
-    const lbl=document.getElementById('northLabel');
-    if(lbl)lbl.textContent=(northI.value||0)+'°';
+    setGlobalNorth(parseFloat(northI.value)||0);
   }
   updateResults();renderTable();draw();
 }));
@@ -2448,6 +2448,35 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 
+// ── Roter plantegning 90° CW ─────────────────────────────────
+document.getElementById('rotBtn').onclick=()=>{
+  if(!bgImg){hintText.textContent='Last opp ei plantegning først.';return;}
+  saveFloorState();
+  const f=curFloor();
+  const origW=f.bgImg.width, origH=f.bgImg.height;
+  // Rotate image 90° CW on a canvas
+  const tmp=document.createElement('canvas');
+  tmp.width=origH; tmp.height=origW;
+  const tc=tmp.getContext('2d');
+  tc.translate(origH,0);
+  tc.rotate(Math.PI/2);
+  tc.drawImage(f.bgImg,0,0);
+  const rotated=new Image();
+  rotated.src=tmp.toDataURL('image/png');
+  rotated.onload=()=>{
+    f.bgImg=rotated;
+    // Transform all zone points: (x,y) → (origH - y, x)
+    f.zones.forEach(z=>{
+      z.pts=z.pts.map(p=>({x:origH-p.y, y:p.x}));
+    });
+    // North shifts 90° CW when image rotates CW
+    setGlobalNorth((globalNorth+90)%360);
+    syncFloorState();
+    fitImage();
+    updateResults();renderTable();draw();
+  };
+};
+
 // ── Lagre / opne prosjekt ─────────────────────────────────────
 document.getElementById('saveBtn').onclick=()=>{
   saveFloorState();
@@ -2458,7 +2487,6 @@ document.getElementById('saveBtn').onclick=()=>{
       id:f.id,name:f.name,
       mmPerImgPx:f.mmPerImgPx,
       sc:f.sc,offX:f.offX,offY:f.offY,
-      northI:f.northI,
       pdfPage:f.pdfPage,totalPages:f.totalPages,
       zones:f.zones.map(z=>({
         ...z,
@@ -2480,6 +2508,7 @@ document.getElementById('saveBtn').onclick=()=>{
     version:1,
     savedAt:new Date().toISOString(),
     activeFloor,
+    globalNorth,
     _nextFloorId,
     _nextGroupId,
     floors:serFloors
@@ -2509,7 +2538,6 @@ document.getElementById('loadFi').onchange=async function(){
         id:f.id,name:f.name,
         mmPerImgPx:f.mmPerImgPx??null,
         sc:f.sc??1,offX:f.offX??0,offY:f.offY??0,
-        northI:f.northI??0,
         pdfPage:f.pdfPage??1,totalPages:f.totalPages??1,
         pdfDoc:null,bgImg:null,
         zones:(f.zones||[]).map(z=>({
@@ -2529,6 +2557,7 @@ document.getElementById('loadFi').onchange=async function(){
     }));
     floors=newFloors;
     activeFloor=Math.min(proj.activeFloor??0,floors.length-1);
+    globalNorth=proj.globalNorth??0;
     _nextFloorId=proj._nextFloorId??floors.length+1;
     _nextGroupId=proj._nextGroupId??1;
     syncFloorState();
