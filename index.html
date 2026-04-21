@@ -641,6 +641,22 @@ function calcSegments(pts,fhM){
 }
 function fmtM2(v){return v.toFixed(2)+' m²';}
 function fmtM(v){return v.toFixed(2)+' m';}
+
+// ── Felles fasadenamn-generator ───────────────────────────────
+// Returnerer array med same lengde som segs, kvart element er namn for det segmentet
+function getFacadeLabels(z, segs){
+  const sk=z.skillevegg||new Set();
+  const dirCount={};
+  segs.forEach(s=>{ if(!sk.has(s.idx)) dirCount[s.dir]=(dirCount[s.dir]||0)+1; });
+  const dirSeen={};
+  let skN=0;
+  return segs.map(seg=>{
+    const isSK=sk.has(seg.idx);
+    if(isSK) return 'SK'+(++skN);
+    dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+    return dirCount[seg.dir]>1 ? seg.dir+'-'+dirSeen[seg.dir] : seg.dir;
+  });
+}
 // ── Entro standardverdiar (frå ks_generator.py) ─────────────
 function entroStandard(year){
   if(!year||isNaN(year))return null;
@@ -959,16 +975,15 @@ function draw(){
     if(!isEditing){
       const segs=calcSegments(z.pts,getHoyde(z));
       if(segs){
-        const dirCount={};let skN1=0;segs.forEach(s=>{if(!(z.skillevegg||new Set()).has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
-        const dirSeen={};
-        segs.forEach(seg=>{
-          dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
-          const isSK2=(z.skillevegg||new Set()).has(seg.idx);let nm;if(isSK2){nm='SK'+(++skN1);}else{dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;}
+        const labels=getFacadeLabels(z,segs);
+        const sk=z.skillevegg||new Set();
+        segs.forEach((seg,si)=>{
+          const isSK2=sk.has(seg.idx);
+          const nm=labels[si];
           const mp=i2s(seg.midImgX,seg.midImgY);
           const dx=seg.midImgX-cxI,dy=seg.midImgY-cyI;
           const dlen=Math.hypot(dx,dy)||1;
           const nx=mp.x+dx/dlen*16,ny=mp.y+dy/dlen*16;
-          // Find windows on this segment
           const wins=(z.windows||[]).filter(w=>w.segIdx===seg.idx);
           const winNote=wins.length?` [${wins.length}×▭]`:'';
           ctx.font='bold 9px Inter,sans-serif';
@@ -1591,15 +1606,13 @@ function updateResults(){
         facHdr.textContent='Fasadar';
         facSection.appendChild(facHdr);
 
-        const dirCount={};let skN2=0,skMergedShown=false;
-        segs.forEach(s=>{if(!(z.skillevegg||new Set()).has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
-        const dirSeen={};
+        const labels2=getFacadeLabels(z,segs);
+        let skMergedShown=false;
 
-        segs.forEach(seg=>{
-          dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+        segs.forEach((seg,si)=>{
           if(!z.skillevegg)z.skillevegg=new Set();
           const isSK=z.skillevegg.has(seg.idx);
-          let nm;if(isSK){nm='SK'+(++skN2);}else{nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;}
+          const nm=labels2[si];
 
           if(isSK&&z.skMerged){
             if(skMergedShown)return;skMergedShown=true;
@@ -1905,19 +1918,17 @@ function renderTable(){
     const segs=calcSegments(z.pts,getHoyde(z));
     if(!segs)return;
     const sk=z.skillevegg||new Set();
-    const dirCount={};let skN3=0,skMergedTbl=false;
-    segs.forEach(s=>{if(!sk.has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
-    const dirSeen={};
+    const labels3=getFacadeLabels(z,segs);
+    let skMergedTbl=false;
     const zColor=COLORS[zi%COLORS.length];
     if(!z.segOverrides)z.segOverrides={};
     const _flsuf=floors.length>1?` <span style="font-size:10px;font-weight:400;color:var(--text3)">${fl.name}</span>`:'';
     html+=`<div style="margin-bottom:2px;padding:4px 0 2px;font-size:11px;font-weight:700;color:${zColor};border-bottom:2px solid ${zColor}22">${z.name}${_flsuf}</div>`;
     html+='<table class="dtbl" style="margin-bottom:10px"><thead><tr><th>Fasade</th><th>Type</th><th>Lengde m</th><th>Veggfl. m²</th><th>Vindauge m²</th><th>Netto m²</th><th>U-verdi W/m²K</th></tr></thead><tbody>';
     const stdZ=entroStandard(z.byggeaar);
-    segs.forEach(seg=>{
-      dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+    segs.forEach((seg,si)=>{
       const isSK=sk.has(seg.idx);
-      let nm;if(isSK){nm='SK'+(++skN3);}else{nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;}
+      const nm=labels3[si];
       // Merged SK row
       if(isSK&&z.skMerged){
         if(skMergedTbl)return;
@@ -2818,14 +2829,11 @@ function buildSXI(proj){
       const segs=calcSegments(lz.pts,getHoyde(lz));
       if(!segs)return;
       const sk=lz.skillevegg||new Set();
-      const dirCount={};
-      segs.forEach(s=>{if(!sk.has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
-      const dirSeen={};
+      const sxiLabels=getFacadeLabels(lz,segs);
 
-      segs.forEach(seg=>{
+      segs.forEach((seg,si)=>{
         if(sk.has(seg.idx))return; // skip skillevegg
-        dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
-        const nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;
+        const nm=sxiLabels[si];
         const ov=lz.segOverrides?.[seg.idx]||{};
         const lenM=ov.lenM??seg.lenM??0;
         const fhM=getHoyde(lz);
