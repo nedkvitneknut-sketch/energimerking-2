@@ -676,7 +676,8 @@ function getTotalVolum(z){
 }
 function getPerimM(z){return z.perimOverride!=null?z.perimOverride:calcPerimM(z.pts);}
 function getHoyde(z){return z.hoyde!=null?z.hoyde:(parseFloat(fhI.value)||3.0);}
-function getVolum(z){const a=getAreaM2(z);return a!=null?a*getHoyde(z):null;}
+function getHimling(z){return z.himling!=null?z.himling:getHoyde(z);}
+function getVolum(z){const a=getAreaM2(z);return a!=null?a*getHimling(z):null;}
 function getUtvOmkrets(z){
   const segs=calcSegments(z.pts,getHoyde(z));
   if(!segs||!mmPerImgPx)return null;
@@ -1441,37 +1442,30 @@ function updateResults(){
 
       // Byggeår + apply-all
       const byWrap=document.createElement('div');byWrap.style.cssText='display:flex;align-items:center;gap:5px;flex:1';
-      // Check if this zone's byggeår is inherited from another
-      const _allBySide=floors.flatMap(fl=>fl.zones).map(z=>z.byggeaar).filter(Boolean);
-      const _sharedBySide=_allBySide.length>1&&_allBySide.every(y=>y===_allBySide[0]);
-      const _byInherited=_sharedBySide&&floors[0].zones[0]!==z&&z.byggeaar===_allBySide[0];
       const byInp=document.createElement('input');byInp.type='number';byInp.min='1800';byInp.max='2030';byInp.placeholder='t.d. 1985';byInp.value=z.byggeaar||'';
-      byInp.style.cssText=`width:70px;padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:4px;text-align:right;background:#fff;font-family:'DM Mono',monospace;opacity:${_byInherited?'.5':'1'}`;
-      byInp.title=_byInherited?'Arva — endra for å overstyre':'Byggeår for denne sona';
-      byInp.disabled=_byInherited;
-      const allCb=document.createElement('input');allCb.type='checkbox';allCb.style.cssText='cursor:pointer;accent-color:var(--accent)';
-      const allLbl=document.createElement('label');allLbl.style.cssText='font-size:10.5px;color:var(--text3);cursor:pointer';allLbl.textContent='Alle';
-      if(_byInherited){
-        const inhLbl=document.createElement('span');inhLbl.style.cssText='font-size:10px;color:var(--text3);font-style:italic';inhLbl.textContent='arva';
-        byWrap.appendChild(inhLbl);
-        // Allow click to unlink
-        byInp.disabled=true;
-        const unlinkBtn=document.createElement('button');
-        unlinkBtn.textContent='✎';unlinkBtn.title='Klikk for å setje eige byggeår';
-        unlinkBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:0 2px';
-        unlinkBtn.onclick=()=>{byInp.disabled=false;byInp.style.opacity='1';byInp.value='';byInp.focus();inhLbl.remove();unlinkBtn.remove();};
-        byWrap.appendChild(unlinkBtn);
-      }
+      byInp.style.cssText="width:70px;padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:4px;text-align:right;background:#fff;font-family:'DM Mono',monospace";
+      byInp.title='Byggeår for denne sona';
+      const allBtn=document.createElement('button');
+      allBtn.textContent='Alle';
+      allBtn.title='Kopier dette byggeåret til alle soner';
+      allBtn.style.cssText='padding:2px 7px;font-size:10.5px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text3);cursor:pointer;font-family:inherit;white-space:nowrap';
+      allBtn.onmouseenter=()=>{allBtn.style.borderColor='var(--accent)';allBtn.style.color='var(--accent)';};
+      allBtn.onmouseleave=()=>{allBtn.style.borderColor='var(--border2)';allBtn.style.color='var(--text3)';};
       byInp.onchange=()=>{
-        const yr=parseInt(byInp.value)||null;z.byggeaar=yr;
-        if(allCb.checked)floors.forEach(fl=>fl.zones.forEach(oz=>{oz.byggeaar=yr;}));
+        const yr=parseInt(byInp.value)||null;
+        z.byggeaar=yr;
         updateResults();renderTable();
       };
-      allCb.onchange=()=>{if(allCb.checked&&z.byggeaar)floors.forEach(fl=>fl.zones.forEach(oz=>{oz.byggeaar=z.byggeaar;}));};
-      byWrap.appendChild(byInp);byWrap.appendChild(allCb);byWrap.appendChild(allLbl);
+      allBtn.onclick=()=>{
+        const yr=parseInt(byInp.value)||null;
+        if(!yr){byInp.focus();return;}
+        floors.forEach(fl=>fl.zones.forEach(oz=>{oz.byggeaar=yr;}));
+        updateResults();renderTable();
+      };
+      byWrap.appendChild(byInp);byWrap.appendChild(allBtn);
       settings.appendChild(mkRow('Byggeår',byWrap));
 
-      // Etasjehøyde
+      // Etasjehøyde + himlingshøgde
       const hWrap=document.createElement('div');hWrap.style.cssText='display:flex;align-items:center;gap:4px;flex:1';
       const hInp=document.createElement('input');hInp.type='number';hInp.min='0.1';hInp.step='0.1';hInp.value=getHoyde(z);
       hInp.style.cssText="width:60px;padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:4px;text-align:right;background:#fff;font-family:'DM Mono',monospace";
@@ -1479,6 +1473,22 @@ function updateResults(){
       hInp.onchange=()=>{const v=parseFloat(hInp.value);z.hoyde=(isNaN(v)||v<=0)?null:v;updateResults();renderTable();draw();};
       hWrap.appendChild(hInp);hWrap.appendChild(hU);
       settings.appendChild(mkRow('Etg.høyde',hWrap));
+
+      // Himlingshøgde (valfri — kun volum)
+      const himWrap=document.createElement('div');himWrap.style.cssText='display:flex;align-items:center;gap:5px;flex:1';
+      const himCb=document.createElement('input');himCb.type='checkbox';himCb.style.cssText='cursor:pointer;accent-color:var(--accent)';himCb.checked=z.himling!=null;
+      const himCbLbl=document.createElement('span');himCbLbl.style.cssText='font-size:10.5px;color:var(--text3)';himCbLbl.textContent='Eigen himling';
+      const himInp=document.createElement('input');himInp.type='number';himInp.min='0.1';himInp.step='0.1';himInp.value=z.himling!=null?z.himling:getHoyde(z);
+      himInp.style.cssText=`width:52px;padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:4px;text-align:right;background:#fff;font-family:'DM Mono',monospace;display:${z.himling!=null?'block':'none'}`;
+      const himU=document.createElement('span');himU.style.cssText=`font-size:11px;color:var(--text3);display:${z.himling!=null?'inline':'none'}`;himU.textContent='m';
+      himCb.onchange=()=>{
+        if(himCb.checked){himInp.style.display='block';himU.style.display='inline';himInp.value=getHoyde(z);z.himling=getHoyde(z);}
+        else{himInp.style.display='none';himU.style.display='none';z.himling=null;}
+        updateResults();renderTable();
+      };
+      himInp.onchange=()=>{const v=parseFloat(himInp.value);z.himling=(isNaN(v)||v<=0)?null:v;updateResults();renderTable();};
+      himWrap.appendChild(himCb);himWrap.appendChild(himCbLbl);himWrap.appendChild(himInp);himWrap.appendChild(himU);
+      settings.appendChild(mkRow('Himling',himWrap));
 
       // Gulv / tak
       const GULV_OPT=['Gulv mot grunn','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Dekke mot det fri'];
@@ -1807,7 +1817,7 @@ function renderTable(){
   html+='<div style="font-size:10px;color:#92400e;display:flex;align-items:center;gap:5px">';
   html+='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#d97706"></span>';
   html+='Manuelt justert</div></div>';
-  html+='<table class="dtbl"><thead><tr><th>Namn</th><th>Kategori</th><th>Areal m²</th><th>Perim. m</th><th>Etg.høyde m</th><th>Gulv</th><th>Tak</th></tr></thead><tbody>';
+  html+='<table class="dtbl"><thead><tr><th>Namn</th><th>Kategori</th><th>Areal m²</th><th>Volum m³</th><th>Perim. m</th><th>Etg.høyde m</th><th>Himling m</th><th>Gulv</th><th>Tak</th></tr></thead><tbody>';
   const BYGG_KAT2=['Småhus','Boligblokker','Barnehager','Kontorbygg','Skolebygg','Universitets- og høgskolebygg','Sykehus','Sykehjem','Hoteller','Idrettsbygg','Forretningsbygg','Kulturbygg','Lett industri, verksteder'];
   const GULV_OPT2=['Gulv mot grunn','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Dekke mot det fri'];
   const TAK_OPT2=['Tak mot det fri','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Flatt tak'];
@@ -1825,7 +1835,8 @@ function renderTable(){
       <td class="${z.areaOverride!=null?'cell-overridden':''}"><input class="tbl-input${z.areaOverride!=null?' overridden':''}" data-zarea="${fli},${zi}" value="${areaVal}" style="width:70px" placeholder="auto" title="${z.areaOverride!=null?'Manuelt justert — slett for å tilbakestille':'Endre for å overstyre. Blank = automatisk.'}"></td>
       <td style="color:#64748b;font-weight:500">${getVolum(z)!=null?getVolum(z).toFixed(1):"—"}</td>
       <td class="${z.perimOverride!=null?'cell-overridden':''}"><input class="tbl-input${z.perimOverride!=null?' overridden':''}" data-zperim="${fli},${zi}" value="${perimVal}" style="width:60px" placeholder="auto" title="${z.perimOverride!=null?'Manuelt justert — slett for å tilbakestille':'Endre for å overstyre. Blank = automatisk.'}"></td>
-      <td><input class="tbl-input" data-zhoyde="${fli},${zi}" value="${getHoyde(z)}" style="width:50px" title="Etasjehøyde for denne sona"></td>
+      <td><input class="tbl-input" data-zhoyde="${fli},${zi}" value="${getHoyde(z)}" style="width:50px" title="Etasjehøyde — styrer fasadeareal"></td>
+      <td class="${z.himling!=null?'cell-overridden':''}"><input class="tbl-input${z.himling!=null?' overridden':''}" data-zhimling="${fli},${zi}" value="${z.himling!=null?z.himling:''}" placeholder="${getHoyde(z)}" style="width:50px" title="Himlingshøgde — styrer berre volum. Blank = same som etg.høyde."></td>
       <td><select class="tbl-input" data-zgulv="${fli},${zi}" style="width:100%">${mkOpts(GULV_OPT2,z.gulvtype||'Gulv mot grunn')}</select></td>
       <td><select class="tbl-input" data-ztak="${fli},${zi}" style="width:100%">${mkOpts(TAK_OPT2,z.taktype||'Tak mot det fri')}</select></td>
     </tr>`;
@@ -1919,9 +1930,10 @@ function renderTable(){
           <td style="color:#d97706;font-weight:700">SK <span style="font-weight:400;color:#92400e">(${allSK.length} seg)</span></td>
           <td style="color:#d97706;font-weight:600">Skillevegg</td>
           <td class="${ov.lenM!=null?'cell-overridden':''}"><input class="tbl-input${ov.lenM!=null?' overridden':''}" data-segov="${fli},${zi},sk_merged,lenM" value="${totalLen.toFixed(2)}" style="width:60px" title="${ov.lenM!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
-          <td>—</td><td>—</td>
-          <td class="${ov.nettoM2!=null?'cell-overridden':''}"><input class="tbl-input${ov.nettoM2!=null?' overridden':''}" data-segov="${fli},${zi},sk_merged,nettoM2" value="${(ov.nettoM2!=null?ov.nettoM2:totalArea).toFixed(2)}" style="width:60px" title="${ov.nettoM2!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
-        <td style="color:var(--text3)">—</td>
+          <td class="${ov.areaM2!=null?'cell-overridden':''}"><input class="tbl-input${ov.areaM2!=null?' overridden':''}" data-segov="${fli},${zi},sk_merged,areaM2" value="${totalArea.toFixed(2)}" style="width:60px" title="${ov.areaM2!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
+          <td>—</td>
+          <td>—</td>
+          <td style="color:var(--text3)">—</td>
         </tr>`;
         return;
       }
@@ -1932,15 +1944,15 @@ function renderTable(){
       const areaVal2=ov.areaM2!=null?ov.areaM2:seg.areaM2;
       const nettoVal=ov.nettoM2!=null?ov.nettoM2:(areaVal2!=null?areaVal2-winA:null);
       const lenStr=lenVal!=null?lenVal.toFixed(2):'—';
-      const areaStr2=isSK||areaVal2==null?'—':areaVal2.toFixed(2);
+      const areaStr2=areaVal2!=null?areaVal2.toFixed(2):'—';
       const nettoStr=isSK||nettoVal==null?'—':nettoVal.toFixed(2);
       const rowBg=isSK?'background:#fef3c7':'';
       html+=`<tr style="${rowBg}">
         <td style="color:${zColor};font-weight:600">${nm}</td>
         <td style="color:${isSK?'#d97706':'#94a3b8'};font-weight:${isSK?'600':'400'}">${isSK?'Skillevegg':'Yttervegg'}</td>
         <td class="${ov.lenM!=null?'cell-overridden':''}"><input class="tbl-input${ov.lenM!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},lenM" value="${lenStr}" placeholder="—" style="width:60px" title="${ov.lenM!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
-        <td class="${!isSK&&ov.areaM2!=null?'cell-overridden':''}">${isSK?'—':`<input class="tbl-input${ov.areaM2!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},areaM2" value="${areaStr2}" placeholder="—" style="width:60px" title="${ov.areaM2!=null?'Manuelt justert — slett for å tilbakestille':''}">`}</td>
-        <td style="color:#0891b2">${winA>0?winA.toFixed(2):'—'}</td>
+        <td class="${ov.areaM2!=null?'cell-overridden':''}"><input class="tbl-input${ov.areaM2!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},areaM2" value="${areaStr2}" placeholder="—" style="width:60px" title="${ov.areaM2!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
+        <td style="color:#0891b2">${isSK?'—':winA>0?winA.toFixed(2):'—'}</td>
         <td class="${!isSK&&ov.nettoM2!=null?'cell-overridden':''}">${isSK?'—':`<input class="tbl-input${ov.nettoM2!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},nettoM2" value="${nettoStr}" placeholder="—" style="width:60px" title="${ov.nettoM2!=null?'Manuelt justert — slett for å tilbakestille':''}">`}</td>
         ${(()=>{
           if(isSK)return '<td style="color:var(--text3)">—</td>';
@@ -2072,6 +2084,15 @@ function renderTable(){
       const v=parseFloat(inp.value);
       _z.hoyde=isNaN(v)?null:v;
       updateResults();renderTable();draw();
+    };
+  });
+  wrap.querySelectorAll('[data-zhimling]').forEach(inp=>{
+    const [_fi,_zi]=inp.dataset.zhimling.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    inp.onchange=()=>{
+      const v=inp.value.trim()===''?null:parseFloat(inp.value);
+      _z.himling=(v===null||isNaN(v))?null:v;
+      updateResults();renderTable();
     };
   });
   wrap.querySelectorAll('[data-zgulv]').forEach(sel=>{
@@ -2851,7 +2872,7 @@ function buildSXI(proj){
 
     const zId=thisZoneId;
     zonesXml+=`  <zone id="${zId}" name="${z.name}" comment="" building_type="Kontorbygning" building_subtype="Kontorer, enkle" area="${bra}" volume="${vol}" n50="${n50}" furniture="Middels møblert" thermal_cap_furniture="4.00" shielding="moderat" facades="flere" thermal_bridge_type="normalisert" norm_thermal_bridge="${kuldebro}" working_days="Mandag-fredag" working_days_en="Mon-Fri" working_days_jan="1111100111110011111001111100111" working_days_feb="11111001111100111110011111001111" working_days_mar="1111100111110011111001111100111" working_days_apr="111110011111001111100111110011111" working_days_may="1111100111110011111001111100111" working_days_jun="11111001111100111110011111001111" working_days_jul="1111100111110011111001111100111" working_days_aug="1111100111110011111001111100111" working_days_sep="11111001111100111110011111001111" working_days_oct="1111100111110011111001111100111" working_days_nov="11111001111100111110011111001111" working_days_dec="1111100111110011111001111100111">
-${facXml}${takXml}${gulvXml}    <ventilation id="${nextId('cav')}" name="Balansert ventilasjon" comment="" sfp_input="prosent" sfp_100="${sfp}" sfp_80="${sfp80}" sfp_60="${sfp60}" sfp_40="${sfp40}" sfp_20="${sfp20}" position_supply_fan="etter" position_extract_fan="etter" supply_temp="19.00" summer_scheme="no" supply_temp_summer="17.00" first_summer_month="mai" last_summer_month="august" heating_coil="ja" heating_coil_cap="30.00" heating_coil_efficiency="0.98" heating_coil_type="lokal" distr_heating_id="" heating_coil_spp="0.50" heating_coil_supply_temp="45.00" heating_coil_return_temp="30.00" cooling_coil="nei" cooling_coil_cap="30.0" cooling_coil_efficiency="2.0" cooling_coil_type="lokal" distr_cooling_id="" cooling_coil_spp="0.50" cooling_coil_supply_temp="10.0" cooling_coil_return_temp="15.0" heat_exchanger="yes" exchanger_efficiency_input="prosent" efficiency_exchanger="0.80" efficiency_exchanger_100="0.79" efficiency_exchanger_80="0.81" efficiency_exchanger_60="0.83" efficiency_exchanger_40="0.81" efficiency_exchanger_20="0.76" frost_protection="no" frost_protect_temp="-10.00" hygroscopic_exchanger="no" humidity_efficiency="0.60" contamination_risk="no" night_cooling="no" start_time_night_cooling="23.00" end_time_night_cooling="06.00" room_temp_night_cooling="22.00" ext_temp_night_cooling="20.00" max_room_temp_night_cooling="24.00" min_room_temp_night_cooling="18.00" min_supply_temp_night_cooling="12.00" night_cooling_holiday="no" reduced_airflow="no" reduced_airflow_temp="-15.00" heating_coil_distr_description="forenklet" heating_coil_specific_length_pipes="0.20" heating_coil_uvalue_pipes="0.20" heating_coil_share_heated_room="50.00" heating_coil_temp_unheated_room="10.00" cooling_coil_distr_description="forenklet" cooling_coil_specific_length_pipes="0.20" cooling_coil_uvalue_pipes="0.20" cooling_coil_share_heated_room="50.0" cooling_coil_temp_unheated_room="10.0" type="balansert" supply_air="2.50" extract_air="2.50" supply_temp_type="konstant" max_supply_temp="19.00" min_supply_temp="16.00" high_extract_temp="24.00" low_extract_temp="21.00" usage_holiday="28.60" supply_airflow_night_cooling="1.20" extract_airflow_night_cooling="1.20" supply_airflow_reduced="0" extract_airflow_reduced="2.50" norm_airflow="no" norm_air_on="2.50" norm_air_off="0" norm_sfp_on="1.50" norm_sfp_off="1.50" cooling_coil_water_flow="variable" heating_coil_water_flow="variable" frost_protection_type="preheat">
+${facXml}${takXml}${gulvXml}    <ventilation id="${nextId('cav')}" name="Balansert ventilasjon" comment="" sfp_input="prosent" sfp_100="${sfp}" sfp_80="${sfp80}" sfp_60="${sfp60}" sfp_40="${sfp40}" sfp_20="${sfp20}" position_supply_fan="etter" position_extract_fan="etter" supply_temp="19.00" summer_scheme="no" supply_temp_summer="17.00" first_summer_month="mai" last_summer_month="august" heating_coil="ja" heating_coil_cap="30.00" heating_coil_efficiency="0.98" heating_coil_type="lokal" distr_heating_id="" heating_coil_spp="0.50" heating_coil_supply_temp="45.00" heating_coil_return_temp="30.00" cooling_coil="nei" cooling_coil_cap="30.0" cooling_coil_efficiency="2.0" cooling_coil_type="lokal" distr_cooling_id="" cooling_coil_spp="0.50" cooling_coil_supply_temp="10.0" cooling_coil_return_temp="15.0" heat_exchanger="yes" exchanger_efficiency_input="prosent" efficiency_exchanger="0.80" efficiency_exchanger_100="0.79" efficiency_exchanger_80="0.81" efficiency_exchanger_60="0.83" efficiency_exchanger_40="0.81" efficiency_exchanger_20="0.76" frost_protection="no" frost_protect_temp="-10.00" hygroscopic_exchanger="no" humidity_efficiency="0.60" contamination_risk="no" night_cooling="no" start_time_night_cooling="23.00" end_time_night_cooling="06.00" room_temp_night_cooling="22.00" ext_temp_night_cooling="20.00" max_room_temp_night_cooling="24.00" min_room_temp_night_cooling="18.00" min_supply_temp_night_cooling="12.00" night_cooling_holiday="no" reduced_airflow="no" reduced_airflow_temp="-15.00" heating_coil_distr_description="forenklet" heating_coil_specific_length_pipes="0.20" heating_coil_uvalue_pipes="0.20" heating_coil_share_heated_room="50.00" heating_coil_temp_unheated_room="10.00" cooling_coil_distr_description="forenklet" cooling_coil_specific_length_pipes="0.20" cooling_coil_uvalue_pipes="0.20" cooling_coil_share_heated_room="50.0" cooling_coil_temp_unheated_room="10.0" type="balansert" supply_air="7.00" extract_air="7.00" supply_temp_type="konstant" max_supply_temp="19.00" min_supply_temp="16.00" high_extract_temp="24.00" low_extract_temp="21.00" usage_holiday="28.60" supply_airflow_night_cooling="1.20" extract_airflow_night_cooling="1.20" supply_airflow_reduced="0" extract_airflow_reduced="7.00" norm_airflow="no" norm_air_on="7.00" norm_air_off="0" norm_sfp_on="1.50" norm_sfp_off="1.50" cooling_coil_water_flow="variable" heating_coil_water_flow="variable" frost_protection_type="preheat">
       <usage_ventilation name="Kontor normert (CAV) NS3031:2025" ${KONTOR_VENT_PROFILE}></usage_ventilation>
     </ventilation>
     <new_heating id="${nextId('new-heating-system')}" name="Elektrisk direktevarme" comment="" setpoint_temp_on="21.00" setpoint_temp_off="21.00" on_time="07.00" off_time="17.00" summer_scheme="no" summer_scheme_reg="dato" start_date_summer="15.05" stop_date_summer="15.09" ext_temperature_summer="10.00" setpoint_temp_on_summer="20.00" setpoint_temp_off_summer="16.00" on_time_summer="07.00" off_time_summer="17.00" delta_t_setpoint="0.00">
