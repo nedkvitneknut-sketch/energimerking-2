@@ -1,0 +1,2998 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entro — Plantegning Oppmåling</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#eef0f5;
+  --surface:#ffffff;
+  --surface2:#f5f6f9;
+  --surface3:#eceef3;
+  --accent:#1a7a6e;--accent-dim:#e6f4f1;--accent-hover:#14635a;
+  --amber:#b86a0a;--amber-dim:#fef5e7;
+  --red:#c0302a;--red-dim:#fef0ef;
+  --text:#0d1b2a;--text2:#4a5568;--text3:#8a94a6;
+  --border:#e2e6ed;--border2:#c8cfe0;
+  --r:7px;--r-lg:11px;--r-xl:15px;
+  --shadow-xs:0 1px 2px rgba(13,27,42,.05);
+  --shadow-sm:0 1px 4px rgba(13,27,42,.08),0 0 1px rgba(13,27,42,.04);
+  --shadow-md:0 4px 16px rgba(13,27,42,.10),0 1px 3px rgba(13,27,42,.05);
+  --shadow-lg:0 12px 40px rgba(13,27,42,.13),0 2px 8px rgba(13,27,42,.07);
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── Header ── */
+#header{display:flex;align-items:center;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);height:52px;flex-shrink:0;box-shadow:var(--shadow-xs);gap:0}
+#logo{display:flex;align-items:center;gap:9px;margin-right:6px;text-decoration:none;flex-shrink:0}
+#logo-mark{width:30px;height:30px;background:linear-gradient(140deg,#23917f 0%,#0e5a50 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(26,122,110,.3)}
+#logo-mark svg{width:16px;height:16px;fill:#fff}
+#logo-text{font-size:14.5px;font-weight:700;color:var(--text);letter-spacing:-.25px}
+#logo-sep{width:1px;height:18px;background:var(--border2);margin:0 12px;flex-shrink:0}
+#logo-sub{font-size:12px;font-weight:500;color:var(--text3);letter-spacing:.01em;margin-right:20px}
+#toolbar{display:flex;align-items:center;gap:2px;flex:1;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+#toolbar::-webkit-scrollbar{display:none}
+.tg{display:flex;align-items:center;gap:2px;padding:0 10px 0 0;border-right:1px solid var(--border);margin-right:6px}
+.tg:last-child{border-right:none;margin-right:0;padding-right:0}
+.lbl{font-size:11px;color:var(--text3);white-space:nowrap;margin-right:3px;font-weight:500}
+.btn{padding:0 11px;font-size:12px;font-weight:500;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .12s;height:30px;display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-xs);letter-spacing:.01em;font-family:inherit}
+.btn:hover{background:var(--surface2);color:var(--text);border-color:#aab0bf}
+.btn.on{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 1px 4px rgba(26,122,110,.25)}
+.btn.on:hover{background:var(--accent-hover)}
+.btn.teal{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 1px 4px rgba(26,122,110,.25)}
+.btn.teal:hover{background:var(--accent-hover)}
+.btn.red{color:var(--red);border-color:#f2b8b5;background:var(--surface)}
+.btn.red:hover{background:var(--red-dim)}
+.ni{width:58px;padding:4px 8px;font-size:12px;font-family:'DM Mono',monospace;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);height:30px;text-align:right;box-shadow:var(--shadow-xs)}
+.ni:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,122,110,.10)}
+
+/* ── Layout ── */
+#main{display:flex;flex:1;overflow:hidden}
+#cwrap{flex:1;position:relative;overflow:hidden;background:#d8dce6;cursor:grab}
+#cv{display:block}
+
+/* ── Sidebar ── */
+#sidebar{width:320px;min-width:200px;max-width:640px;display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--surface);flex-shrink:0;position:relative}
+#sidebar-resize{position:absolute;left:-3px;top:0;bottom:0;width:7px;cursor:col-resize;z-index:10;background:transparent;transition:background .15s}
+#sidebar-resize:hover,#sidebar-resize.dragging{background:var(--accent);opacity:.2}
+#stabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.stab{flex:1;padding:11px 8px;font-size:11.5px;font-weight:600;text-align:center;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.03em}
+.stab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.stab:hover:not(.on){color:var(--text2);background:var(--surface2)}
+#spanel{flex:1;overflow-y:auto;padding:12px;background:var(--surface2);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+#spanel::-webkit-scrollbar{width:3px}
+#spanel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── Zone cards ── */
+.zcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:10px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-xs)}
+.zcard:hover{border-color:var(--border2);box-shadow:var(--shadow-sm)}
+.zcard.editing{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,122,110,.07)}
+.zname-row{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.zdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.zname-input{font-size:13px;font-weight:600;border:none;background:transparent;color:var(--text);outline:none;width:100%;cursor:text;font-family:inherit}
+.zname-input:focus{color:var(--accent)}
+.metric{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:1px solid var(--border)}
+.metric:last-of-type{border-bottom:none}
+.metric-l{color:var(--text3);font-weight:500}
+.metric-v{font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;font-family:'DM Mono',monospace;font-size:11px}
+.card-btn{flex:1;padding:6px 8px;font-size:11.5px;border-radius:var(--r);cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:all .12s;font-weight:500;font-family:inherit}
+.card-btn:hover{background:var(--surface);color:var(--text);border-color:var(--border2)}
+.card-btn.danger{color:var(--red);border-color:#f2b8b5;background:var(--surface)}
+.card-btn.danger:hover{background:var(--red-dim)}
+.zone-select{width:100%;padding:4px 7px;font-size:11.5px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer}
+.zone-select:focus{outline:none;border-color:var(--accent)}
+
+/* ── Window cards ── */
+.win-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.win-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;font-size:11px;display:flex;align-items:center;gap:6px}
+.win-card-info{flex:1;color:var(--text2)}
+.win-card-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;transition:color .1s}
+.win-card-del:hover{color:var(--red)}
+
+/* ── Table panel ── */
+#tableWrap{font-size:11.5px;padding-bottom:24px}
+.ttitle{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:20px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.ttitle:first-child{margin-top:4px}
+table.dtbl{width:100%;border-collapse:collapse;background:var(--surface);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:10px;border:1px solid var(--border)}
+table.dtbl th{font-size:10px;font-weight:700;color:var(--text3);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface2);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+table.dtbl td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2);font-size:11.5px}
+table.dtbl tr:last-child td{border-bottom:none}
+table.dtbl tbody tr:hover td{background:var(--surface2)}
+.tbl-input{background:transparent;border:none;color:var(--text);font-size:11.5px;width:100%;outline:none;font-family:'DM Mono',monospace;transition:color .1s}
+.tbl-input:focus{color:var(--accent)}
+.tbl-input::placeholder{color:var(--text3)}
+
+/* ── Manual override ── */
+.tbl-input.overridden{color:var(--amber);font-weight:600;background:var(--amber-dim);border-radius:4px;padding:1px 5px}
+td.cell-overridden{background:var(--amber-dim);position:relative}
+td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--amber)}
+
+/* ── Hint bar ── */
+#hintbar{font-size:11px;color:var(--text3);padding:5px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px}
+#hintbar span{background:var(--accent-dim);border:1px solid rgba(26,122,110,.16);border-radius:5px;padding:2px 9px;font-size:10.5px;color:var(--accent);white-space:nowrap;font-weight:600;letter-spacing:.02em}
+
+/* ── Scale badge ── */
+#scaleBadge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.93);border:1px solid var(--border2);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--text2);pointer-events:none;box-shadow:var(--shadow-sm);backdrop-filter:blur(6px);font-weight:500;font-family:'DM Mono',monospace}
+#scaleBadge.uncal{color:var(--amber);border-color:rgba(184,106,10,.25);background:rgba(254,245,231,.93)}
+
+/* ── Dropzone ── */
+#dropz{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer}
+#dropz-icon{width:64px;height:64px;border-radius:50%;background:rgba(26,122,110,.07);border:2px dashed rgba(26,122,110,.22);display:flex;align-items:center;justify-content:center;font-size:26px;transition:all .2s}
+#dropz:hover #dropz-icon{background:rgba(26,122,110,.12);border-color:rgba(26,122,110,.4);transform:scale(1.04)}
+#dropz-text{text-align:center;color:var(--text3);font-size:13px;line-height:2}
+#dropz-text strong{color:var(--text2);display:block;margin-bottom:2px;font-size:14px;font-weight:600}
+
+/* ── Dialogs ── */
+.dialog-overlay{display:none;position:absolute;inset:0;background:rgba(13,27,42,.45);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.dialog-overlay.show{display:flex}
+.dialog{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:26px;width:360px;max-width:92vw;box-shadow:var(--shadow-lg)}
+.dialog h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.2px}
+.dialog p{font-size:12.5px;color:var(--text2);margin-bottom:18px;line-height:1.7}
+.dialog .irow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dialog .irow label{font-size:12px;color:var(--text3);white-space:nowrap;min-width:90px;font-weight:500}
+.big-input{flex:1;padding:10px 12px;font-size:17px;font-weight:600;border:1.5px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);text-align:right;outline:none;width:100%;font-family:'DM Mono',monospace;transition:border-color .15s,box-shadow .15s}
+.big-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,122,110,.09)}
+.dialog .unit{font-size:13px;font-weight:600;color:var(--text3)}
+.dbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.dok{padding:8px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .12s;box-shadow:0 1px 4px rgba(26,122,110,.25)}
+.dok:hover{background:var(--accent-hover)}
+.dcancel{padding:8px 14px;background:var(--surface);color:var(--text2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:13px;font-family:inherit;transition:all .12s}
+.dcancel:hover{background:var(--surface2)}
+#winDialog .irow{margin-bottom:12px}
+
+/* ── AI overlay ── */
+#aiOverlay{display:none;position:absolute;inset:0;background:rgba(13,27,42,.45);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+#aiOverlay.show{display:flex}
+#aiPanel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:26px;width:400px;max-width:92vw;box-shadow:var(--shadow-lg)}
+#aiPanel h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.aisub{font-size:12.5px;color:var(--text2);margin-bottom:14px;line-height:1.7}
+#aiLog{font-size:11px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;min-height:60px;max-height:150px;overflow-y:auto;margin-bottom:14px;line-height:1.8;white-space:pre-wrap;font-family:'DM Mono',monospace}
+.aibtns{display:flex;gap:8px;justify-content:flex-end}
+.ai-go{padding:8px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .12s}
+.ai-go:hover{background:var(--accent-hover)}
+.ai-go:disabled{background:var(--surface3);color:var(--text3);cursor:default;border:1px solid var(--border);box-shadow:none}
+.ai-skip{padding:8px 14px;background:var(--surface);color:var(--text2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:13px;font-family:inherit;transition:all .12s}
+.ai-skip:hover{background:var(--surface2)}
+
+/* ── Floor tabs bar ── */
+#floor-tabs-bar{
+  display:flex;align-items:center;padding:0 14px;gap:8px;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  height:40px;flex-shrink:0;overflow-x:auto;
+  scrollbar-width:none;
+}
+#floor-tabs-bar::-webkit-scrollbar{display:none}
+#floor-tabs{display:flex;gap:3px;align-items:center;flex:1}
+.floor-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:7px;cursor:pointer;
+  font-size:12px;font-weight:600;white-space:nowrap;
+  border:1px solid transparent;
+  transition:all .15s;color:var(--text3);background:transparent;
+  font-family:inherit;
+}
+.floor-tab:hover{background:var(--surface);color:var(--text2);border-color:var(--border)}
+.floor-tab.active{
+  background:var(--surface);color:var(--accent);
+  border-color:var(--border);
+  box-shadow:var(--shadow-xs);
+}
+.floor-tab-badge{
+  font-size:10px;font-weight:700;padding:1px 5px;
+  border-radius:8px;background:var(--surface3);color:var(--text3);
+  transition:all .15s;
+}
+.floor-tab.active .floor-tab-badge{background:var(--accent);color:#fff}
+.floor-tab-del{
+  background:none;border:none;cursor:pointer;
+  font-size:13px;color:var(--text3);padding:0;line-height:1;
+  opacity:0;transition:opacity .1s;margin-left:1px;
+}
+.floor-tab:hover .floor-tab-del{opacity:.6}
+.floor-tab-del:hover{color:var(--red) !important;opacity:1 !important}
+.add-floor-btn{
+  flex-shrink:0;display:flex;align-items:center;gap:5px;
+  padding:5px 12px;font-size:12px;font-weight:600;
+  border:1px dashed var(--border2);border-radius:7px;
+  background:transparent;color:var(--text3);cursor:pointer;
+  font-family:inherit;white-space:nowrap;transition:all .15s;
+}
+.add-floor-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+
+/* ── Compass ── */
+#compassCanvas{position:absolute;bottom:16px;right:16px;pointer-events:all;border-radius:50%;box-shadow:var(--shadow-md);cursor:grab;transition:box-shadow .15s}
+#compassCanvas:hover{box-shadow:var(--shadow-lg)}
+#compassCanvas.dragging{cursor:grabbing}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:13px;line-height:2.2}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.18}
+</style>
+</head>
+<body>
+<div id="header">
+  <a id="logo">
+    <div id="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 2a4 4 0 110 8A4 4 0 018 4zm0 1.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg></div>
+    <span id="logo-text">entro</span><span id="logo-sep"></span><span id="logo-sub">Oppmåling</span>
+  </a>
+  <div id="toolbar">
+    <div class="tg">
+      <button class="btn teal" id="upBtn">↑ Last opp</button>
+      <input type="file" id="fi" accept=".pdf,image/*" style="display:none">
+      <div id="pgctrl" style="display:none;align-items:center;gap:3px">
+        <button class="btn" id="prevPg">‹</button>
+        <span class="lbl" id="pgLbl" style="font-size:11px">1/1</span>
+        <button class="btn" id="nextPg">›</button>
+      </div>
+    </div>
+    <div class="tg">
+      <button class="btn" id="calBtn">⊕ Kalibrer</button>
+    </div>
+    <div class="tg">
+      <span class="lbl">Etg.høyde</span>
+      <input type="number" class="ni" id="fhI" value="3.0" min="0.1" step="0.1">
+      <span class="lbl">m</span>
+    </div>
+    <div class="tg">
+      <span class="lbl">Nord</span>
+      <span class="lbl" id="northLabel" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--text2);min-width:32px">0°</span>
+      <input type="number" class="ni" id="northI" value="0" min="0" max="359" step="1" style="display:none">
+    </div>
+    <div class="tg">
+      <button class="btn on" id="navBtn">↖ Naviger</button>
+      <button class="btn" id="drawBtn">⬡ Sone</button>
+      <button class="btn" id="editBtn">⊹ Rediger</button>
+      <button class="btn" id="winBtn">▭ Vindauge/dør</button>
+    </div>
+    <div class="tg">
+      <button class="btn" id="aiBtn" disabled title="AI-analyse er ikkje tilgjengeleg i denne versjonen" style="opacity:.4;cursor:not-allowed;pointer-events:none">✦ AI: Soner</button>
+      <button class="btn red" id="clrBtn">× Slett alt</button>
+    </div>
+    <div class="tg">
+      <button class="btn" id="saveBtn">💾 Lagre</button>
+      <button class="btn" id="loadBtn">📂 Opne</button>
+      <input type="file" id="loadFi" accept=".entro" style="display:none">
+    </div>
+    <div class="tg">
+      <button class="btn" id="sxiBtn" style="background:var(--accent);color:#fff;border-color:transparent;font-weight:600">⬇ Eksporter SXI</button>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="floor-wrap" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0">
+  <div id="floor-tabs-bar">
+    <div id="floor-tabs"></div>
+    <button id="addFloorBtn" class="add-floor-btn">+ Etasje</button>
+  </div>
+  <div id="cwrap">
+    <canvas id="cv"></canvas>
+    <div id="dropz">
+      <div id="dropz-icon">📐</div>
+      <div id="dropz-text"><strong>Last opp plantegning</strong>PDF eller bilete (PNG, JPG)<br><small>Klikk eller slepp fil her</small></div>
+    </div>
+    <div id="scaleBadge" class="uncal">Ikkje kalibrert</div>
+    <canvas id="compassCanvas" width="96" height="96"></canvas>
+
+    <!-- Cal dialog -->
+    <div class="dialog-overlay" id="calOverlay">
+      <div class="dialog">
+        <h3>📏 Kalibrér skala</h3>
+        <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden">
+          <button id="calTabLen" onclick="switchCalTab('length')" style="flex:1;padding:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:inherit">Lengde</button>
+          <button id="calTabArea" onclick="switchCalTab('area')" style="flex:1;padding:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#fff;color:var(--text2);font-family:inherit;border-left:1px solid var(--border2)">Areal</button>
+        </div>
+        <!-- Length mode -->
+        <div id="calModeLen">
+          <p>Du målte <strong id="calPxSpan" style="color:var(--accent)">—</strong> px.<br>Kor lang er denne strekninga i verkelegheita?</p>
+          <div class="irow">
+            <label>Faktisk lengde</label>
+            <input type="number" class="big-input" id="calMmInput" min="1" step="1" placeholder="5000">
+            <span class="unit">mm</span>
+          </div>
+        </div>
+        <!-- Area mode -->
+        <div id="calModeArea" style="display:none">
+          <p>Du teikna eit polygon på eit kjend rom.<br>Kor stort er dette arealet i verkelegheita?</p>
+          <div class="irow">
+            <label>Faktisk areal</label>
+            <input type="number" class="big-input" id="calAreaInput" min="0.01" step="0.01" placeholder="42.0">
+            <span class="unit">m²</span>
+          </div>
+          <p style="font-size:11px;color:var(--text3);margin-top:-10px">Teikn polygon rundt rommet i tegnemodus, merk arealet i px² som vert synt, og skriv inn faktisk m².</p>
+        </div>
+        <div class="dbtns">
+          <button class="dcancel" id="calCancel">Avbryt</button>
+          <button class="dok" id="calOk">Sett skala ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Window dialog -->
+    <div class="dialog-overlay" id="winOverlay">
+      <div class="dialog" id="winDialog">
+        <h3>▭ Legg til vindauge / dør</h3>
+        <p>Du teikna ei strek på fasaden (<span id="winFacadeDir" style="color:var(--accent);font-weight:700">—</span>).<br>Fyll inn detaljar:</p>
+        <div class="irow"><label>Namn</label><input type="text" class="big-input" id="winName" placeholder="Vindauge 1" style="font-size:15px;text-align:left"></div>
+        <div class="irow"><label>Bredde (mål)</label><input type="number" class="big-input" id="winW" placeholder="1200" min="1"><span class="unit">mm</span></div>
+        <div class="irow"><label>Høgde</label><input type="number" class="big-input" id="winH" value="1200" min="1"><span class="unit">mm</span></div>
+        <div class="irow"><label>Tal stk</label><input type="number" class="big-input" id="winN" value="1" min="1" step="1"><span class="unit">stk</span></div>
+        <div class="irow"><label>Type</label>
+          <select class="big-input" id="winType" style="font-size:14px;padding:8px">
+            <option value="vindauge">Vindauge</option>
+            <option value="dor">Dør</option>
+          </select>
+        </div>
+        <div class="dbtns">
+          <button class="dcancel" id="winCancel">Avbryt</button>
+          <button class="dok" id="winOk">Legg til ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI soner overlay -->
+    <div id="aiOverlay">
+      <div id="aiPanel">
+        <h3>✦ AI: Soner</h3>
+        <div class="aisub">Claude analyserer plantegningen og teiknar opp ytterveggar som soner du kan justere.</div>
+        <div id="aiLog">Klar til å analysere…</div>
+        <div class="aibtns" id="aiMainBtns">
+          <button class="ai-skip" id="aiClose">Avbryt</button>
+          <button class="ai-go" id="aiGo">Start analyse ✦</button>
+        </div>
+        <div class="aibtns" id="aiConfirmBtns" style="display:none">
+          <button class="ai-skip" id="aiReject">✕ Forkast</button>
+          <button class="ai-go" id="aiAccept">✓ Godta soner</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div><!-- /floor-wrap -->
+
+  <div id="sidebar">
+    <div id="sidebar-resize"></div>
+    <div id="stabs">
+      <div class="stab on" data-tab="zones">Soner</div>
+      <div class="stab" data-tab="table">Tabell</div>
+    </div>
+    <div id="spanel">
+      <div id="zonesPanel">
+        <div class="empty" id="empty"><div class="empty-icon">⬡</div>Teikn ei sone på plantegningen<br>for å sjå areal og fasadar</div>
+        <div id="zlist"></div>
+      </div>
+      <div id="tablePanel" style="display:none">
+        <div id="tableWrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="hintbar"><span id="modeLabel">Naviger</span> <span id="hintText">Scroll for zoom · klikk+dra for å flytte · last opp PDF for å starte</span></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── Constants ────────────────────────────────────────────────
+const COLORS=['#1a7a6e','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2','#c2410c'];
+const FILLS=['rgba(26,122,110,.10)','rgba(37,99,235,.10)','rgba(217,119,6,.10)','rgba(220,38,38,.10)','rgba(124,58,237,.10)','rgba(8,145,178,.10)','rgba(194,65,12,.10)'];
+const DIRS=['Nord','Nordøst','Øst','Sørøst','Sør','Sørvest','Vest','Nordvest'];
+
+// ── DOM refs ─────────────────────────────────────────────────
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+const cwrap=document.getElementById('cwrap');
+const compassCanvas=document.getElementById('compassCanvas');
+const cctx=compassCanvas.getContext('2d');
+const fi=document.getElementById('fi');
+const dropz=document.getElementById('dropz');
+const emptyEl=document.getElementById('empty');
+const zlist=document.getElementById('zlist');
+const pgctrl=document.getElementById('pgctrl');
+const pgLbl=document.getElementById('pgLbl');
+const fhI=document.getElementById('fhI');
+const northI=document.getElementById('northI');
+const scaleBadge=document.getElementById('scaleBadge');
+const hintText=document.getElementById('hintText');
+const modeLabel=document.getElementById('modeLabel');
+const calOverlay=document.getElementById('calOverlay');
+const calPxSpan=document.getElementById('calPxSpan');
+const calMmInput=document.getElementById('calMmInput');
+const winOverlay=document.getElementById('winOverlay');
+
+// ── State ────────────────────────────────────────────────────
+let bgImg=null,sc=1,offX=0,offY=0;
+let dragging=false,dragSt=null,lastOff={x:0,y:0};
+let mouse=null;
+let mmPerImgPx=null;
+let zones=[],curPts=[],mode='navigate',calPts=[];
+let draftZones=[];
+let editZoneIdx=null,dragCorner=null;
+let pendingCalImgPx=0;
+let pdfDoc=null,curPage=1,totalPages=1;
+// Window drawing state
+let winPts=[];
+let winSnapPreview=null;
+let drawSnap=null;
+let calSnap=null;
+let pendingWin=null;
+
+// ── Floor state ───────────────────────────────────────────────
+// Each floor: {id, name, bgImg, pdfDoc, pdfPage, totalPages, mmPerImgPx, sc, offX, offY, zones, northI}
+let floors=[{id:1,name:'Etasje 1',bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1,mmPerImgPx:null,sc:1,offX:0,offY:0,zones:[],northI:0}];
+let activeFloor=0;
+let _nextFloorId=2;
+let _nextGroupId=1;
+
+function curFloor(){return floors[activeFloor];}
+// Redirect zones to active floor
+function syncFloorState(){
+  const f=curFloor();
+  bgImg=f.bgImg;sc=f.sc;offX=f.offX;offY=f.offY;
+  mmPerImgPx=f.mmPerImgPx;
+  zones=f.zones;
+  pdfDoc=f.pdfDoc;curPage=f.pdfPage;totalPages=f.totalPages;
+  northI.value=f.northI??0;
+  const _nl=document.getElementById('northLabel');if(_nl)_nl.textContent=(f.northI??0)+'°';
+  updateScaleBadge();
+}
+function saveFloorState(){
+  const f=curFloor();
+  f.bgImg=bgImg;f.sc=sc;f.offX=offX;f.offY=offY;
+  f.mmPerImgPx=mmPerImgPx;f.zones=zones;
+  f.pdfDoc=pdfDoc;f.pdfPage=curPage;f.totalPages=totalPages;
+  f.northI=parseFloat(northI.value)||0;
+}
+
+// ── Floor UI ─────────────────────────────────────────────────
+function renderFloorTabs(){
+  const bar=document.getElementById('floor-tabs');
+  bar.innerHTML='';
+  floors.forEach((f,fi)=>{
+    const tab=document.createElement('button');
+    tab.className='floor-tab'+(fi===activeFloor?' active':'');
+
+    // Editable name span
+    const nameEl=document.createElement('span');
+    nameEl.contentEditable='true';
+    nameEl.textContent=f.name;
+    nameEl.style.cssText='outline:none;min-width:30px;cursor:'+(fi===activeFloor?'text':'pointer');
+    nameEl.onfocus=e=>{if(fi!==activeFloor){nameEl.blur();switchFloor(fi);return;}};
+    nameEl.onblur=()=>{f.name=nameEl.textContent.trim()||f.name;nameEl.textContent=f.name;};
+    nameEl.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();nameEl.blur();}e.stopPropagation();};
+    tab.onclick=(e)=>{if(e.target===nameEl&&fi===activeFloor)return;if(fi!==activeFloor)switchFloor(fi);};
+
+    // Badge
+    const badge=document.createElement('span');
+    badge.className='floor-tab-badge';
+    badge.textContent=f.zones.length+' soner';
+
+    tab.appendChild(nameEl);
+    tab.appendChild(badge);
+
+    // Delete (only if >1 floor)
+    if(floors.length>1){
+      const del=document.createElement('button');
+      del.className='floor-tab-del';
+      del.textContent='×';
+      del.title='Slett etasje';
+      del.onclick=e=>{
+        e.stopPropagation();
+        if(!confirm('Slett "'+f.name+'" og alle sonene i denne etasjen?')){return;}
+        floors.splice(fi,1);
+        if(activeFloor>=floors.length)activeFloor=floors.length-1;
+        syncFloorState();renderFloorTabs();updateResults();renderTable();draw();
+      };
+      tab.appendChild(del);
+    }
+    bar.appendChild(tab);
+  });
+}
+
+function switchFloor(fi){
+  saveFloorState();
+  activeFloor=fi;
+  syncFloorState();
+  editZoneIdx=null;curPts=[];draftZones=[];winPts=[];
+  updateResults();renderTable();renderFloorTabs();
+  if(bgImg)fitImage();else draw();
+}
+
+document.getElementById('addFloorBtn').onclick=async()=>{
+  // Show a small menu: blank floor, copy from PDF page, copy from file
+  const choice=await showAddFloorMenu();
+  if(!choice)return;
+  saveFloorState();
+  // Inherit calibration from current floor
+  const newFloor={
+    id:_nextFloorId++,
+    name:'Etasje '+(floors.length+1),
+    bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1,
+    mmPerImgPx:curFloor().mmPerImgPx, // inherit — can be overridden per floor
+    sc:1,offX:0,offY:0,zones:[],northI:parseFloat(northI.value)||0
+  };
+  if(choice==='pdf-page'&&pdfDoc){
+    // Pick next page from current PDF
+    const nextPg=curPage+1;
+    if(nextPg<=totalPages){
+      newFloor.pdfDoc=pdfDoc;newFloor.pdfPage=nextPg;newFloor.totalPages=totalPages;
+      newFloor.bgImg=await loadPdfPage_with(pdfDoc,nextPg);
+      newFloor.name='Etasje '+(floors.length+1)+' (s.'+nextPg+')';
+    }
+  } else if(choice==='file'){
+    const img=await pickFile();
+    if(img){newFloor.bgImg=img.bgImg;newFloor.pdfDoc=img.pdfDoc;newFloor.pdfPage=img.pdfPage;newFloor.totalPages=img.totalPages;}
+  }
+  // choice==='blank': leave as-is
+  floors.push(newFloor);
+  activeFloor=floors.length-1;
+  syncFloorState();
+  editZoneIdx=null;curPts=[];draftZones=[];winPts=[];
+  renderFloorTabs();updateResults();renderTable();
+  if(bgImg)fitImage();else draw();
+};
+
+function showAddFloorMenu(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+    const box=document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:320px;box-shadow:0 12px 40px rgba(13,27,42,.15)';
+    box.innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px">Legg til etasje</div>`;
+    const opts=[
+      {key:'blank',icon:'⬡',label:'Tom etasje','desc':'Last opp teikning seinare'},
+      {key:'file',icon:'↑',label:'Last opp fil','desc':'PDF eller bilete for ny etasje'},
+      {key:'pdf-page',icon:'⊕',label:'Neste side i same PDF','desc':pdfDoc?`Side ${curPage+1} av ${totalPages}`:'Ingen PDF lasta'},
+    ];
+    opts.forEach(o=>{
+      const btn=document.createElement('button');
+      btn.style.cssText='width:100%;display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;text-align:left;margin-bottom:8px;font-family:inherit;transition:all .12s';
+      btn.innerHTML=`<span style="font-size:20px;width:28px;text-align:center">${o.icon}</span><div><div style="font-size:13px;font-weight:600;color:var(--text)">${o.label}</div><div style="font-size:11.5px;color:var(--text3);margin-top:1px">${o.desc}</div></div>`;
+      btn.onmouseenter=()=>{btn.style.borderColor='var(--accent)';btn.style.background='var(--accent-dim)';};
+      btn.onmouseleave=()=>{btn.style.borderColor='var(--border)';btn.style.background='#fff';};
+      if(o.key==='pdf-page'&&(!pdfDoc||curPage>=totalPages))btn.style.opacity='.4',btn.style.cursor='default',btn.onclick=null;
+      else btn.onclick=()=>{document.body.removeChild(overlay);resolve(o.key);};
+      box.appendChild(btn);
+    });
+    const cancel=document.createElement('button');
+    cancel.textContent='Avbryt';
+    cancel.style.cssText='width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px';
+    cancel.onclick=()=>{document.body.removeChild(overlay);resolve(null);};
+    box.appendChild(cancel);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+async function loadPdfPage_with(doc,n){
+  const page=await doc.getPage(n);
+  const vp=page.getViewport({scale:2.5});
+  const tmp=document.createElement('canvas');
+  tmp.width=vp.width;tmp.height=vp.height;
+  await page.render({canvasContext:tmp.getContext('2d'),viewport:vp}).promise;
+  return new Promise(r=>{const img=new Image();img.onload=()=>r(img);img.src=tmp.toDataURL('image/png');});
+}
+
+async function pickFile(){
+  return new Promise(resolve=>{
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='.pdf,image/*';
+    inp.onchange=async()=>{
+      const f=inp.files[0];if(!f){resolve(null);return;}
+      const result={bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1};
+      if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
+        const ab=await f.arrayBuffer();
+        result.pdfDoc=await pdfjsLib.getDocument({data:ab}).promise;
+        result.totalPages=result.pdfDoc.numPages;
+        result.bgImg=await loadPdfPage_with(result.pdfDoc,1);
+      } else {
+        const url=URL.createObjectURL(f);
+        await new Promise(r=>{const img=new Image();img.onload=()=>{result.bgImg=img;r();};img.src=url;});
+      }
+      resolve(result);
+    };
+    inp.click();
+  });
+}
+
+// ── Coord helpers ─────────────────────────────────────────────
+function s2i(sx,sy){return{x:(sx-offX)/sc,y:(sy-offY)/sc};}
+function i2s(ix,iy){return{x:ix*sc+offX,y:iy*sc+offY};}
+
+// ── Scale helpers ─────────────────────────────────────────────
+function imgPxToM(px){return mmPerImgPx===null?null:px*mmPerImgPx/1000;}
+function calcAreaM2(pts){
+  if(!mmPerImgPx||pts.length<3)return null;
+  let a=0;for(let i=0;i<pts.length;i++){const j=(i+1)%pts.length;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}
+  return Math.abs(a)/2*(mmPerImgPx/1000)**2;
+}
+function calcPerimM(pts){
+  if(!mmPerImgPx)return null;
+  let p=0;for(let i=0;i<pts.length;i++){const p1=pts[i],p2=pts[(i+1)%pts.length];p+=Math.hypot(p2.x-p1.x,p2.y-p1.y);}
+  return p*mmPerImgPx/1000;
+}
+function calcSegments(pts,fhM){
+  if(pts.length<2)return null;
+  if(fhM==null)fhM=parseFloat(fhI.value)||3.0;
+  const nd=parseFloat(northI.value)||0;
+  return pts.map((p1,i)=>{
+    const p2=pts[(i+1)%pts.length];
+    const lenPx=Math.hypot(p2.x-p1.x,p2.y-p1.y);
+    const lenM=mmPerImgPx?lenPx*mmPerImgPx/1000:null;
+    const areaM2=(lenM!==null)?lenM*fhM:null;
+    const wallAngle=Math.atan2(p2.y-p1.y,p2.x-p1.x)*180/Math.PI;
+    const normalAz=((wallAngle-nd)%360+360)%360;
+    const dirIdx=Math.round(normalAz/45)%8;
+    const dir=DIRS[dirIdx>=0&&dirIdx<8?dirIdx:0];
+    return{idx:i,dir,lenM,lenPx,areaM2,midImgX:(p1.x+p2.x)/2,midImgY:(p1.y+p2.y)/2,wallAngle,p1,p2};
+  });
+}
+function fmtM2(v){return v.toFixed(2)+' m²';}
+function fmtM(v){return v.toFixed(2)+' m';}
+// ── Entro standardverdiar (frå ks_generator.py) ─────────────
+function entroStandard(year){
+  if(!year||isNaN(year))return null;
+  const y=parseInt(year);
+  // U-vegg
+  let uVegg=y<1940?1.56:y<=1953?1.32:y<=1968?1.02:y<=1984?0.66:y<=1986?0.42:y<=1996?0.36:y<=2006?0.26:0.18;
+  // U-tak
+  let uTak=y<1940?1.20:y<=1953?1.08:y<=1968?0.90:y<=1984?0.60:y<=1986?0.30:y<=1996?0.24:y<=2006?0.18:0.13;
+  // U-gulv
+  let uGulv=y<1959?1.30:y<=1989?0.70:y<=1999?0.40:y<=2007?0.35:y<=2009?0.18:y<=2016?0.15:0.10;
+  // U-vindu
+  let uVindu=y<1920?4.80:y<=1968?2.80:y<=1986?2.80:y<=1996?2.40:y<=2006?1.60:y<=2009?1.40:1.20;
+  // n50
+  let n50=y<1940?9.0:y<=1960?9.0:y<=1980?7.0:y<=2000?5.0:y<=2007?3.5:y<=2009?3.0:1.5;
+  // Kuldebro
+  let kuldebro=y>=1997?0.09:0.12;
+  return {uVegg,uTak,uGulv,uVindu,n50,kuldebro};
+}
+
+function getAreaM2(z){return z.areaOverride!=null?z.areaOverride:calcAreaM2(z.pts);}
+// Get all zone instances across floors that share the same groupId
+function getLinkedZones(z){
+  if(!z.groupId)return[z];
+  return floors.flatMap(f=>f.zones).filter(x=>x.groupId===z.groupId);
+}
+// Total area for a zone (sum across all linked floors)
+function getTotalAreaM2(z){
+  return getLinkedZones(z).reduce((s,lz)=>{const a=getAreaM2(lz);return s+(a||0);},0)||null;
+}
+// Total volume
+function getTotalVolum(z){
+  return getLinkedZones(z).reduce((s,lz)=>{const v=getVolum(lz);return s+(v||0);},0)||null;
+}
+function getPerimM(z){return z.perimOverride!=null?z.perimOverride:calcPerimM(z.pts);}
+function getHoyde(z){return z.hoyde!=null?z.hoyde:(parseFloat(fhI.value)||3.0);}
+function getVolum(z){const a=getAreaM2(z);return a!=null?a*getHoyde(z):null;}
+function getUtvOmkrets(z){
+  const segs=calcSegments(z.pts,getHoyde(z));
+  if(!segs||!mmPerImgPx)return null;
+  const sk=z.skillevegg||new Set();
+  return segs.filter(s=>!sk.has(s.idx)).reduce((t,s)=>t+(s.lenM||0),0);
+}
+
+function updateScaleBadge(){
+  if(!mmPerImgPx){scaleBadge.textContent='Ikkje kalibrert';scaleBadge.className='uncal';}
+  else{scaleBadge.textContent='1 px = '+mmPerImgPx.toFixed(3)+' mm';scaleBadge.className='';}
+}
+
+// ── Mode management ───────────────────────────────────────────
+const navBtn=document.getElementById('navBtn');
+const drawBtn=document.getElementById('drawBtn');
+const editBtn=document.getElementById('editBtn');
+const winBtn=document.getElementById('winBtn');
+const calBtn=document.getElementById('calBtn');
+
+const HINTS={
+  navigate:'Scroll for zoom · klikk+dra for å flytte rundt',
+  draw:'Klikk hjørner · dobbelklikk eller klikk startpunkt for å avslutte · Esc for å avbryte',
+  edit:'Dra hjørner · klikk + for å leggje til · høgreklikk for å slette · Esc for å avslutte',
+  calibrate:'Klikk startpunkt → klikk endepunkt på ei kjend lengde',
+  window:'Klikk éin ende av vindauget/døra på fasaden, så den andre enden',
+};
+const MODELABELS={navigate:'Naviger',draw:'Tegn sone',edit:'Rediger',calibrate:'Kalibrer',window:'Vindauge/dør'};
+
+function setMode(m){
+  mode=m;drawSnap=null;calSnap=null;
+  navBtn.classList.toggle('on',m==='navigate');
+  drawBtn.classList.toggle('on',m==='draw');
+  editBtn.classList.toggle('on',m==='edit');
+  winBtn.classList.toggle('on',m==='window');
+  calBtn.classList.toggle('on',m==='calibrate');
+  cv.style.cursor=m==='navigate'?'grab':m==='draw'||m==='calibrate'||m==='window'?'crosshair':'default';
+  modeLabel.textContent=MODELABELS[m]||m;
+  hintText.textContent=HINTS[m]||'';
+}
+
+navBtn.onclick=()=>{setMode('navigate');editZoneIdx=null;curPts=[];calPts=[];draw();};
+drawBtn.onclick=()=>{setMode('draw');editZoneIdx=null;curPts=[];calPts=[];draw();};
+editBtn.onclick=()=>{
+  if(!zones.length){hintText.textContent='Ingen soner å redigere på denne etasjen. Gå til riktig etasje eller klikk Rediger på ei sone i panelet.';return;}
+  setMode('edit');curPts=[];if(editZoneIdx===null)editZoneIdx=0;draw();
+};
+winBtn.onclick=()=>{
+  if(!zones.length){hintText.textContent='Teikn ei sone først.';return;}
+  setMode('window');winPts=[];winSnapPreview=null;draw();
+};
+document.getElementById('clrBtn').onclick=()=>{curFloor().zones=[];zones=[];curPts=[];calPts=[];winPts=[];editZoneIdx=null;renderFloorTabs();updateResults();draw();};
+
+// ── Tabs ──────────────────────────────────────────────────────
+document.querySelectorAll('.stab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.stab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    const tab=t.dataset.tab;
+    document.getElementById('zonesPanel').style.display=tab==='zones'?'':'none';
+    document.getElementById('tablePanel').style.display=tab==='table'?'':'none';
+    if(tab==='table')renderTable();
+  };
+});
+
+// ── PDF / image loading ───────────────────────────────────────
+async function loadPdfPage(n){
+  return loadPdfPage_with(pdfDoc,n);
+}
+async function handleFile(f){
+  if(!f)return;
+  const result={bgImg:null,pdfDoc:null,pdfPage:1,totalPages:1};
+  if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
+    hintText.textContent='Laster PDF…';
+    const ab=await f.arrayBuffer();
+    result.pdfDoc=await pdfjsLib.getDocument({data:ab}).promise;
+    result.totalPages=result.pdfDoc.numPages;
+    result.bgImg=await loadPdfPage_with(result.pdfDoc,1);
+  } else {
+    const url=URL.createObjectURL(f);
+    await new Promise(r=>{const img=new Image();img.onload=()=>{result.bgImg=img;r();};img.src=url;});
+  }
+  // Load into active floor
+  const f2=curFloor();
+  f2.bgImg=result.bgImg;f2.pdfDoc=result.pdfDoc;
+  f2.pdfPage=result.pdfPage;f2.totalPages=result.totalPages;
+  f2.mmPerImgPx=null;f2.zones=[];
+  syncFloorState();
+  curPts=[];editZoneIdx=null;draftZones=[];winPts=[];
+  pgctrl.style.display=(result.pdfDoc&&result.totalPages>1)?'flex':'none';
+  pgLbl.textContent='1/'+result.totalPages;
+  renderFloorTabs();updateResults();fitImage();
+}
+function fitImage(){
+  if(!bgImg)return;
+  const r=cwrap.getBoundingClientRect();
+  sc=Math.min((r.width-30)/bgImg.width,(r.height-30)/bgImg.height);
+  offX=(r.width-bgImg.width*sc)/2;offY=(r.height-bgImg.height*sc)/2;
+  cv.width=r.width;cv.height=r.height;
+  dropz.style.display='none';draw();
+}
+
+document.getElementById('upBtn').onclick=()=>fi.click();
+fi.onchange=async e=>{await handleFile(e.target.files[0]);e.target.value='';};
+dropz.onclick=()=>fi.click();
+cwrap.addEventListener('dragover',e=>e.preventDefault());
+cwrap.addEventListener('drop',async e=>{e.preventDefault();await handleFile(e.dataTransfer.files[0]);});
+document.getElementById('prevPg').onclick=async()=>{if(!pdfDoc||curPage<=1)return;curPage--;pgLbl.textContent=curPage+'/'+totalPages;bgImg=await loadPdfPage(curPage);curFloor().pdfPage=curPage;curFloor().bgImg=bgImg;fitImage();};
+document.getElementById('nextPg').onclick=async()=>{if(!pdfDoc||curPage>=totalPages)return;curPage++;pgLbl.textContent=curPage+'/'+totalPages;bgImg=await loadPdfPage(curPage);curFloor().pdfPage=curPage;curFloor().bgImg=bgImg;fitImage();};
+
+// ── Compass ───────────────────────────────────────────────────
+function drawCompass(){
+  const W=96,H=96,cx=48,cy=48,r=40;
+  cctx.clearRect(0,0,W,H);
+  const nd=parseFloat(northI.value)||0;
+  // Shadow + background circle
+  cctx.beginPath();cctx.arc(cx,cy,r,0,Math.PI*2);
+  cctx.fillStyle='rgba(255,255,255,.96)';cctx.fill();
+  cctx.strokeStyle='var(--border, #e2e6ed)';cctx.lineWidth=1.5;cctx.stroke();
+  // Subtle ring inside
+  cctx.beginPath();cctx.arc(cx,cy,r-8,0,Math.PI*2);
+  cctx.strokeStyle='rgba(0,0,0,.04)';cctx.lineWidth=1;cctx.stroke();
+
+  // Arrow angle: northI degrees CW from UP
+  // In canvas: UP = -PI/2, CW = positive direction
+  const arrowAngle = (nd - 90) * Math.PI / 180;
+  const tipR = r - 6;
+  const tailR = r - 16;
+
+  // Arrow tip and tail positions
+  const tip  = {x: cx + Math.cos(arrowAngle)*tipR,  y: cy + Math.sin(arrowAngle)*tipR};
+  const tail = {x: cx - Math.cos(arrowAngle)*tailR, y: cy - Math.sin(arrowAngle)*tailR};
+  const perp = {x: -Math.sin(arrowAngle), y: Math.cos(arrowAngle)};
+
+  // Draw arrow shaft
+  cctx.beginPath();
+  cctx.moveTo(tail.x, tail.y);
+  cctx.lineTo(tip.x, tip.y);
+  cctx.strokeStyle='#1a7a6e';cctx.lineWidth=2.5;
+  cctx.lineCap='round';cctx.stroke();cctx.lineCap='butt';
+
+  // Arrowhead (filled triangle at tip)
+  const headLen = 11;
+  const headW = 5.5;
+  const base = {x: tip.x - Math.cos(arrowAngle)*headLen, y: tip.y - Math.sin(arrowAngle)*headLen};
+  cctx.beginPath();
+  cctx.moveTo(tip.x, tip.y);
+  cctx.lineTo(base.x + perp.x*headW, base.y + perp.y*headW);
+  cctx.lineTo(base.x - perp.x*headW, base.y - perp.y*headW);
+  cctx.closePath();
+  cctx.fillStyle='#1a7a6e';cctx.fill();
+
+  // Small tail dot
+  cctx.beginPath();cctx.arc(tail.x,tail.y,2.5,0,Math.PI*2);
+  cctx.fillStyle='#c8cfe0';cctx.fill();
+
+  // "N" label near arrowhead (outside circle, at tip direction)
+  const labelR = r + 8; // outside the circle... no, keep inside near tip
+  const labelPos = {
+    x: cx + Math.cos(arrowAngle)*(tipR - 18),
+    y: cy + Math.sin(arrowAngle)*(tipR - 18)
+  };
+  cctx.font='bold 11px "DM Sans",sans-serif';
+  cctx.fillStyle='#fff';
+  cctx.textAlign='center';cctx.textBaseline='middle';
+  // White halo
+  cctx.strokeStyle='#1a7a6e';cctx.lineWidth=3;
+  cctx.strokeText('N', labelPos.x, labelPos.y);
+  cctx.fillStyle='#fff';
+  cctx.fillText('N', labelPos.x, labelPos.y);
+
+  // Centre pivot dot
+  cctx.beginPath();cctx.arc(cx,cy,3.5,0,Math.PI*2);
+  cctx.fillStyle='#1a7a6e';cctx.fill();
+  cctx.beginPath();cctx.arc(cx,cy,1.5,0,Math.PI*2);
+  cctx.fillStyle='#fff';cctx.fill();
+
+  // Tooltip hint at bottom of circle
+  cctx.font='9px "DM Sans",sans-serif';
+  cctx.fillStyle='#9ca3af';
+  cctx.textAlign='center';cctx.textBaseline='middle';
+  cctx.fillText('dra for å justere', cx, cy+r-8);
+}
+
+// ── Compass drag interaction ──────────────────────────────────
+let compassDragging=false;
+compassCanvas.addEventListener('mousedown', e=>{
+  compassDragging=true;
+  compassCanvas.classList.add('dragging');
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e=>{
+  if(!compassDragging)return;
+  const rect=compassCanvas.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const dx=e.clientX-cx, dy=e.clientY-cy;
+  // atan2 gives angle from positive-x, CW in screen coords
+  // Convert to northI: northI = atan2_deg + 90
+  let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  if(angle<0)angle+=360;
+  if(angle>=360)angle-=360;
+  const nd = Math.round(angle);
+  northI.value = nd;
+  curFloor().northI = nd;
+  document.getElementById('northLabel').textContent = nd + '°';
+  updateResults(); renderTable(); draw();
+});
+document.addEventListener('mouseup', ()=>{
+  if(compassDragging){compassDragging=false;compassCanvas.classList.remove('dragging');}
+});
+// Touch support
+compassCanvas.addEventListener('touchstart', e=>{compassDragging=true;e.preventDefault();},{passive:false});
+document.addEventListener('touchmove', e=>{
+  if(!compassDragging)return;
+  const t=e.touches[0];
+  const rect=compassCanvas.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  let angle=Math.atan2(t.clientY-cy,t.clientX-cx)*180/Math.PI+90;
+  if(angle<0)angle+=360;if(angle>=360)angle-=360;
+  const nd=Math.round(angle);
+  northI.value=nd;curFloor().northI=nd;
+  document.getElementById('northLabel').textContent=nd+'°';
+  updateResults();renderTable();draw();
+},{passive:false});
+document.addEventListener('touchend',()=>{compassDragging=false;});
+
+// ── Draw ──────────────────────────────────────────────────────
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(bgImg){
+    ctx.fillStyle='#d0d6de';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.drawImage(bgImg,offX,offY,bgImg.width*sc,bgImg.height*sc);
+  }
+
+  // Completed zones
+  zones.forEach((z,zi)=>{
+    if(z.pts.length<2)return;
+    const ci=zi%COLORS.length;
+    ctx.beginPath();
+    const p0=i2s(z.pts[0].x,z.pts[0].y);ctx.moveTo(p0.x,p0.y);
+    z.pts.forEach((p,i)=>{if(i>0){const pp=i2s(p.x,p.y);ctx.lineTo(pp.x,pp.y);}});
+    ctx.closePath();ctx.fillStyle=FILLS[ci];ctx.fill();
+    const isEditing=mode==='edit'&&editZoneIdx===zi;
+    const sk_set=z.skillevegg||new Set();
+    for(let si=0;si<z.pts.length;si++){
+      const sp1=i2s(z.pts[si].x,z.pts[si].y);
+      const sp2=i2s(z.pts[(si+1)%z.pts.length].x,z.pts[(si+1)%z.pts.length].y);
+      const segIsSK=sk_set.has(si);
+      ctx.beginPath();ctx.moveTo(sp1.x,sp1.y);ctx.lineTo(sp2.x,sp2.y);
+      if(segIsSK){
+        ctx.strokeStyle='#d97706';ctx.lineWidth=isEditing?3:2.5;ctx.setLineDash([7,4]);
+      } else {
+        ctx.strokeStyle=isEditing?COLORS[ci]:COLORS[ci]+'bb';ctx.lineWidth=isEditing?2.5:1.5;ctx.setLineDash([]);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Vertex dots (only in edit mode for this zone)
+    if(isEditing){
+      z.pts.forEach(p=>{
+        const pp=i2s(p.x,p.y);
+        ctx.beginPath();ctx.arc(pp.x,pp.y,4,0,Math.PI*2);
+        ctx.fillStyle='#0f1117';ctx.fill();ctx.strokeStyle=COLORS[ci];ctx.lineWidth=2;ctx.stroke();
+      });
+    }
+
+    // Centre label
+    const cxI=z.pts.reduce((s,p)=>s+p.x,0)/z.pts.length;
+    const cyI=z.pts.reduce((s,p)=>s+p.y,0)/z.pts.length;
+    const cp=i2s(cxI,cyI);
+    const area=getAreaM2(z);
+    const areaTxt=area!==null?fmtM2(area):'';
+    ctx.font='bold 12px Inter,sans-serif';
+    const w1=ctx.measureText(z.name).width;
+    ctx.font='10px Inter,sans-serif';
+    const w2=ctx.measureText(areaTxt).width;
+    const bw=Math.max(w1,w2)+14,bh=areaTxt?30:18;
+    ctx.fillStyle='rgba(255,255,255,.90)';
+    ctx.beginPath();ctx.roundRect(cp.x-bw/2,cp.y-bh/2,bw,bh,5);ctx.fill();
+    ctx.font='bold 11px Inter,sans-serif';ctx.fillStyle=COLORS[ci];ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(z.name,cp.x,areaTxt?cp.y-7:cp.y);
+    if(areaTxt){ctx.font='10px Inter,sans-serif';ctx.fillStyle='#4b5563';ctx.fillText(areaTxt,cp.x,cp.y+7);}
+
+    // Facade labels — always show direction, metrics only when calibrated
+    if(!isEditing){
+      const segs=calcSegments(z.pts,getHoyde(z));
+      if(segs){
+        const dirCount={};let skN1=0;segs.forEach(s=>{if(!(z.skillevegg||new Set()).has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
+        const dirSeen={};
+        segs.forEach(seg=>{
+          dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+          const isSK2=(z.skillevegg||new Set()).has(seg.idx);let nm;if(isSK2){nm='SK'+(++skN1);}else{dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;}
+          const mp=i2s(seg.midImgX,seg.midImgY);
+          const dx=seg.midImgX-cxI,dy=seg.midImgY-cyI;
+          const dlen=Math.hypot(dx,dy)||1;
+          const nx=mp.x+dx/dlen*16,ny=mp.y+dy/dlen*16;
+          // Find windows on this segment
+          const wins=(z.windows||[]).filter(w=>w.segIdx===seg.idx);
+          const winNote=wins.length?` [${wins.length}×▭]`:'';
+          ctx.font='bold 9px Inter,sans-serif';
+          const tw=ctx.measureText(nm+winNote).width+10;
+          ctx.fillStyle=isSK2?'#fef3c7':'rgba(255,255,255,.88)';
+          ctx.beginPath();ctx.roundRect(nx-tw/2,ny-9,tw,17,3);ctx.fill();
+          if(isSK2){ctx.strokeStyle='#d97706';ctx.lineWidth=1;ctx.stroke();}
+          ctx.fillStyle=isSK2?'#92400e':COLORS[ci];ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(nm+winNote,nx,ny);
+        });
+      }
+    }
+
+    // Edit mode: midpoint handles + drag handles
+    if(isEditing){
+      for(let i=0;i<z.pts.length;i++){
+        const p1=z.pts[i],p2=z.pts[(i+1)%z.pts.length];
+        const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+        const mp=i2s(mx,my);
+        ctx.beginPath();ctx.arc(mp.x,mp.y,5,0,Math.PI*2);
+        ctx.fillStyle='rgba(15,17,23,.8)';ctx.fill();
+        ctx.strokeStyle=COLORS[ci]+'88';ctx.lineWidth=1.5;ctx.setLineDash([2,2]);ctx.stroke();ctx.setLineDash([]);
+        ctx.font='bold 8px sans-serif';ctx.fillStyle=COLORS[ci];ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText('+',mp.x,mp.y);
+      }
+      z.pts.forEach((p,pi)=>{
+        const pp=i2s(p.x,p.y);
+        const active=dragCorner&&dragCorner.zoneIdx===zi&&dragCorner.ptIdx===pi;
+        ctx.beginPath();ctx.arc(pp.x,pp.y,active?8:6,0,Math.PI*2);
+        ctx.fillStyle=active?COLORS[ci]:'#0f1117';ctx.fill();
+        ctx.strokeStyle=COLORS[ci];ctx.lineWidth=2;ctx.stroke();
+      });
+    }
+
+    // Draw windows/doors on zone
+    (z.windows||[]).forEach(w=>{
+      const seg=calcSegments(z.pts)?.[w.segIdx];
+      if(!seg)return;
+      // Project window onto segment
+      const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+      const segLen=Math.hypot(dx,dy);
+      if(segLen<1)return;
+      const ux=dx/segLen,uy=dy/segLen;
+      const perp={x:-uy,y:ux};
+      // w.t0, w.t1 are 0-1 along segment
+      const s0i={x:seg.p1.x+ux*w.t0*segLen,y:seg.p1.y+uy*w.t0*segLen};
+      const s1i={x:seg.p1.x+ux*w.t1*segLen,y:seg.p1.y+uy*w.t1*segLen};
+      const s0=i2s(s0i.x,s0i.y),s1=i2s(s1i.x,s1i.y);
+      ctx.beginPath();ctx.moveTo(s0.x,s0.y);ctx.lineTo(s1.x,s1.y);
+      ctx.strokeStyle=w.type==='dor'?'#f59e0b':'#06b6d4';
+      ctx.lineWidth=3.5;ctx.stroke();
+      // Label
+      const mx=(s0.x+s1.x)/2,my=(s0.y+s1.y)/2;
+      const psx=perp.x*sc,psy=perp.y*sc;
+      const plen=Math.hypot(psx,psy)||1;
+      ctx.font='9px Inter,sans-serif';
+      ctx.fillStyle=w.type==='dor'?'#f59e0b':'#06b6d4';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      const _cl=(w.name||(w.type==='dor'?'D':'V'))+(w.antal>1?'×'+w.antal:'');
+      ctx.fillText(_cl,mx+psx/plen*10,my+psy/plen*10);
+    });
+  });
+
+  // Draft zones
+  draftZones.forEach(z=>{
+    if(z.pts.length<2)return;
+    ctx.beginPath();
+    const pd0=i2s(z.pts[0].x,z.pts[0].y);ctx.moveTo(pd0.x,pd0.y);
+    z.pts.forEach((p,i)=>{if(i>0){const pp=i2s(p.x,p.y);ctx.lineTo(pp.x,pp.y);}});
+    ctx.closePath();ctx.fillStyle='rgba(217,119,6,.08)';ctx.fill();
+    ctx.strokeStyle='#d97706';ctx.lineWidth=2;ctx.setLineDash([8,4]);ctx.stroke();ctx.setLineDash([]);
+    z.pts.forEach(p=>{
+      const pp=i2s(p.x,p.y);
+      ctx.beginPath();ctx.arc(pp.x,pp.y,5,0,Math.PI*2);
+      ctx.fillStyle='#d97706';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    });
+    const cxD=z.pts.reduce((s,p)=>s+p.x,0)/z.pts.length;
+    const cyD=z.pts.reduce((s,p)=>s+p.y,0)/z.pts.length;
+    const cpD=i2s(cxD,cyD);
+    ctx.font='bold 11px Inter,sans-serif';ctx.fillStyle='#92400e';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(z.name+' (forslag)',cpD.x,cpD.y);
+  });
+
+  // Current polygon being drawn
+  if(curPts.length>0&&mode==='draw'){
+    ctx.beginPath();
+    const p0c=i2s(curPts[0].x,curPts[0].y);ctx.moveTo(p0c.x,p0c.y);
+    curPts.forEach((p,i)=>{if(i>0){const pp=i2s(p.x,p.y);ctx.lineTo(pp.x,pp.y);}});
+    // Use snapped position as line endpoint if snap available
+    const snapTarget=drawSnap?i2s(drawSnap.x,drawSnap.y):null;
+    const lineEndX=snapTarget?snapTarget.x:(mouse?mouse.x:null);
+    const lineEndY=snapTarget?snapTarget.y:(mouse?mouse.y:null);
+    if(lineEndX!==null)ctx.lineTo(lineEndX,lineEndY);
+    ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+    // Live area
+    if(curPts.length>=2&&mouse&&mmPerImgPx){
+      const testPt=drawSnap?{x:drawSnap.x,y:drawSnap.y}:s2i(mouse.x,mouse.y);
+      const a=calcAreaM2([...curPts,testPt]);
+      if(a){
+        const lx=lineEndX!=null?lineEndX:mouse.x,ly=lineEndY!=null?lineEndY:mouse.y;
+        ctx.font='11px Inter,sans-serif';ctx.fillStyle='#3b82f6';ctx.textAlign='left';ctx.textBaseline='top';
+        ctx.fillText('~'+fmtM2(a),lx+10,ly+4);
+      }
+    }
+    // Snap indicator
+    if(drawSnap){
+      const sp=i2s(drawSnap.x,drawSnap.y);
+      ctx.beginPath();
+      if(drawSnap.type==='corner'){
+        const r=7;
+        ctx.rect(sp.x-r,sp.y-r,r*2,r*2);
+        ctx.strokeStyle='#1a7a6e';ctx.lineWidth=2;ctx.stroke();
+        ctx.fillStyle='rgba(26,122,110,.15)';ctx.fill();
+      } else {
+        const r=6;
+        ctx.moveTo(sp.x,sp.y-r);ctx.lineTo(sp.x+r,sp.y);
+        ctx.lineTo(sp.x,sp.y+r);ctx.lineTo(sp.x-r,sp.y);ctx.closePath();
+        ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.stroke();
+        ctx.fillStyle='rgba(124,58,237,.15)';ctx.fill();
+      }
+    }
+    curPts.forEach((p,i)=>{
+      const pp=i2s(p.x,p.y);
+      ctx.beginPath();ctx.arc(pp.x,pp.y,i===0?7:4,0,Math.PI*2);
+      ctx.fillStyle=i===0?'#1d4ed8':'#3b82f6';ctx.fill();
+      if(i===0){ctx.strokeStyle='#f1f5f9';ctx.lineWidth=2;ctx.stroke();}
+    });
+  }
+
+  // Window drawing mode
+  if(mode==='window'){
+    // Highlight all segments with a subtle glow to show they're clickable
+    if(winPts.length===0){
+      zones.forEach((z,zi)=>{
+        const segs=calcSegments(z.pts)||[];
+        segs.forEach(seg=>{
+          const s0=i2s(seg.p1.x,seg.p1.y),s1=i2s(seg.p2.x,seg.p2.y);
+          ctx.beginPath();ctx.moveTo(s0.x,s0.y);ctx.lineTo(s1.x,s1.y);
+          ctx.strokeStyle='rgba(6,182,212,.25)';ctx.lineWidth=6;ctx.stroke();
+        });
+      });
+    }
+    // Snap indicator: crosshair on nearest segment point
+    const preview=winSnapPreview||(mouse?snapScreenToSegment(mouse.x,mouse.y):null);
+    if(preview&&preview.snap){
+      ctx.beginPath();ctx.arc(preview.x,preview.y,6,0,Math.PI*2);
+      ctx.strokeStyle='#0891b2';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(preview.x-9,preview.y);ctx.lineTo(preview.x+9,preview.y);
+      ctx.moveTo(preview.x,preview.y-9);ctx.lineTo(preview.x,preview.y+9);
+      ctx.strokeStyle='#0891b2';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    // First point placed — draw line from it to current snap
+    if(winPts.length===1){
+      const snap2=preview&&preview.snap?preview:null;
+      const ex=snap2?snap2.x:mouse?mouse.x:winPts[0].x;
+      const ey=snap2?snap2.y:mouse?mouse.y:winPts[0].y;
+      // Draw along the segment direction if both points snap to same seg
+      ctx.beginPath();ctx.moveTo(winPts[0].x,winPts[0].y);ctx.lineTo(ex,ey);
+      ctx.strokeStyle='#0891b2';ctx.lineWidth=4;ctx.lineCap='round';ctx.stroke();ctx.lineCap='butt';
+      // Endpoint dots
+      ctx.beginPath();ctx.arc(winPts[0].x,winPts[0].y,6,0,Math.PI*2);
+      ctx.fillStyle='#0891b2';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+      if(snap2){
+        ctx.beginPath();ctx.arc(ex,ey,6,0,Math.PI*2);
+        ctx.fillStyle='#0891b2';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+      }
+      // Live mm readout
+      if(snap2&&mmPerImgPx){
+        const p1i=winPts[0].snap?{x:winPts[0].snap.cx,y:winPts[0].snap.cy}:s2i(winPts[0].x,winPts[0].y);
+        const p2i={x:snap2.snap.cx,y:snap2.snap.cy};
+        const distMm=Math.hypot(p2i.x-p1i.x,p2i.y-p1i.y)*mmPerImgPx;
+        const lbl=Math.round(distMm)+' mm';
+        ctx.font='bold 12px Inter,sans-serif';
+        const tw=ctx.measureText(lbl).width+14;
+        ctx.fillStyle='rgba(8,145,178,.9)';ctx.beginPath();ctx.roundRect((winPts[0].x+ex)/2-tw/2,(winPts[0].y+ey)/2-13,tw,20,4);ctx.fill();
+        ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(lbl,(winPts[0].x+ex)/2,(winPts[0].y+ey)/2);
+      }
+    }
+  }
+
+  // Calibration area polygon
+  if(mode==='calibrate'&&calMode==='area'&&calPts.length>0){
+    ctx.beginPath();
+    // calPts are image coords in area mode
+    const cap0=i2s(calPts[0].x,calPts[0].y);ctx.moveTo(cap0.x,cap0.y);
+    calPts.forEach((p,i)=>{if(i>0){const pp=i2s(p.x,p.y);ctx.lineTo(pp.x,pp.y);}});
+    const _alsr=calSnap?i2s(calSnap.x,calSnap.y):null;
+    if(_alsr){ctx.lineTo(_alsr.x,_alsr.y);}else if(mouse){ctx.lineTo(mouse.x,mouse.y);}
+    ctx.closePath();
+    ctx.fillStyle='rgba(26,122,110,.1)';ctx.fill();
+    ctx.strokeStyle='#1a7a6e';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+    calPts.forEach((p,i)=>{
+      const pp=i2s(p.x,p.y);
+      ctx.beginPath();ctx.arc(pp.x,pp.y,i===0?6:4,0,Math.PI*2);
+      ctx.fillStyle='#1a7a6e';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    });
+  }
+
+  // Calibration line
+  if(mode==='calibrate'&&calMode==='length'&&calPts.length>0){
+    const _csr=calSnap&&calPts.length<2?i2s(calSnap.x,calSnap.y):null;
+    const ex=calPts.length===2?calPts[1].x:(_csr?_csr.x:mouse?mouse.x:calPts[0].x);
+    const ey=calPts.length===2?calPts[1].y:(_csr?_csr.y:mouse?mouse.y:calPts[0].y);
+    ctx.beginPath();ctx.moveTo(calPts[0].x,calPts[0].y);ctx.lineTo(ex,ey);
+    ctx.strokeStyle='#f59e0b';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+    [calPts[0],...(calPts.length===2?[calPts[1]]:[])].forEach(p=>{
+      ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);
+      ctx.fillStyle='#d97706';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    });
+    if(calSnap&&calPts.length<2){
+      const _si=i2s(calSnap.x,calSnap.y);
+      ctx.beginPath();
+      if(calSnap.type==='corner'){const _r=7;ctx.rect(_si.x-_r,_si.y-_r,_r*2,_r*2);ctx.strokeStyle='#d97706';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(217,119,6,.15)';ctx.fill();}
+      else{ctx.moveTo(_si.x,_si.y-6);ctx.lineTo(_si.x+6,_si.y);ctx.lineTo(_si.x,_si.y+6);ctx.lineTo(_si.x-6,_si.y);ctx.closePath();ctx.strokeStyle='#b86a0a';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(184,106,10,.15)';ctx.fill();}
+    }
+    if(mouse&&calPts.length===1){
+      const d=Math.hypot(ex-calPts[0].x,ey-calPts[0].y);
+      const imgD=(d/sc).toFixed(0);
+      const est=mmPerImgPx?(imgD*mmPerImgPx/1000).toFixed(2)+' m':'';
+      const lbl=imgD+' px'+(est?' ≈ '+est:'');
+      ctx.font='11px Inter,sans-serif';const tw=ctx.measureText(lbl).width+12;
+      ctx.fillStyle='rgba(217,119,6,.9)';ctx.beginPath();ctx.roundRect(ex+8,ey-11,tw,18,4);ctx.fill();
+      ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(lbl,ex+14,ey);
+    }
+  }
+
+  drawCompass();
+}
+
+// ── Calibration dialog ────────────────────────────────────────
+let calMode='length'; // 'length' or 'area'
+let pendingCalAreaPx2=0; // area in image px² for area mode
+
+function switchCalTab(tab){
+  calMode=tab;
+  document.getElementById('calModeLen').style.display=tab==='length'?'':'none';
+  document.getElementById('calModeArea').style.display=tab==='area'?'':'none';
+  document.getElementById('calTabLen').style.background=tab==='length'?'var(--accent)':'#fff';
+  document.getElementById('calTabLen').style.color=tab==='length'?'#fff':'var(--text2)';
+  document.getElementById('calTabArea').style.background=tab==='area'?'var(--accent)':'#fff';
+  document.getElementById('calTabArea').style.color=tab==='area'?'#fff':'var(--text2)';
+}
+
+calBtn.onclick=()=>{
+  calPts=[];curPts=[];
+  calMode='length';
+  switchCalTab('length');
+  setMode('calibrate');
+  hintText.textContent='Lengde: klikk to punkt med kjend avstand — eller bytt til Areal-fana og teikn eit kjend rom i tegnemodus.';
+  draw();
+};
+
+document.getElementById('calOk').onclick=()=>{
+  if(calMode==='length'){
+    const mm=parseFloat(document.getElementById('calMmInput').value);
+    if(!isNaN(mm)&&mm>0&&pendingCalImgPx>0){
+      mmPerImgPx=mm/pendingCalImgPx;
+      updateScaleBadge();updateResults();renderTable();draw();
+    }
+  } else {
+    // Area calibration: user drew a polygon in draw mode before opening dialog
+    const m2=parseFloat(document.getElementById('calAreaInput').value);
+    if(!isNaN(m2)&&m2>0&&pendingCalAreaPx2>0){
+      // areaPx² * (mmPerImgPx/1000)² = m²  → mmPerImgPx = sqrt(m²/areaPx²)*1000
+      mmPerImgPx=Math.sqrt(m2/pendingCalAreaPx2)*1000;
+      updateScaleBadge();updateResults();renderTable();draw();
+    }
+  }
+  calOverlay.classList.remove('show');
+  calPts=[];setMode('navigate');
+};
+
+document.getElementById('calCancel').onclick=()=>{
+  calOverlay.classList.remove('show');calPts=[];setMode('navigate');
+};
+document.getElementById('calMmInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('calOk').click();
+  if(e.key==='Escape')document.getElementById('calCancel').click();
+});
+document.getElementById('calAreaInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('calOk').click();
+  if(e.key==='Escape')document.getElementById('calCancel').click();
+});
+
+// ── Zone management ───────────────────────────────────────────
+function finishZone(){
+  if(curPts.length<3)return;
+  zones.push({name:'Sone '+(zones.length+1),pts:[...curPts],windows:[],skillevegg:new Set()});
+  curPts=[];updateResults();renderTable();draw();
+  hintText.textContent='Sone '+zones.length+' lagt til!';
+}
+
+// ── Window management ─────────────────────────────────────────
+// Snap for draw mode: corners (green square) or edges (purple diamond)
+const DRAW_SNAP_R=14;
+function snapDrawPoint(sx,sy){
+  let bestD=DRAW_SNAP_R,best=null;
+  zones.forEach(z=>{
+    z.pts.forEach(p=>{
+      const sp=i2s(p.x,p.y);
+      const d=Math.hypot(sx-sp.x,sy-sp.y);
+      if(d<bestD){bestD=d;best={x:p.x,y:p.y,type:'corner',sx:sp.x,sy:sp.y};}
+    });
+    for(let i=0;i<z.pts.length;i++){
+      const p1=z.pts[i],p2=z.pts[(i+1)%z.pts.length];
+      const s1=i2s(p1.x,p1.y),s2=i2s(p2.x,p2.y);
+      const dx=s2.x-s1.x,dy=s2.y-s1.y;
+      const len=Math.hypot(dx,dy);if(len<1)continue;
+      const t=((sx-s1.x)*dx+(sy-s1.y)*dy)/(len*len);
+      if(t<=0||t>=1)continue;
+      const projX=s1.x+t*dx,projY=s1.y+t*dy;
+      const d=Math.hypot(sx-projX,sy-projY);
+      if(d<bestD){
+        bestD=d;
+        const ip=s2i(projX,projY);
+        best={x:ip.x,y:ip.y,type:'edge',sx:projX,sy:projY};
+      }
+    }
+  });
+  return best;
+}
+
+// Find the closest segment to a screen point, and the projected t (0-1) along it
+function snapToSegment(sx,sy){
+  const ip=s2i(sx,sy);
+  let best=null,bestD=Infinity;
+  zones.forEach((z,zi)=>{
+    const segs=calcSegments(z.pts)||[];
+    segs.forEach(seg=>{
+      // Distance from point to infinite line of segment
+      const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+      const len=Math.hypot(dx,dy);if(len<1)return;
+      const ux=dx/len,uy=dy/len;
+      // Project point onto segment
+      const t=((ip.x-seg.p1.x)*ux+(ip.y-seg.p1.y)*uy)/len;
+      const tc=Math.max(0,Math.min(1,t));
+      // Closest point on segment
+      const cx2=seg.p1.x+ux*tc*len,cy2=seg.p1.y+uy*tc*len;
+      const d=Math.hypot(ip.x-cx2,ip.y-cy2);
+      if(d<bestD){bestD=d;best={zi,seg,t:tc,cx:cx2,cy:cy2,ux,uy,len,dx,dy};}
+    });
+  });
+  // Accept snap within 40 image pixels (generous, scales with zoom via sc)
+  if(!best||bestD>40/sc*1)return null;
+  return best;
+}
+
+// Snap screen point to closest segment, return screen coords of snapped point
+function snapScreenToSegment(sx,sy){
+  const snap=snapToSegment(sx,sy);
+  if(!snap)return{x:sx,y:sy,snap:null};
+  const snappedScreen=i2s(snap.cx,snap.cy);
+  return{x:snappedScreen.x,y:snappedScreen.y,snap};
+}
+
+document.getElementById('winOk').onclick=()=>{
+  if(!pendingWin)return;
+  const w=parseInt(document.getElementById('winW').value)||1200;
+  const h=parseInt(document.getElementById('winH').value)||1200;
+  const n=parseInt(document.getElementById('winN').value)||1;
+  const type=document.getElementById('winType').value;
+  zones[pendingWin.zi].windows=zones[pendingWin.zi].windows||[];
+  const _existW=zones[pendingWin.zi].windows;
+  const _typeL=type==='dor'?'Dør':'Vindauge';
+  const _autoN=_typeL+' '+(_existW.filter(x=>x.type===type).length+1);
+  const _wname=(document.getElementById('winName').value||'').trim()||_autoN;
+  _existW.push({segIdx:pendingWin.segIdx,dir:pendingWin.dir,t0:pendingWin.t0,t1:pendingWin.t1,breddeMm:w,hoyMm:h,antal:n,type,name:_wname});
+  pendingWin=null;winPts=[];
+  winOverlay.classList.remove('show');
+  updateResults();renderTable();draw();
+};
+document.getElementById('winCancel').onclick=()=>{winOverlay.classList.remove('show');winPts=[];pendingWin=null;draw();};
+
+// ── Results / sidebar ─────────────────────────────────────────
+function updateResults(){
+  const allZones=floors.flatMap((f,fi)=>f.zones.map((z,zi)=>({z,zi,fi,f})));
+  const hasZones=allZones.length>0;
+  emptyEl.style.display=hasZones?'none':'block';
+  zlist.innerHTML='';
+
+  const BYGG_KAT=['Småhus','Boligblokker','Barnehager','Kontorbygg',
+    'Skolebygg','Universitets- og høgskolebygg','Sykehus','Sykehjem',
+    'Hoteller','Idrettsbygg','Forretningsbygg','Kulturbygg','Lett industri, verksteder'];
+
+  floors.forEach((f,fi)=>{
+    if(!f.zones.length)return;
+    f.zones.forEach((z,zi)=>{
+      const ci=zi%COLORS.length;
+      const segs=calcSegments(z.pts,getHoyde(z));
+      const linked=getLinkedZones(z);
+      const isGrouped=linked.length>1;
+      const dispArea=isGrouped?getTotalAreaM2(z):getAreaM2(z);
+      const dispVolum=isGrouped?getTotalVolum(z):getVolum(z);
+      const std=entroStandard(z.byggeaar);
+
+      const card=document.createElement('div');
+      card.className='zcard'+(mode==='edit'&&fi===activeFloor&&editZoneIdx===zi?' editing':'');
+
+      // ── Header row: dot + name + etasje-tag ──
+      const nameRow=document.createElement('div');nameRow.className='zname-row';
+      const dot=document.createElement('div');dot.className='zdot';dot.style.background=COLORS[ci];
+      const inp=document.createElement('input');inp.className='zname-input';inp.value=z.name;
+      inp.onchange=()=>{z.name=inp.value.trim()||z.name;draw();renderTable();};
+      inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();};
+      nameRow.appendChild(dot);nameRow.appendChild(inp);
+      if(floors.length>1){
+        const ftag=document.createElement('span');
+        ftag.style.cssText='font-size:10px;color:var(--text3);white-space:nowrap;flex-shrink:0';
+        ftag.textContent=f.name;
+        nameRow.appendChild(ftag);
+      }
+      card.appendChild(nameRow);
+
+      // ── Grouped zone badge + breakdown ──
+      if(isGrouped){
+        const breakdown=document.createElement('div');
+        breakdown.style.cssText='background:var(--accent-dim);border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:11px';
+        let rows=linked.map(lz=>{
+          const lf=floors.find(fl=>fl.zones.includes(lz));
+          const la=getAreaM2(lz);
+          const isCur=lz===z;
+          return `<div style="display:flex;justify-content:space-between;padding:2px 0;color:${isCur?'var(--accent)':'var(--text2)'}">
+            <span style="font-weight:${isCur?'600':'400'}">${lf?lf.name:'?'}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10.5px">${la!=null?la.toFixed(1)+' m²':'—'}</span></div>`;
+        }).join('');
+        const totalA=getTotalAreaM2(z);
+        rows+=`<div style="display:flex;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px solid rgba(26,122,110,.2);font-weight:700;color:var(--accent)">
+          <span>Sum</span><span style="font-family:'DM Mono',monospace">${totalA!=null?totalA.toFixed(1)+' m²':'—'}</span></div>`;
+        breakdown.innerHTML=rows;
+        card.appendChild(breakdown);
+      }
+
+      // ── Key metrics: 2-col grid ──
+      const grid=document.createElement('div');
+      grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px';
+      const mkStat=(label,value,sub)=>{
+        const el=document.createElement('div');
+        el.style.cssText='background:var(--surface2);border-radius:6px;padding:6px 8px';
+        el.innerHTML=`<div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">${label}</div>`
+          +`<div style="font-size:13px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;line-height:1.2">${value}</div>`
+          +(sub?`<div style="font-size:10px;color:var(--text3)">${sub}</div>`:'');
+        return el;
+      };
+      const areaDisp=dispArea!=null?dispArea.toFixed(1)+' m²':'—';
+      const volDisp=dispVolum!=null?dispVolum.toFixed(0)+' m³':'—';
+      grid.appendChild(mkStat('Areal'+(isGrouped?' (sum)':''),areaDisp,z.areaOverride!=null?'✎ manuelt':null));
+      grid.appendChild(mkStat('Volum'+(isGrouped?' (sum)':''),volDisp));
+      card.appendChild(grid);
+
+      // ── Settings: kategori, byggeår, høyde ──
+      const settings=document.createElement('div');
+      settings.style.cssText='display:flex;flex-direction:column;gap:4px';
+
+      const mkRow=(label, content)=>{
+        const r=document.createElement('div');
+        r.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px';
+        const l=document.createElement('span');
+        l.style.cssText='font-size:11px;color:var(--text3);white-space:nowrap;min-width:72px';
+        l.textContent=label;
+        r.appendChild(l);r.appendChild(content);
+        return r;
+      };
+
+      // Bygningskategori
+      const bkSel=document.createElement('select');bkSel.className='zone-select';bkSel.style.cssText='padding:3px 6px;font-size:11px;flex:1';
+      BYGG_KAT.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;if(k===(z.bygkat||'Kontorbygg'))o.selected=true;bkSel.appendChild(o);});
+      bkSel.onchange=()=>{z.bygkat=bkSel.value;renderTable();};
+      settings.appendChild(mkRow('Kategori',bkSel));
+
+      // Byggeår + apply-all
+      const byWrap=document.createElement('div');byWrap.style.cssText='display:flex;align-items:center;gap:5px;flex:1';
+      // Check if this zone's byggeår is inherited from another
+      const _allBySide=floors.flatMap(fl=>fl.zones).map(z=>z.byggeaar).filter(Boolean);
+      const _sharedBySide=_allBySide.length>1&&_allBySide.every(y=>y===_allBySide[0]);
+      const _byInherited=_sharedBySide&&floors[0].zones[0]!==z&&z.byggeaar===_allBySide[0];
+      const byInp=document.createElement('input');byInp.type='number';byInp.min='1800';byInp.max='2030';byInp.placeholder='t.d. 1985';byInp.value=z.byggeaar||'';
+      byInp.style.cssText=`width:70px;padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:4px;text-align:right;background:#fff;font-family:'DM Mono',monospace;opacity:${_byInherited?'.5':'1'}`;
+      byInp.title=_byInherited?'Arva — endra for å overstyre':'Byggeår for denne sona';
+      byInp.disabled=_byInherited;
+      const allCb=document.createElement('input');allCb.type='checkbox';allCb.style.cssText='cursor:pointer;accent-color:var(--accent)';
+      const allLbl=document.createElement('label');allLbl.style.cssText='font-size:10.5px;color:var(--text3);cursor:pointer';allLbl.textContent='Alle';
+      if(_byInherited){
+        const inhLbl=document.createElement('span');inhLbl.style.cssText='font-size:10px;color:var(--text3);font-style:italic';inhLbl.textContent='arva';
+        byWrap.appendChild(inhLbl);
+        // Allow click to unlink
+        byInp.disabled=true;
+        const unlinkBtn=document.createElement('button');
+        unlinkBtn.textContent='✎';unlinkBtn.title='Klikk for å setje eige byggeår';
+        unlinkBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:0 2px';
+        unlinkBtn.onclick=()=>{byInp.disabled=false;byInp.style.opacity='1';byInp.value='';byInp.focus();inhLbl.remove();unlinkBtn.remove();};
+        byWrap.appendChild(unlinkBtn);
+      }
+      byInp.onchange=()=>{
+        const yr=parseInt(byInp.value)||null;z.byggeaar=yr;
+        if(allCb.checked)floors.forEach(fl=>fl.zones.forEach(oz=>{oz.byggeaar=yr;}));
+        updateResults();renderTable();
+      };
+      allCb.onchange=()=>{if(allCb.checked&&z.byggeaar)floors.forEach(fl=>fl.zones.forEach(oz=>{oz.byggeaar=z.byggeaar;}));};
+      byWrap.appendChild(byInp);byWrap.appendChild(allCb);byWrap.appendChild(allLbl);
+      settings.appendChild(mkRow('Byggeår',byWrap));
+
+      // Etasjehøyde
+      const hWrap=document.createElement('div');hWrap.style.cssText='display:flex;align-items:center;gap:4px;flex:1';
+      const hInp=document.createElement('input');hInp.type='number';hInp.min='0.1';hInp.step='0.1';hInp.value=getHoyde(z);
+      hInp.style.cssText="width:60px;padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:4px;text-align:right;background:#fff;font-family:'DM Mono',monospace";
+      const hU=document.createElement('span');hU.style.cssText='font-size:11px;color:var(--text3)';hU.textContent='m';
+      hInp.onchange=()=>{const v=parseFloat(hInp.value);z.hoyde=(isNaN(v)||v<=0)?null:v;updateResults();renderTable();draw();};
+      hWrap.appendChild(hInp);hWrap.appendChild(hU);
+      settings.appendChild(mkRow('Etg.høyde',hWrap));
+
+      // Gulv / tak
+      const GULV_OPT=['Gulv mot grunn','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Dekke mot det fri'];
+      const TAK_OPT=['Tak mot det fri','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Flatt tak'];
+      const mkSelRow=(lbl,opts,val,cb)=>{
+        const sel=document.createElement('select');sel.className='zone-select';sel.style.cssText='padding:3px 6px;font-size:11px;flex:1';
+        opts.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;if(o===val)op.selected=true;sel.appendChild(op);});
+        sel.onchange=()=>cb(sel.value);
+        return mkRow(lbl,sel);
+      };
+      const isPrimaryInGroup=!isGrouped||(linked[0]===z);
+      if(isPrimaryInGroup){
+        settings.appendChild(mkSelRow('Gulv',GULV_OPT,z.gulvtype||'Gulv mot grunn',v=>{z.gulvtype=v;renderTable();}));
+        settings.appendChild(mkSelRow('Tak',TAK_OPT,z.taktype||'Tak mot det fri',v=>{z.taktype=v;renderTable();}));
+      }
+
+      // Standard U-verdiar badge
+      if(std){
+        const uBadge=document.createElement('div');
+        uBadge.style.cssText='margin-top:2px;padding:5px 8px;background:var(--accent-dim);border-radius:6px;font-size:10.5px;color:var(--accent);cursor:pointer;display:flex;justify-content:space-between;align-items:center';
+        const uvManuell=[z.uVegg,z.uTak,z.uGulv,z.uVindu,z.n50].filter(v=>v!=null).length;
+        uBadge.innerHTML=`<span style="font-weight:600">U-verdiar: Entro standard ${z.byggeaar}</span><span style="opacity:.7;font-size:10px">${uvManuell?uvManuell+' manuelt':'→ sjå tabell'}</span>`;
+        uBadge.title='U-verdiar og n50 redigerast i Tabell-fana';
+        uBadge.onclick=()=>{
+          document.querySelector('.stab[data-tab="table"]').click();
+        };
+        settings.appendChild(uBadge);
+      }
+
+      card.appendChild(settings);
+
+      // ── Fasadar kompakt (kun YV med vindauge) ──
+      if(segs&&(z.windows||[]).length>0){
+        const winSummary=document.createElement('div');
+        winSummary.style.cssText='margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
+        const winHdr=document.createElement('div');
+        winHdr.style.cssText='font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px';
+        winHdr.textContent='Vindauge og dører';
+        winSummary.appendChild(winHdr);
+        const wl=document.createElement('div');wl.className='win-list';
+        z.windows.forEach((w,wi)=>{
+          const wc=document.createElement('div');wc.className='win-card';
+          const dir=segs?segs[w.segIdx]?.dir||w.dir:w.dir;
+          const _wlbl=w.name||(w.type==='dor'?'Dør':'Vindauge');
+          const info=document.createElement('div');info.className='win-card-info';
+          const icon=w.type==='dor'?'🚪':'▭';
+          info.innerHTML=`<strong style="color:var(--text)">${icon} ${_wlbl}</strong> <span style="color:var(--text3)">${dir} · ${w.breddeMm}×${w.hoyMm}mm · ${w.antal} stk</span>`;
+          const cpW=document.createElement('button');cpW.className='win-card-del';cpW.title='Kopier';cpW.textContent='⎘';
+          cpW.style.cssText='background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;transition:color .1s';
+          cpW.onmouseenter=()=>{cpW.style.color='var(--accent)';};cpW.onmouseleave=()=>{cpW.style.color='var(--text3)';};
+          cpW.onclick=()=>showCopyWindowMenu(w,z,zi,f,fi);
+          const del=document.createElement('button');del.className='win-card-del';del.textContent='✕';
+          del.onclick=()=>{z.windows.splice(wi,1);updateResults();renderTable();draw();};
+          wc.appendChild(info);wc.appendChild(cpW);wc.appendChild(del);wl.appendChild(wc);
+        });
+        winSummary.appendChild(wl);
+        card.appendChild(winSummary);
+      }
+
+      // ── Action buttons ──
+      const btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:5px;margin-top:10px;flex-wrap:wrap';
+      const eb=document.createElement('button');eb.className='card-btn';eb.textContent='Rediger geometri';
+      eb.onclick=()=>{
+        if(fi!==activeFloor){saveFloorState();activeFloor=fi;syncFloorState();renderFloorTabs();}
+        setMode('edit');editZoneIdx=zi;draw();
+      };
+      const db=document.createElement('button');db.className='card-btn danger';db.textContent='Slett';
+      db.onclick=()=>{f.zones.splice(zi,1);if(fi===activeFloor&&editZoneIdx===zi)editZoneIdx=null;zones=curFloor().zones;renderFloorTabs();updateResults();renderTable();draw();};
+      btnRow.appendChild(eb);btnRow.appendChild(db);
+      if(floors.length>1){
+        const lnBtn=document.createElement('button');
+        lnBtn.className='card-btn';lnBtn.style.cssText='font-size:10.5px;color:#7c3aed;border-color:#ede9fe';
+        lnBtn.textContent='⇌ Kobl soner';
+        lnBtn.onclick=()=>showLinkZoneMenu(z,f,fi);
+        btnRow.appendChild(lnBtn);
+      }
+      if(z.groupId){
+        const ulBtn=document.createElement('button');ulBtn.className='card-btn';ulBtn.style.cssText='font-size:10.5px;color:var(--text3);width:100%';
+        ulBtn.textContent='⊘ Frikopl frå gruppe';
+        ulBtn.onclick=()=>{delete z.groupId;updateResults();renderTable();};
+        btnRow.appendChild(ulBtn);
+      }
+      // SK merge
+      if((z.skillevegg||new Set()).size>1){
+        const isMerged=!!z.skMerged;
+        const mergeBtn=document.createElement('button');
+        mergeBtn.style.cssText='width:100%;margin-top:4px;padding:5px 10px;font-size:11px;font-weight:600;border:1px dashed #d97706;border-radius:6px;cursor:pointer;font-family:inherit;background:'+(isMerged?'#fef3c7':'#fffbeb')+';color:#92400e';
+        mergeBtn.textContent=isMerged?'⇌ Vis SK separate':'⇌ Slå saman SK';
+        mergeBtn.onclick=()=>{z.skMerged=!z.skMerged;updateResults();renderTable();};
+        btnRow.appendChild(mergeBtn);
+      }
+      card.appendChild(btnRow);
+
+      // ── Fasade-radar (SK-toggle, segment) ──
+      if(segs){
+        const facSection=document.createElement('div');
+        facSection.style.cssText='margin-top:10px;padding-top:8px;border-top:1px solid var(--border)';
+        const facHdr=document.createElement('div');
+        facHdr.style.cssText='font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px';
+        facHdr.textContent='Fasadar';
+        facSection.appendChild(facHdr);
+
+        const dirCount={};let skN2=0,skMergedShown=false;
+        segs.forEach(s=>{if(!(z.skillevegg||new Set()).has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
+        const dirSeen={};
+
+        segs.forEach(seg=>{
+          dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+          if(!z.skillevegg)z.skillevegg=new Set();
+          const isSK=z.skillevegg.has(seg.idx);
+          let nm;if(isSK){nm='SK'+(++skN2);}else{nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;}
+
+          if(isSK&&z.skMerged){
+            if(skMergedShown)return;skMergedShown=true;
+            const allSK=segs.filter(s=>z.skillevegg.has(s.idx));
+            const totalLenM=allSK.reduce((s,s2)=>s+(s2.lenM||0),0);
+            const row=document.createElement('div');
+            row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:5px 8px;margin:2px 0;border-radius:6px;background:#fef3c7;border:1px solid #d97706;cursor:pointer';
+            row.innerHTML=`<div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:#92400e">SK</span><span style="font-size:11px;color:#6b7280">${mmPerImgPx?fmtM(totalLenM):'—'} (${allSK.length} seg)</span></div>`;
+            row.onclick=()=>{z.skMerged=false;updateResults();renderTable();};
+            facSection.appendChild(row);return;
+          }
+
+          const wins=(z.windows||[]).filter(w=>w.segIdx===seg.idx);
+          const winA=wins.reduce((s,w)=>s+(w.breddeMm/1000)*(w.hoyMm/1000)*w.antal,0);
+          const netA=seg.areaM2!==null?(seg.areaM2-winA):null;
+          const row=document.createElement('div');
+          row.style.cssText=`display:flex;align-items:center;justify-content:space-between;padding:5px 8px;margin:2px 0;border-radius:6px;cursor:pointer;background:${isSK?'#fef3c7':'#f8fafb'};border:1px solid ${isSK?'#d97706':'#e5e7eb'};transition:all .15s`;
+          row.title='Klikk for å endre type';
+          const left=document.createElement('div');left.style.cssText='display:flex;align-items:center;gap:7px;min-width:0';
+          const dirBadge=document.createElement('span');dirBadge.style.cssText=`font-size:11px;font-weight:700;color:${isSK?'#92400e':'var(--accent)'};white-space:nowrap`;dirBadge.textContent=nm;
+          const lenSpan=document.createElement('span');lenSpan.style.cssText="font-size:11px;color:#6b7280;font-family:'DM Mono',monospace";lenSpan.textContent=seg.lenM!==null?fmtM(seg.lenM):'—';
+          left.appendChild(dirBadge);left.appendChild(lenSpan);
+          const right=document.createElement('div');right.style.cssText='display:flex;align-items:center;gap:4px';
+          if(!isSK){
+            const areaSpan=document.createElement('span');areaSpan.style.cssText="font-size:10.5px;color:#374151;font-family:'DM Mono',monospace";
+            areaSpan.textContent=netA!=null?fmtM2(netA>0?netA:seg.areaM2):'—';
+            right.appendChild(areaSpan);
+          }
+          const typePill=document.createElement('span');
+          typePill.style.cssText=`font-size:10px;font-weight:600;padding:2px 6px;border-radius:8px;background:${isSK?'#d97706':'#e5e7eb'};color:${isSK?'#fff':'#6b7280'}`;
+          typePill.textContent=isSK?'SK':'YV';
+          right.appendChild(typePill);
+          row.appendChild(left);row.appendChild(right);
+          row.onmouseenter=()=>{row.style.background=isSK?'#fde68a':'#eef1f4';};
+          row.onmouseleave=()=>{row.style.background=isSK?'#fef3c7':'#f8fafb';};
+          row.onclick=()=>{if(!z.skillevegg)z.skillevegg=new Set();if(isSK)z.skillevegg.delete(seg.idx);else z.skillevegg.add(seg.idx);updateResults();renderTable();draw();};
+          facSection.appendChild(row);
+        });
+        card.appendChild(facSection);
+      }
+
+      zlist.appendChild(card);
+    });
+  });
+}
+
+// ── Copy/link zone to other floor ────────────────────────────
+function showCopyZoneMenu(z,zi){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  const box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;padding:22px;width:300px;box-shadow:0 12px 40px rgba(13,27,42,.15)';
+  box.innerHTML=`<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Kopier "${z.name}"</div><div style="font-size:12px;color:var(--text3);margin-bottom:14px">Vel korleis og kvar</div>`;
+  floors.forEach((f,fi)=>{
+    if(fi===activeFloor)return;
+    const grp=document.createElement('div');
+    grp.style.cssText='margin-bottom:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px';
+    grp.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">${f.name}</div>`;
+    const mkBtn=(label,desc,action)=>{
+      const b=document.createElement('button');
+      b.style.cssText='width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:2px;margin-bottom:5px;transition:all .12s';
+      b.innerHTML=`<span style="font-size:12px;font-weight:600;color:var(--text)">${label}</span><span style="font-size:10.5px;color:var(--text3)">${desc}</span>`;
+      b.onmouseenter=()=>{b.style.borderColor='var(--accent)';b.style.background='var(--accent-dim)';};
+      b.onmouseleave=()=>{b.style.borderColor='var(--border2)';b.style.background='#fff';};
+      b.onclick=()=>{action();document.body.removeChild(overlay);};
+      return b;
+    };
+    // Deep copy (own geometry)
+    grp.appendChild(mkBtn('Eksakt kopi','Kopierer geometri — uavhengig sone',()=>{
+      const copy=JSON.parse(JSON.stringify(z));
+      copy.name=z.name;
+      copy.skillevegg=new Set(z.skillevegg||[]);
+      if(!copy.groupId) {/* no group */}
+      f.zones.push(copy);
+      renderFloorTabs();updateResults();renderTable();
+    }));
+    // Same logical zone (shared groupId)
+    grp.appendChild(mkBtn('Same sone','Kopierer og koplar saman — vises samla i tabell',()=>{
+      if(!z.groupId)z.groupId='g'+(++_nextGroupId);
+      const copy=JSON.parse(JSON.stringify(z));
+      copy.skillevegg=new Set(z.skillevegg||[]);
+      copy.groupId=z.groupId;
+      f.zones.push(copy);
+      renderFloorTabs();updateResults();renderTable();
+    }));
+    box.appendChild(grp);
+  });
+  const cancel=document.createElement('button');
+  cancel.textContent='Avbryt';
+  cancel.style.cssText='width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px';
+  cancel.onclick=()=>document.body.removeChild(overlay);
+  box.appendChild(cancel);
+  overlay.appendChild(box);document.body.appendChild(overlay);
+}
+
+// ── Copy window/door to another segment ──────────────────────
+function showCopyWindowMenu(w, srcZone, srcZi, srcFloor, srcFi){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  const box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;padding:22px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 12px 40px rgba(13,27,42,.15)';
+  const wLabel=w.name||(w.type==='dor'?'Dør':'Vindauge');
+  box.innerHTML=`<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Kopier "${wLabel}"</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${w.breddeMm}×${w.hoyMm} mm · ${w.antal} stk<br>Vel kva fasade du vil kopiere til:</div>`;
+  let added=0;
+  floors.forEach((fl,fli)=>{
+    fl.zones.forEach((tz,tzi)=>{
+      const tsegs=calcSegments(tz.pts)||[];
+      if(!tsegs.length)return;
+      const tsk=tz.skillevegg||new Set();
+      const yvSegs=tsegs.filter(s=>!tsk.has(s.idx));
+      if(!yvSegs.length)return;
+      const isCurrentZone=(fli===srcFi&&tzi===srcZi);
+      // Section header per zone
+      const zhdr=document.createElement('div');
+      zhdr.style.cssText='font-size:11px;font-weight:700;color:var(--text3);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.05em';
+      zhdr.textContent=(fl.name!==floors[srcFi].name?fl.name+' — ':'')+tz.name+(isCurrentZone?' (denne)':'');
+      box.appendChild(zhdr);
+      yvSegs.forEach(seg=>{
+        const isSameSeg=(isCurrentZone&&seg.idx===w.segIdx);
+        const btn=document.createElement('button');
+        btn.style.cssText=`width:100%;padding:7px 12px;border:1px solid ${isSameSeg?'var(--border)':'var(--border2)'};border-radius:6px;background:${isSameSeg?'var(--surface2)':'#fff'};cursor:${isSameSeg?'default':'pointer'};text-align:left;font-family:inherit;font-size:12px;color:${isSameSeg?'var(--text3)':'var(--text)'};margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;transition:all .12s`;
+        const lenStr=seg.lenM!=null?seg.lenM.toFixed(1)+' m':'—';
+        btn.innerHTML=`<span style="font-weight:600">${seg.dir}</span><span style="color:var(--text3);font-size:11px">${lenStr}</span>`;
+        if(!isSameSeg){
+          btn.onmouseenter=()=>{btn.style.borderColor='var(--accent)';btn.style.background='var(--accent-dim)';};
+          btn.onmouseleave=()=>{btn.style.borderColor='var(--border2)';btn.style.background='#fff';};
+          btn.onclick=()=>{
+            if(!tz.windows)tz.windows=[];
+            // Count same type for auto-name
+            const sameType=tz.windows.filter(x=>x.type===w.type).length+1;
+            const typeL=w.type==='dor'?'Dør':'Vindauge';
+            tz.windows.push({
+              segIdx:seg.idx,dir:seg.dir,
+              t0:w.t0,t1:Math.min(w.t1,1), // keep same relative position
+              breddeMm:w.breddeMm,hoyMm:w.hoyMm,antal:w.antal,
+              type:w.type,name:w.name||typeL+' '+sameType
+            });
+            document.body.removeChild(overlay);
+            updateResults();renderTable();draw();
+          };
+        }
+        box.appendChild(btn);
+        added++;
+      });
+    });
+  });
+  if(!added){
+    box.innerHTML+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">Ingen fasadar tilgjengeleg</div>';
+  }
+  const cancel=document.createElement('button');
+  cancel.textContent='Avbryt';
+  cancel.style.cssText='width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px;margin-top:8px';
+  cancel.onclick=()=>document.body.removeChild(overlay);
+  box.appendChild(cancel);
+  overlay.appendChild(box);document.body.appendChild(overlay);
+}
+
+// ── Link existing zones across floors ────────────────────────
+function showLinkZoneMenu(z, srcFloor, srcFi){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  const box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;padding:22px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 12px 40px rgba(13,27,42,.15)';
+  box.innerHTML=`<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Slå saman med sone</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Vel ei sone frå ein annan etasje som skal reknast som same sone. Geometrien i kvar etasje er eigen, men areal, volum og takara/golvra blir summert.</div>`;
+
+  let added=0;
+  floors.forEach((f,fi)=>{
+    if(fi===srcFi)return;
+    f.zones.forEach((tz,ti)=>{
+      added++;
+      const row=document.createElement('button');
+      const isLinked=tz.groupId&&tz.groupId===z.groupId;
+      row.style.cssText=`width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid ${isLinked?'var(--accent)':'var(--border)'};border-radius:8px;background:${isLinked?'var(--accent-dim)':'#fff'};cursor:pointer;text-align:left;margin-bottom:6px;font-family:inherit;transition:all .12s`;
+      row.innerHTML=`<div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--text)">${tz.name}</div><div style="font-size:11px;color:var(--text3)">${f.name}</div></div>${isLinked?'<span style="color:var(--accent);font-size:11px;font-weight:600">Kopla ✓</span>':''}`;
+      row.onmouseenter=()=>{if(!isLinked){row.style.borderColor='var(--accent)';row.style.background='var(--accent-dim)';}};
+      row.onmouseleave=()=>{if(!isLinked){row.style.borderColor='var(--border)';row.style.background='#fff';}};
+      row.onclick=()=>{
+        if(isLinked){
+          // Unlink this specific zone
+          delete tz.groupId;
+        } else {
+          // Create or extend group
+          if(!z.groupId)z.groupId='g'+(++_nextGroupId);
+          tz.groupId=z.groupId;
+        }
+        document.body.removeChild(overlay);
+        updateResults();renderTable();
+      };
+      box.appendChild(row);
+    });
+  });
+  if(added===0){
+    box.innerHTML+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">Ingen soner i andre etasjar</div>';
+  }
+  const cancel=document.createElement('button');
+  cancel.textContent='Lukk';
+  cancel.style.cssText='width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px;margin-top:4px';
+  cancel.onclick=()=>document.body.removeChild(overlay);
+  box.appendChild(cancel);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+// ── Table panel ───────────────────────────────────────────────
+function renderTable(){
+  const wrap=document.getElementById('tableWrap');
+  if(!zones.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">⬡</div>Ingen soner enno</div>';return;}
+  let html='';
+
+  // Soner
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+  html+='<div class="ttitle" style="margin:0">Soner</div>';
+  html+='<div style="font-size:10px;color:#92400e;display:flex;align-items:center;gap:5px">';
+  html+='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#d97706"></span>';
+  html+='Manuelt justert</div></div>';
+  html+='<table class="dtbl"><thead><tr><th>Namn</th><th>Kategori</th><th>Areal m²</th><th>Perim. m</th><th>Etg.høyde m</th><th>Gulv</th><th>Tak</th></tr></thead><tbody>';
+  const BYGG_KAT2=['Småhus','Boligblokker','Barnehager','Kontorbygg','Skolebygg','Universitets- og høgskolebygg','Sykehus','Sykehjem','Hoteller','Idrettsbygg','Forretningsbygg','Kulturbygg','Lett industri, verksteder'];
+  const GULV_OPT2=['Gulv mot grunn','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Dekke mot det fri'];
+  const TAK_OPT2=['Tak mot det fri','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Flatt tak'];
+  const mkOpts=(opts,val)=>opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('');
+  floors.forEach((fl,fli)=>{fl.zones.forEach((z,zi)=>{
+    const area=calcAreaM2(z.pts);
+    const perim=calcPerimM(z.pts);
+    const fh=getHoyde(z);
+    const areaVal=z.areaOverride!=null?z.areaOverride:(area?area.toFixed(2):'');
+    const perimVal=z.perimOverride!=null?z.perimOverride:(perim?perim.toFixed(2):'');
+    const _flLabel=floors.length>1?` <span style="font-size:10px;color:var(--text3);font-weight:400">${fl.name}</span>`:'';  
+    html+=`<tr>
+      <td><div style="display:flex;align-items:center;gap:4px"><input class="tbl-input" data-zname="${fli},${zi}" value="${z.name.replace(/"/g,'&quot;')}">${_flLabel}</div></td>
+      <td><select class="tbl-input" data-zbygkat="${fli},${zi}" style="width:100%">${mkOpts(BYGG_KAT2,z.bygkat||'Kontorbygg')}</select></td>
+      <td class="${z.areaOverride!=null?'cell-overridden':''}"><input class="tbl-input${z.areaOverride!=null?' overridden':''}" data-zarea="${fli},${zi}" value="${areaVal}" style="width:70px" placeholder="auto" title="${z.areaOverride!=null?'Manuelt justert — slett for å tilbakestille':'Endre for å overstyre. Blank = automatisk.'}"></td>
+      <td style="color:#64748b;font-weight:500">${getVolum(z)!=null?getVolum(z).toFixed(1):"—"}</td>
+      <td class="${z.perimOverride!=null?'cell-overridden':''}"><input class="tbl-input${z.perimOverride!=null?' overridden':''}" data-zperim="${fli},${zi}" value="${perimVal}" style="width:60px" placeholder="auto" title="${z.perimOverride!=null?'Manuelt justert — slett for å tilbakestille':'Endre for å overstyre. Blank = automatisk.'}"></td>
+      <td><input class="tbl-input" data-zhoyde="${fli},${zi}" value="${getHoyde(z)}" style="width:50px" title="Etasjehøyde for denne sona"></td>
+      <td><select class="tbl-input" data-zgulv="${fli},${zi}" style="width:100%">${mkOpts(GULV_OPT2,z.gulvtype||'Gulv mot grunn')}</select></td>
+      <td><select class="tbl-input" data-ztak="${fli},${zi}" style="width:100%">${mkOpts(TAK_OPT2,z.taktype||'Tak mot det fri')}</select></td>
+    </tr>`;
+  });});
+  html+='</tbody></table>';
+
+  // Tak og gulv
+  html+='<div class="ttitle">Tak og gulv</div>';
+  html+='<table class="dtbl"><thead><tr><th>Sone</th><th>Type</th><th>Konstruksjon</th><th>Areal m²</th><th>Utv. perimeter m</th></tr></thead><tbody>';
+  floors.forEach((fl,fli)=>{fl.zones.forEach((z,zi)=>{
+    const a=getAreaM2(z);
+    const aStr=a!=null?a.toFixed(2):'—';
+    const GULV_OPT3=['Gulv mot grunn','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Dekke mot det fri'];
+    const TAK_OPT3=['Tak mot det fri','Skiljevegg/dekke mot oppvarma','Dekke mot uoppvarma','Flatt tak'];
+    const mkO3=(opts,val,dkey)=>{
+      const s=`<select class="tbl-input" ${dkey} style="width:100%">`+opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')+'</select>';
+      return s;
+    };
+    const utvOmk=getUtvOmkrets(z);
+    const utvStr=utvOmk!=null?utvOmk.toFixed(2):"—";
+    const _fltag=floors.length>1?` (${fl.name})`:'';html+=`<tr><td style="color:#64748b">${z.name}${_fltag}</td><td style="color:#6b7280">Gulv</td>`
+      +`<td>${mkO3(GULV_OPT3,z.gulvtype||'Gulv mot grunn',`data-tgulv="${fli},${zi}"`)}</td>`
+      +`<td style="font-weight:600">${aStr}</td>`
+      +`<td style="color:#64748b" title="Utvendig omkrets (berre yttervegg, ikkje SK)">${utvStr} m</td></tr>`;
+    html+=`<tr><td style="color:#64748b">${z.name}${_fltag}</td><td style="color:#6b7280">Tak</td>`
+      +`<td>${mkO3(TAK_OPT3,z.taktype||'Tak mot det fri',`data-ttak="${fli},${zi}"`)}</td>`
+      +`<td style="font-weight:600">${aStr}</td><td style="color:#94a3b8">—</td></tr>`;
+  });});
+  html+='</tbody></table>';
+
+  // U-verdiar og n50 tabell
+  html+='<div class="ttitle">U-verdiar og n50</div>';
+  html+='<table class="dtbl"><thead><tr><th>Sone</th><th>Byggeår</th><th title="Yttervegg">U-vegg<br><small>W/m²K</small></th><th title="Tak">U-tak<br><small>W/m²K</small></th><th title="Gulv mot grunn">U-gulv<br><small>W/m²K</small></th><th title="Vindauge inkl. karm">U-vindu<br><small>W/m²K</small></th><th title="Lekkasjetall">n50<br><small>1/h</small></th><th title="Normalisert kuldebroverdi">Kuldebro<br><small>W/m²K</small></th></tr></thead><tbody>';
+  // Check if all zones share same byggeår
+  const _allBy=floors.flatMap(fl=>fl.zones).map(z=>z.byggeaar).filter(Boolean);
+  const _sharedBy=_allBy.length>0&&_allBy.every(y=>y===_allBy[0]);
+  floors.forEach((fl,fli)=>{fl.zones.forEach((z,zi)=>{
+    const std=entroStandard(z.byggeaar);
+    const _fltag=floors.length>1?` (${fl.name})`:''
+;    // Check if this zone's byggeår is inherited (same as first zone that set it)
+    const _isInherited=_sharedBy&&floors[0].zones[0]!==z&&z.byggeaar===_allBy[0];
+    const mkUCell=(field,stdVal,ovVal)=>{
+      const isOv=ovVal!=null;
+      const dispV=isOv?ovVal:stdVal;
+      const bg=isOv?'var(--amber-dim)':stdVal?'':'var(--surface2)';
+      const border=isOv?'var(--amber)':stdVal?'var(--border2)':'var(--border2)';
+      const title=isOv?'Manuelt overstyrt':stdVal?'Entro standard':'Ikkje sett — legg inn byggeår';
+      return `<td class="${isOv?'cell-overridden':''}"><input class="tbl-input${isOv?' overridden':''}" data-uval="${fli},${zi},${field}" value="${dispV!=null?dispV:''}" placeholder="${stdVal!=null?stdVal:'—'}" style="width:52px;font-family:'DM Mono',monospace" title="${title}"></td>`;
+    };
+    html+=`<tr style="${_isInherited?'opacity:.7':''}">`
+      +`<td style="font-weight:600;color:var(--text)">${z.name}${_fltag}</td>`
+      +`<td style="font-family:'DM Mono',monospace;color:${_isInherited?'var(--text3)':'var(--text)'}">${z.byggeaar||'—'}${_isInherited?' <small style="color:var(--text3)">(arva)</small>':''}</td>`
+      +mkUCell('uVegg',std?.uVegg,z.uVegg)
+      +mkUCell('uTak',std?.uTak,z.uTak)
+      +mkUCell('uGulv',std?.uGulv,z.uGulv)
+      +mkUCell('uVindu',std?.uVindu,z.uVindu)
+      +mkUCell('n50',std?.n50,z.n50)
+      +mkUCell('kuldebro',std?.kuldebro,z.kuldebro)
+      +'</tr>';
+  });});
+  html+='</tbody></table>';
+
+  // Fasadar — sone for sone med redigerbare celler
+  html+='<div class="ttitle">Fasadar</div>';
+  floors.forEach((fl,fli)=>{fl.zones.forEach((z,zi)=>{
+    const segs=calcSegments(z.pts,getHoyde(z));
+    if(!segs)return;
+    const sk=z.skillevegg||new Set();
+    const dirCount={};let skN3=0,skMergedTbl=false;
+    segs.forEach(s=>{if(!sk.has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
+    const dirSeen={};
+    const zColor=COLORS[zi%COLORS.length];
+    if(!z.segOverrides)z.segOverrides={};
+    const _flsuf=floors.length>1?` <span style="font-size:10px;font-weight:400;color:var(--text3)">${fl.name}</span>`:'';
+    html+=`<div style="margin-bottom:2px;padding:4px 0 2px;font-size:11px;font-weight:700;color:${zColor};border-bottom:2px solid ${zColor}22">${z.name}${_flsuf}</div>`;
+    html+='<table class="dtbl" style="margin-bottom:10px"><thead><tr><th>Fasade</th><th>Type</th><th>Lengde m</th><th>Veggfl. m²</th><th>Vindauge m²</th><th>Netto m²</th><th>U-verdi W/m²K</th></tr></thead><tbody>';
+    const stdZ=entroStandard(z.byggeaar);
+    segs.forEach(seg=>{
+      dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+      const isSK=sk.has(seg.idx);
+      let nm;if(isSK){nm='SK'+(++skN3);}else{nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;}
+      // Merged SK row
+      if(isSK&&z.skMerged){
+        if(skMergedTbl)return;
+        skMergedTbl=true;
+        const allSK=segs.filter(s=>sk.has(s.idx));
+        const ov=z.segOverrides['sk_merged']||{};
+        const totalLen=ov.lenM!=null?ov.lenM:allSK.reduce((s,s2)=>s+(s2.lenM||0),0);
+        const totalArea=ov.areaM2!=null?ov.areaM2:allSK.reduce((s,s2)=>s+(s2.areaM2||0),0);
+        html+=`<tr style="background:#fef3c7">
+          <td style="color:#d97706;font-weight:700">SK <span style="font-weight:400;color:#92400e">(${allSK.length} seg)</span></td>
+          <td style="color:#d97706;font-weight:600">Skillevegg</td>
+          <td class="${ov.lenM!=null?'cell-overridden':''}"><input class="tbl-input${ov.lenM!=null?' overridden':''}" data-segov="${fli},${zi},sk_merged,lenM" value="${totalLen.toFixed(2)}" style="width:60px" title="${ov.lenM!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
+          <td>—</td><td>—</td>
+          <td class="${ov.nettoM2!=null?'cell-overridden':''}"><input class="tbl-input${ov.nettoM2!=null?' overridden':''}" data-segov="${fli},${zi},sk_merged,nettoM2" value="${(ov.nettoM2!=null?ov.nettoM2:totalArea).toFixed(2)}" style="width:60px" title="${ov.nettoM2!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
+        <td style="color:var(--text3)">—</td>
+        </tr>`;
+        return;
+      }
+      const wins=(z.windows||[]).filter(w=>w.segIdx===seg.idx);
+      const winA=wins.reduce((s,w)=>s+(w.breddeMm/1000)*(w.hoyMm/1000)*w.antal,0);
+      const ov=z.segOverrides[seg.idx]||{};
+      const lenVal=ov.lenM!=null?ov.lenM:seg.lenM;
+      const areaVal2=ov.areaM2!=null?ov.areaM2:seg.areaM2;
+      const nettoVal=ov.nettoM2!=null?ov.nettoM2:(areaVal2!=null?areaVal2-winA:null);
+      const lenStr=lenVal!=null?lenVal.toFixed(2):'—';
+      const areaStr2=isSK||areaVal2==null?'—':areaVal2.toFixed(2);
+      const nettoStr=isSK||nettoVal==null?'—':nettoVal.toFixed(2);
+      const rowBg=isSK?'background:#fef3c7':'';
+      html+=`<tr style="${rowBg}">
+        <td style="color:${zColor};font-weight:600">${nm}</td>
+        <td style="color:${isSK?'#d97706':'#94a3b8'};font-weight:${isSK?'600':'400'}">${isSK?'Skillevegg':'Yttervegg'}</td>
+        <td class="${ov.lenM!=null?'cell-overridden':''}"><input class="tbl-input${ov.lenM!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},lenM" value="${lenStr}" placeholder="—" style="width:60px" title="${ov.lenM!=null?'Manuelt justert — slett for å tilbakestille':''}"></td>
+        <td class="${!isSK&&ov.areaM2!=null?'cell-overridden':''}">${isSK?'—':`<input class="tbl-input${ov.areaM2!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},areaM2" value="${areaStr2}" placeholder="—" style="width:60px" title="${ov.areaM2!=null?'Manuelt justert — slett for å tilbakestille':''}">`}</td>
+        <td style="color:#0891b2">${winA>0?winA.toFixed(2):'—'}</td>
+        <td class="${!isSK&&ov.nettoM2!=null?'cell-overridden':''}">${isSK?'—':`<input class="tbl-input${ov.nettoM2!=null?' overridden':''}" data-segov="${fli},${zi},${seg.idx},nettoM2" value="${nettoStr}" placeholder="—" style="width:60px" title="${ov.nettoM2!=null?'Manuelt justert — slett for å tilbakestille':''}">`}</td>
+        ${(()=>{
+          if(isSK)return '<td style="color:var(--text3)">—</td>';
+          const segKey='seg_'+seg.idx;
+          const segU=z.uPerSeg?.[segKey];
+          const isOv=segU!=null,isSoneOv=!isOv&&z.uVegg!=null;
+          const effU=segU??z.uVegg??stdZ?.uVegg;
+          const ph=z.uVegg??stdZ?.uVegg;
+          const bc=isOv?'var(--amber)':isSoneOv?'var(--accent)':'var(--border2)';
+          const bg=isOv?'var(--amber-dim)':isSoneOv?'var(--accent-dim)':'';
+          const tt=isOv?'Fasade-spesifikk':isSoneOv?'Frå sone':stdZ?'Entro standard':'Legg inn byggeår';
+          return `<td class="${isOv?'cell-overridden':''}"><input class="tbl-input${isOv?' overridden':''}" data-uvseg="${fli},${zi},${segKey}" value="${effU!=null?effU:''}" placeholder="${ph!=null?ph:''}" style="width:52px;font-family:'DM Mono',monospace;border-color:${bc};background:${bg}" title="${tt}"></td>`;
+        })()}
+      </tr>`;
+    });
+    html+='</tbody></table>';
+  });});
+
+  // Vindauge og dører
+  const allWins=[];
+  floors.forEach((fl,fli)=>{fl.zones.forEach((z,zi)=>{
+    const segs=calcSegments(z.pts)||[];
+    (z.windows||[]).forEach((w,wi)=>{
+      const dir=segs[w.segIdx]?.dir||w.dir;
+      const _wfn=floors.length>1?` (${fl.name})`:'';allWins.push({...w,zoneName:z.name+_wfn,zi,wi,dir,fl,fli});
+    });
+  });});
+  if(allWins.length){
+    html+='<div class="ttitle">Vindauge og dører</div>';
+    html+='<table class="dtbl"><thead><tr><th>Sone</th><th>Fasade</th><th>Type</th><th>Breidd mm</th><th>Høgd mm</th><th>Tal</th><th>Areal m²</th><th>U-verdi W/m²K</th><th></th></tr></thead><tbody>';
+    allWins.forEach(w=>{
+      const totalA=((w.breddeMm/1000)*(w.hoyMm/1000)*w.antal).toFixed(2);
+      html+=`<tr>
+        <td style="color:#64748b">${w.zoneName}</td>
+        <td style="color:${COLORS[w.zi%COLORS.length]};font-weight:600">${w.dir}</td>
+        <td><strong>${w.name||(w.type==='dor'?'Dør':'Vindauge')}</strong></td>
+        <td><input class="tbl-input" data-wb="${w.fli},${w.zi},${w.wi}" value="${w.breddeMm}" style="width:60px"></td>
+        <td><input class="tbl-input" data-wh="${w.fli},${w.zi},${w.wi}" value="${w.hoyMm}" style="width:60px"></td>
+        <td><input class="tbl-input" data-wn="${w.fli},${w.zi},${w.wi}" value="${w.antal}" style="width:40px"></td>
+        <td style="color:#06b6d4">${totalA}</td>
+        ${(()=>{
+          const _wz=floors[w.fli].zones[w.zi];
+          const _wstd=entroStandard(_wz.byggeaar);
+          const _wOv=w.uVerdi!=null,_wSone=!_wOv&&_wz.uVindu!=null;
+          const _wEff=w.uVerdi??_wz.uVindu??_wstd?.uVindu;
+          const _wPh=_wz.uVindu??_wstd?.uVindu??'';
+          const _wBc=_wOv?'var(--amber)':_wSone?'var(--accent)':'var(--border2)';
+          const _wBg=_wOv?'var(--amber-dim)':_wSone?'var(--accent-dim)':'';
+          return `<td class="${_wOv?'cell-overridden':''}"><input class="tbl-input${_wOv?' overridden':''}" data-wuv="${w.fli},${w.zi},${w.wi}" value="${_wEff??''}" placeholder="${_wPh}" style="width:52px;font-family:'DM Mono',monospace;border-color:${_wBc};background:${_wBg}" title="${_wOv?'Vindauge-spesifikk':_wSone?'Frå sone':_wstd?'Entro standard':'Legg inn byggeår'}"></td>`;
+        })()}
+        <td><button onclick="floors[${w.fli}].zones[${w.zi}].windows.splice(${w.wi},1);updateResults();renderTable();draw();" style="background:none;border:none;color:#ef444499;cursor:pointer;font-size:12px">✕</button></td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+  }
+
+  // Cross-floor grouped zones summary
+  const allGroups={};
+  floors.forEach((f,fi)=>{
+    f.zones.forEach(z=>{
+      if(!z.groupId)return;
+      if(!allGroups[z.groupId])allGroups[z.groupId]=[];
+      allGroups[z.groupId].push({z,fi,fname:f.name});
+    });
+  });
+  const groupKeys=Object.keys(allGroups).filter(k=>allGroups[k].length>1);
+  if(groupKeys.length){
+    html+='<div class="ttitle">Same sone — fleire etasjar</div>';
+    html+='<table class="dtbl"><thead><tr><th>Gruppe</th><th>Etasje</th><th>Sone</th><th>Areal m²</th><th>Volum m³</th></tr></thead><tbody>';
+    groupKeys.forEach(gk=>{
+      const entries=allGroups[gk];
+      const totalA=entries.reduce((s,e)=>{const a=getAreaM2(e.z);return s+(a||0);},0);
+      const totalV=entries.reduce((s,e)=>{const v=getVolum(e.z);return s+(v||0);},0);
+      entries.forEach((e,i)=>{
+        const a=getAreaM2(e.z);const v=getVolum(e.z);
+        html+=`<tr style="${i===0?'border-top:2px solid var(--accent-dim)':''}">
+          <td style="color:var(--accent);font-weight:700">${i===0?gk:''}</td>
+          <td style="color:var(--text3)">${e.fname}</td>
+          <td style="color:var(--text)">${e.z.name}</td>
+          <td style="font-family:'DM Mono',monospace">${a!=null?a.toFixed(2):'—'}</td>
+          <td style="font-family:'DM Mono',monospace">${v!=null?v.toFixed(1):'—'}</td>
+        </tr>`;
+      });
+      html+=`<tr style="background:var(--accent-dim)">
+        <td colspan="3" style="font-weight:600;color:var(--accent);font-size:11px">Totalt</td>
+        <td style="font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${totalA.toFixed(2)}</td>
+        <td style="font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${totalV.toFixed(1)}</td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+  }
+
+  wrap.innerHTML=html;
+
+  // Wire up table inputs
+  wrap.querySelectorAll('[data-zname]').forEach(inp=>{
+    const [_fi,_zi]=inp.dataset.zname.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    inp.onchange=()=>{_z.name=inp.value.trim()||_z.name;updateResults();draw();};
+    inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();};
+  });
+  wrap.querySelectorAll('[data-zbygkat]').forEach(sel=>{
+    const [_fi,_zi]=sel.dataset.zbygkat.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    sel.onchange=()=>{_z.bygkat=sel.value;};
+  });
+  wrap.querySelectorAll('[data-zarea]').forEach(inp=>{
+    const [_fi,_zi]=inp.dataset.zarea.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    inp.onchange=()=>{
+      const v=inp.value.trim()===''?null:parseFloat(inp.value);
+      _z.areaOverride=(v===null||isNaN(v))?null:v;
+      updateResults();renderTable();draw();
+    };
+  });
+  wrap.querySelectorAll('[data-zperim]').forEach(inp=>{
+    const [_fi,_zi]=inp.dataset.zperim.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    inp.onchange=()=>{
+      const v=inp.value.trim()===''?null:parseFloat(inp.value);
+      _z.perimOverride=(v===null||isNaN(v))?null:v;
+      updateResults();renderTable();
+    };
+  });
+  wrap.querySelectorAll('[data-zhoyde]').forEach(inp=>{
+    const [_fi,_zi]=inp.dataset.zhoyde.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    inp.onchange=()=>{
+      const v=parseFloat(inp.value);
+      _z.hoyde=isNaN(v)?null:v;
+      updateResults();renderTable();draw();
+    };
+  });
+  wrap.querySelectorAll('[data-zgulv]').forEach(sel=>{
+    const [_fi,_zi]=sel.dataset.zgulv.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    sel.onchange=()=>{_z.gulvtype=sel.value;renderTable();};
+  });
+  wrap.querySelectorAll('[data-ztak]').forEach(sel=>{
+    const [_fi,_zi]=sel.dataset.ztak.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    sel.onchange=()=>{_z.taktype=sel.value;renderTable();};
+  });
+  wrap.querySelectorAll('[data-tgulv]').forEach(sel=>{
+    const [_fi,_zi]=sel.dataset.tgulv.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    sel.onchange=()=>{_z.gulvtype=sel.value;renderTable();};
+  });
+  wrap.querySelectorAll('[data-uvseg]').forEach(inp=>{
+    const [_fi,_zi,segKey]=inp.dataset.uvseg.split(',');
+    const _z=floors[parseInt(_fi)]?.zones[parseInt(_zi)];
+    if(!_z)return;
+    inp.onchange=()=>{const v=inp.value.trim();if(!_z.uPerSeg)_z.uPerSeg={};if(v==='')delete _z.uPerSeg[segKey];else _z.uPerSeg[segKey]=parseFloat(v);renderTable();};
+  });
+  wrap.querySelectorAll('[data-wuv]').forEach(inp=>{
+    const [_fi,_zi,_wi]=inp.dataset.wuv.split(',').map(Number);
+    const _w=floors[_fi]?.zones[_zi]?.windows[_wi];
+    if(!_w)return;
+    inp.onchange=()=>{const v=inp.value.trim();_w.uVerdi=v===''?null:parseFloat(v);renderTable();};
+  });
+  wrap.querySelectorAll('[data-uval]').forEach(inp=>{
+    const [_fi,_zi,field]=inp.dataset.uval.split(',');
+    const _z=floors[parseInt(_fi)]?.zones[parseInt(_zi)];
+    if(!_z)return;
+    inp.onchange=()=>{
+      const v=inp.value.trim();
+      _z[field]=(v==='')?null:parseFloat(v);
+      updateResults();renderTable();
+    };
+  });
+  wrap.querySelectorAll('[data-ttak]').forEach(sel=>{
+    const [_fi,_zi]=sel.dataset.ttak.split(',').map(Number);
+    const _z=floors[_fi].zones[_zi];
+    sel.onchange=()=>{_z.taktype=sel.value;renderTable();};
+  });
+  wrap.querySelectorAll('[data-segov]').forEach(inp=>{
+    const parts=inp.dataset.segov.split(',');
+    const [_sfi,_szi,sidxRaw,field]=[parseInt(parts[0]),parseInt(parts[1]),parts[2],parts[3]];
+    const _sz=floors[_sfi]?.zones[_szi];
+    if(!_sz)return;
+    if(!_sz.segOverrides)_sz.segOverrides={};
+    const sidx=sidxRaw==='sk_merged'?'sk_merged':parseInt(sidxRaw);
+    inp.onchange=()=>{
+      const raw=inp.value.trim();
+      if(!_sz.segOverrides[sidx])_sz.segOverrides[sidx]={};
+      if(raw===''||raw==='—'){delete _sz.segOverrides[sidx][field];if(!Object.keys(_sz.segOverrides[sidx]).length)delete _sz.segOverrides[sidx];}
+      else _sz.segOverrides[sidx][field]=parseFloat(raw)||0;
+      renderTable();
+    };
+  });
+  wrap.querySelectorAll('[data-wb]').forEach(inp=>{
+    const [_fi,_zi,_wi]=inp.dataset.wb.split(',').map(Number);
+    inp.onchange=()=>{const w=floors[_fi].zones[_zi].windows[_wi];w.breddeMm=parseInt(inp.value)||w.breddeMm;updateResults();renderTable();draw();};
+  });
+  wrap.querySelectorAll('[data-wh]').forEach(inp=>{
+    const [_fi,_zi,_wi]=inp.dataset.wh.split(',').map(Number);
+    inp.onchange=()=>{const w=floors[_fi].zones[_zi].windows[_wi];w.hoyMm=parseInt(inp.value)||w.hoyMm;updateResults();renderTable();draw();};
+  });
+  wrap.querySelectorAll('[data-wn]').forEach(inp=>{
+    const [_fi,_zi,_wi]=inp.dataset.wn.split(',').map(Number);
+    inp.onchange=()=>{const w=floors[_fi].zones[_zi].windows[_wi];w.antal=parseInt(inp.value)||1;updateResults();renderTable();draw();};
+  });
+}
+
+// ── Canvas interaction ────────────────────────────────────────
+cwrap.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();
+  mouse={x:e.clientX-r.left,y:e.clientY-r.top};
+  if(dragging&&dragSt){offX=lastOff.x+(mouse.x-dragSt.x);offY=lastOff.y+(mouse.y-dragSt.y);}
+  if(dragCorner){const pt=s2i(mouse.x,mouse.y);zones[dragCorner.zoneIdx].pts[dragCorner.ptIdx]={x:pt.x,y:pt.y};}
+  if(mode==='navigate')cv.style.cursor=dragging?'grabbing':'grab';
+  // Live snap preview for window mode
+  if(mode==='window'){
+    winSnapPreview=snapScreenToSegment(mouse.x,mouse.y);
+    cv.style.cursor=winSnapPreview.snap?'crosshair':'not-allowed';
+  }
+  // Snap to existing geometry in draw mode
+  if(mode==='draw'){
+    drawSnap=zones.length>0?snapDrawPoint(mouse.x,mouse.y):null;
+  }
+  if(mode==='calibrate'){
+    calSnap=zones.length>0?snapDrawPoint(mouse.x,mouse.y):null;
+  }
+  draw();
+});
+cwrap.addEventListener('mouseleave',()=>{mouse=null;dragging=false;draw();});
+cwrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=cv.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const f=e.deltaY<0?1.1:1/1.1;
+  offX=mx-(mx-offX)*f;offY=my-(my-offY)*f;sc*=f;draw();
+},{passive:false});
+cwrap.addEventListener('mousedown',e=>{
+  if(e.button===1||(e.button===0&&e.altKey)||(e.button===0&&mode==='navigate')){
+    dragging=true;const r=cv.getBoundingClientRect();
+    dragSt={x:e.clientX-r.left,y:e.clientY-r.top};lastOff={x:offX,y:offY};e.preventDefault();return;
+  }
+  if(e.button===0&&mode==='edit'&&editZoneIdx!==null){
+    const r=cv.getBoundingClientRect();
+    const sx=e.clientX-r.left,sy=e.clientY-r.top;
+    const z=zones[editZoneIdx];let best=14,bpi=-1;
+    z.pts.forEach((p,pi)=>{const sp=i2s(p.x,p.y);const d=Math.hypot(sx-sp.x,sy-sp.y);if(d<best){best=d;bpi=pi;}});
+    if(bpi>=0){dragCorner={zoneIdx:editZoneIdx,ptIdx:bpi};e.preventDefault();}
+  }
+});
+cwrap.addEventListener('mouseup',()=>{dragging=false;if(dragCorner){updateResults();dragCorner=null;}});
+cwrap.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(mode!=='edit'||editZoneIdx===null)return;
+  const r=cv.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  const z=zones[editZoneIdx];if(z.pts.length<=3)return;
+  let best=14,bpi=-1;
+  z.pts.forEach((p,pi)=>{const sp=i2s(p.x,p.y);const d=Math.hypot(sx-sp.x,sy-sp.y);if(d<best){best=d;bpi=pi;}});
+  if(bpi>=0){z.pts.splice(bpi,1);updateResults();draw();}
+});
+
+cv.addEventListener('click',e=>{
+  if(e.button!==0||e.altKey||dragging||dragCorner)return;
+  if(calOverlay.classList.contains('show'))return;
+  const r=cv.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+
+  if(mode==='draw'&&bgImg){
+    if(curPts.length>=3){const p0=i2s(curPts[0].x,curPts[0].y);if(Math.hypot(sx-p0.x,sy-p0.y)<12){finishZone();return;}}
+    const pt=drawSnap?{x:drawSnap.x,y:drawSnap.y}:s2i(sx,sy);
+    curPts.push(pt);drawSnap=null;draw();return;
+  }
+  if(mode==='calibrate'){
+    if(calMode==='area'){
+      // Area mode: add point to a temporary polygon
+      const _asp=calSnap?{x:calSnap.x,y:calSnap.y}:s2i(sx,sy);
+      calPts.push(_asp);calSnap=null;
+      if(calPts.length>=3){
+        hintText.textContent=calPts.length+' punkt. Dobbelklikk for å avslutte og berekne areal.';
+      } else {
+        hintText.textContent='Klikk hjørner rundt det kjende rommet. '+calPts.length+' punkt.';
+      }
+      draw();return;
+    }
+    // Length mode — use snap if available
+    const _csp=calSnap?i2s(calSnap.x,calSnap.y):null;
+    calPts.push({x:_csp?_csp.x:sx,y:_csp?_csp.y:sy});calSnap=null;
+    if(calPts.length===2){
+      const d=Math.hypot(calPts[1].x-calPts[0].x,calPts[1].y-calPts[0].y);
+      const imgD=d/sc;pendingCalImgPx=imgD;
+      calPxSpan.textContent=Math.round(d)+'px = '+Math.round(imgD)+' biletpx';
+      if(mmPerImgPx)document.getElementById('calMmInput').value=Math.round(imgD*mmPerImgPx);
+      else document.getElementById('calMmInput').value='';
+      switchCalTab('length');
+      calOverlay.classList.add('show');
+      setTimeout(()=>{document.getElementById('calMmInput').select();document.getElementById('calMmInput').focus();},50);
+      draw();
+    } else {hintText.textContent='Klikk endepunktet.';draw();}
+    return;
+  }
+  if(mode==='window'){
+    const snapped=snapScreenToSegment(sx,sy);
+    if(!snapped.snap){
+      hintText.textContent='Klikk på ein fasade (den farga vegglinja rundt sona).';draw();return;
+    }
+    winPts.push(snapped);
+    if(winPts.length===1){
+      hintText.textContent='Klikk der vindauget/døra sluttar på same fasade.';draw();return;
+    }
+    // Two points — both snapped
+    const s1=winPts[0].snap,s2=winPts[1].snap;
+    // Check same zone and segment
+    if(s1.zi!==s2.zi||s1.seg.idx!==s2.seg.idx){
+      // Accept: find segment for first point, project second onto same seg
+      // Use first point's segment
+    }
+    const seg=s1.seg;const zi=s1.zi;
+    const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+    const segLen=Math.hypot(dx,dy);
+    const ux=dx/segLen,uy=dy/segLen;
+    const proj=(px,py)=>((px-seg.p1.x)*ux+(py-seg.p1.y)*uy)/segLen;
+    const t0c=Math.max(0,Math.min(1,proj(s1.cx,s1.cy)));
+    const t1c=Math.max(0,Math.min(1,proj(s2.snap?s2.cx:s2i(winPts[1].x,winPts[1].y).x, s2.snap?s2.cy:s2i(winPts[1].x,winPts[1].y).y)));
+    const tMin=Math.min(t0c,t1c),tMax=Math.max(t0c,t1c);
+    if(tMax-tMin<0.005){hintText.textContent='Vindauget er for smalt. Prøv igjen.';winPts=[];draw();return;}
+    // Calc width in mm
+    const widthMm=mmPerImgPx?(tMax-tMin)*segLen*mmPerImgPx:1200;
+    const result={zi,segIdx:seg.idx,dir:seg.dir,t0:tMin,t1:tMax,lenM:seg.lenM};
+    pendingWin=result;
+    document.getElementById('winFacadeDir').textContent=seg.dir;
+    document.getElementById('winW').value=Math.round(widthMm);
+    const _zt=zones[zi];
+    const _tval=document.getElementById('winType').value;
+    const _tl=_tval==='dor'?'Dør':'Vindauge';
+    const _cnt=((_zt.windows||[]).filter(x=>x.type===_tval).length)+1;
+    document.getElementById('winName').value=_tl+' '+_cnt;
+    winOverlay.classList.add('show');
+    winPts=[];draw();
+    setTimeout(()=>{const el=document.getElementById('winName');el.select();el.focus();},50);
+    return;
+  }
+  if(mode==='edit'){
+    // Midpoint click → insert
+    if(editZoneIdx!==null){
+      const z=zones[editZoneIdx];
+      for(let i=0;i<z.pts.length;i++){
+        const p1=z.pts[i],p2=z.pts[(i+1)%z.pts.length];
+        const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+        const sp=i2s(mx,my);
+        if(Math.hypot(sx-sp.x,sy-sp.y)<12){
+          z.pts.splice(i+1,0,{x:mx,y:my});updateResults();draw();return;
+        }
+      }
+    }
+  }
+});
+let lastClickTime=0;
+cv.addEventListener('dblclick',e=>{
+  if(mode==='draw'&&curPts.length>=3){
+    if(curPts.length>0) curPts.pop();
+    finishZone();
+  }
+  if(mode==='calibrate'&&calMode==='area'&&calPts.length>=3){
+    // calPts are image-px points (stored as {x,y} in image space for area mode)
+    if(calPts.length>0) calPts.pop(); // remove dblclick duplicate
+    // Compute area in image px²
+    let a=0;
+    for(let i=0;i<calPts.length;i++){
+      const j=(i+1)%calPts.length;
+      a+=calPts[i].x*calPts[j].y-calPts[j].x*calPts[i].y;
+    }
+    pendingCalAreaPx2=Math.abs(a)/2;
+    if(mmPerImgPx) document.getElementById('calAreaInput').value=(pendingCalAreaPx2*(mmPerImgPx/1000)**2).toFixed(2);
+    else document.getElementById('calAreaInput').value='';
+    switchCalTab('area');
+    calOverlay.classList.add('show');
+    setTimeout(()=>{document.getElementById('calAreaInput').select();document.getElementById('calAreaInput').focus();},50);
+  }
+});
+document.addEventListener('keydown',e=>{
+  // Don't fire when typing in an input
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+  if(e.key==='Escape'){
+    if(mode==='edit'){setMode('navigate');editZoneIdx=null;draw();}
+    else if(mode==='draw'){curPts=[];setMode('navigate');draw();}
+    else if(mode==='window'){winPts=[];winSnapPreview=null;setMode('navigate');draw();}
+  }
+  if((e.key==='Backspace'||e.key==='Delete')&&mode==='draw'){
+    if(curPts.length>0){
+      curPts.pop();
+      hintText.textContent=curPts.length>0
+        ?curPts.length+' punkt. Backspace for å angre, dobbelklikk for å avslutte.'
+        :'Alle punkt fjerna. Klikk for å starte på nytt.';
+      draw();
+    }
+    e.preventDefault();
+  }
+});
+
+[northI,fhI].forEach(el=>el.addEventListener('input',()=>{
+  if(el===northI){
+    curFloor().northI=parseFloat(northI.value)||0;
+    const lbl=document.getElementById('northLabel');
+    if(lbl)lbl.textContent=(northI.value||0)+'°';
+  }
+  updateResults();renderTable();draw();
+}));
+
+renderFloorTabs();
+
+// ── AI: Soner ─────────────────────────────────────────────────
+const aiOverlay=document.getElementById('aiOverlay');
+const aiLog=document.getElementById('aiLog');
+const aiGo=document.getElementById('aiGo');
+document.getElementById('aiBtn').onclick=()=>{
+  if(!bgImg){hintText.textContent='Last opp ei plantegning først.';return;}
+  aiLog.textContent='Klar til å analysere…';
+  aiGo.disabled=false;aiGo.textContent='Start analyse ✦';
+  aiOverlay.classList.add('show');
+};
+document.getElementById('aiClose').onclick=()=>{draftZones=[];draw();aiOverlay.classList.remove('show');};
+document.getElementById('aiAccept').onclick=()=>{
+  draftZones.forEach(z=>zones.push({name:z.name,pts:z.pts,windows:[]}));
+  draftZones=[];updateResults();renderTable();draw();
+  document.getElementById('aiMainBtns').style.display='flex';
+  document.getElementById('aiConfirmBtns').style.display='none';
+  aiOverlay.classList.remove('show');
+};
+document.getElementById('aiReject').onclick=()=>{
+  draftZones=[];draw();
+  aiLog.textContent+='Forkasta.\n';
+  document.getElementById('aiMainBtns').style.display='flex';
+  document.getElementById('aiConfirmBtns').style.display='none';
+  aiGo.disabled=false;aiGo.textContent='Analyser på nytt';
+};
+
+// ── AI helpers ────────────────────────────────────────────────
+async function callClaude(b64,prompt,maxTok){
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTok||1200,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:prompt}
+      ]}]})
+  });
+  const data=await resp.json();
+  if(!resp.ok)throw new Error(data.error?.message||resp.status);
+  return data.content.map(c=>c.text||'').join('');
+}
+function renderBg(maxPx){
+  const s=Math.min(1,(maxPx||1200)/Math.max(bgImg.width,bgImg.height));
+  const t=document.createElement('canvas');
+  t.width=Math.round(bgImg.width*s);t.height=Math.round(bgImg.height*s);
+  t.getContext('2d').drawImage(bgImg,0,0,t.width,t.height);
+  return{b64:t.toDataURL('image/jpeg',0.88).split(',')[1],scale:s,W:t.width,H:t.height};
+}
+function extractJson(raw){const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error('Ingen JSON i svaret');return JSON.parse(m[0]);}
+function logAi(t){aiLog.textContent+=t+'\n';aiLog.scrollTop=aiLog.scrollHeight;}
+
+aiGo.onclick=async()=>{
+  aiGo.disabled=true;aiGo.textContent='Analyserer…';aiLog.textContent='';
+  try{
+    const{b64,scale,W,H}=renderBg(1200);
+    logAi('Bilete: '+W+'×'+H+' px\n');
+    // Nord
+    logAi('Steg 1/2 — nordpil…');
+    const r1=await callClaude(b64,
+      'Dette er ei arkitekturteikning ('+W+'x'+H+' px).\nFinn nordpil (merka N, Nord eller kompass).\n'+
+      'Oppgi vinkelen nordpilspissen peikar i, grader frå biletet sin positive X-akse (høgre=0°, opp=270°, venstre=180°, ned=90°).\n'+
+      'Returner KUN JSON: {"nord_vinkel_deg":270,"kommentar":"…"}. Viss ingen nordpil: nord_vinkel_deg: null.',200);
+    const d1=extractJson(r1);
+    logAi('Svar: '+(d1.kommentar||'(ok)'));
+    if(d1.nord_vinkel_deg!=null){const nd=((90-d1.nord_vinkel_deg)+360)%360;northI.value=Math.round(nd);draw();logAi('✓ Nordpil → Nord = '+Math.round(nd)+'°');}
+    else logAi('ℹ️  Ingen nordpil.');
+
+    logAi('\nSteg 2/2 — ytterveggar…');
+    const p2=
+      'Dette er ei arkitekturteikning.\n\n'+
+      'OPPGÅVE: Finn INNKANTEN av ytterveggen — der innvendig golv/romareal startar.\n\n'+
+      'STEG 1 — Beskriv: Er bygget rektangulært/L-forma/anna? Kva aksegrid langs kantane (td 0–44 / A–K)?\n'+
+      'STEG 2 — Finn innkanten: Ytterveggane har ei ytre linje (fasade) og ei indre (mot rom). Bruk den INDRE.\n'+
+      'STEG 3 — Aksegrid: Innkanten ligg vanlegvis akkurat PÅ aksegrensa. Bruk aksenummera presist.\n\n'+
+      'KOORDINATAR som PROSENT av biletets breidd/høgd (0–100). Rektangulært bygg: berre 4 hjørner.\n'+
+      'Returner KUN JSON: {"analyse":"…","soner":[{"namn":"Hovudsone","pts":[[xPct,yPct],...]}]}';
+    const r2=await callClaude(b64,p2,1200);
+    const d2=extractJson(r2);
+    if(d2.analyse)logAi('AI: '+d2.analyse+'\n');
+    const soner=d2.soner||[];
+    if(!soner.length){logAi('Ingen soner funne.');aiGo.disabled=false;aiGo.textContent='Prøv igjen';return;}
+    logAi('Fann '+soner.length+' sone(r). Konverterer…');
+    draftZones=[];
+    soner.forEach((s,si)=>{
+      const pts=s.pts.map(([xp,yp])=>({x:(xp/100)*bgImg.width,y:(yp/100)*bgImg.height}));
+      draftZones.push({name:s.namn||('Sone '+(si+1)),pts});
+      logAi('✓ '+s.namn+': '+pts.length+' punkt');
+    });
+    draw();logAi('\nForslaget er vist. Godta eller forkast.');
+    document.getElementById('aiMainBtns').style.display='none';
+    document.getElementById('aiConfirmBtns').style.display='flex';
+    aiGo.disabled=false;
+  }catch(err){logAi('Feil: '+err.message);aiGo.disabled=false;aiGo.textContent='Prøv igjen';}
+};
+
+// ── Init ──────────────────────────────────────────────────────
+function resize(){
+  if(!bgImg)return;
+  const r=cwrap.getBoundingClientRect();
+  cv.width=r.width;cv.height=r.height;draw();
+}
+window.addEventListener('resize',resize);
+
+// ── Lagre / opne prosjekt ─────────────────────────────────────
+document.getElementById('saveBtn').onclick=()=>{
+  saveFloorState();
+  // Serialiser floors — bgImg og pdfDoc kan ikkje serialiserast direkte
+  // Vi lagrar bgImg som dataURL, men hoppar over pdfDoc (brukaren lastar opp PDF på nytt)
+  const serFloors=floors.map(f=>{
+    const obj={
+      id:f.id,name:f.name,
+      mmPerImgPx:f.mmPerImgPx,
+      sc:f.sc,offX:f.offX,offY:f.offY,
+      northI:f.northI,
+      pdfPage:f.pdfPage,totalPages:f.totalPages,
+      zones:f.zones.map(z=>({
+        ...z,
+        skillevegg:z.skillevegg?Array.from(z.skillevegg):[]
+      }))
+    };
+    // Lagre bgImg som dataURL viss det finst
+    if(f.bgImg){
+      try{
+        const tmp=document.createElement('canvas');
+        tmp.width=f.bgImg.width;tmp.height=f.bgImg.height;
+        tmp.getContext('2d').drawImage(f.bgImg,0,0);
+        obj.bgImgData=tmp.toDataURL('image/png');
+      }catch(e){/* tainted canvas — hopp over */}
+    }
+    return obj;
+  });
+  const proj={
+    version:1,
+    savedAt:new Date().toISOString(),
+    activeFloor,
+    _nextFloorId,
+    _nextGroupId,
+    floors:serFloors
+  };
+  const json=JSON.stringify(proj);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  // Bruk prosjektnamn frå første etasje eller generisk namn
+  const fname='Entro_oppmaling_'+new Date().toISOString().slice(0,10)+'.entro';
+  a.href=url;a.download=fname;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+};
+
+document.getElementById('loadBtn').onclick=()=>document.getElementById('loadFi').click();
+document.getElementById('loadFi').onchange=async function(){
+  const file=this.files[0];if(!file)return;
+  this.value='';
+  try{
+    const text=await file.text();
+    const proj=JSON.parse(text);
+    if(!proj.floors||!Array.isArray(proj.floors)){throw new Error('Ugyldig prosjektfil.');}
+    // Gjenoppbygg floors
+    const newFloors=await Promise.all(proj.floors.map(async f=>{
+      const floor={
+        id:f.id,name:f.name,
+        mmPerImgPx:f.mmPerImgPx??null,
+        sc:f.sc??1,offX:f.offX??0,offY:f.offY??0,
+        northI:f.northI??0,
+        pdfPage:f.pdfPage??1,totalPages:f.totalPages??1,
+        pdfDoc:null,bgImg:null,
+        zones:(f.zones||[]).map(z=>({
+          ...z,
+          skillevegg:new Set(z.skillevegg||[])
+        }))
+      };
+      if(f.bgImgData){
+        await new Promise(res=>{
+          const img=new Image();
+          img.onload=()=>{floor.bgImg=img;res();};
+          img.onerror=()=>res();
+          img.src=f.bgImgData;
+        });
+      }
+      return floor;
+    }));
+    floors=newFloors;
+    activeFloor=Math.min(proj.activeFloor??0,floors.length-1);
+    _nextFloorId=proj._nextFloorId??floors.length+1;
+    _nextGroupId=proj._nextGroupId??1;
+    syncFloorState();
+    editZoneIdx=null;curPts=[];draftZones=[];winPts=[];
+    renderFloorTabs();updateResults();renderTable();
+    if(bgImg)fitImage();else draw();
+  }catch(e){
+    alert('Kunne ikkje opne prosjektfil: '+e.message);
+  }
+};
+const KLIMA={
+  'Bergen':    {lat:'60.380000',lon:'5.330000',fil:'E:\\Sites\\Climates\\TMY_Bergen_CERRA_1991-2020_tmy-no.csv',mean:'7.60',
+    ds:{dt:'11.8',hum:'13.31',gr:'0.13'},
+    dw:{dt:'4.6',hum:'1.09',gr:'0.17'},
+    t1d_s:['20.80','22.70','24.10','25.30','26.00','26.90','28.20'],
+    t2d_s:['20.20','22.30','23.50','24.70','25.40','26.20','27.20'],
+    t3d_s:['19.80','21.80','23.00','24.20','24.80','25.50','26.50'],
+    t4d_s:['19.50','21.50','22.70','23.80','24.50','25.20','26.20'],
+    t5d_s:['19.30','21.20','22.50','23.60','24.20','24.90','25.90'],
+    t1d_w:['-6.40','-8.90','-10.50','-11.80','-12.60','-13.50','-14.60'],
+    t2d_w:['-5.70','-8.30','-9.90','-11.30','-12.10','-13.00','-14.30'],
+    t3d_w:['-5.20','-7.70','-9.30','-10.60','-11.40','-12.30','-13.50'],
+    t4d_w:['-4.90','-7.30','-8.80','-10.10','-10.80','-11.70','-12.80'],
+    t5d_w:['-4.40','-6.80','-8.20','-9.50','-10.20','-11.00','-12.10'],
+    cc:{apartments:'0.9500',cultural:'1.0000',hospital:'0.9700',hotel:'0.9900',industrial:'0.9800',kindergarten:'1.0200',nursing_home:'1.0100',office:'0.9700',residential:'0.9400',school:'0.9700',sports_venue:'0.8600',store:'0.7400',university:'0.9300'}},
+  'Oslo':      {lat:'59.920000',lon:'10.750000',fil:'E:\\Sites\\Climates\\TMY_Oslo_CERRA_1991-2020_tmy-no.csv',mean:'7.30',
+    ds:{dt:'10.7',hum:'13.64',gr:'0.14'},
+    dw:{dt:'4.6',hum:'0.59',gr:'0.30'},
+    t1d_s:['25.60','27.80','29.30','30.60','31.40','32.40','33.70'],
+    t2d_s:['24.80','27.10','28.60','29.90','30.70','31.70','33.00'],
+    t3d_s:['24.10','26.40','27.90','29.20','30.00','31.00','32.30'],
+    t4d_s:['23.50','25.80','27.30','28.60','29.40','30.40','31.70'],
+    t5d_s:['23.00','25.30','26.80','28.10','28.90','29.90','31.20'],
+    t1d_w:['-14.70','-17.60','-19.40','-21.00','-21.90','-23.00','-24.40'],
+    t2d_w:['-13.60','-16.50','-18.40','-20.00','-20.90','-22.00','-23.50'],
+    t3d_w:['-12.80','-15.60','-17.40','-19.00','-19.90','-21.00','-22.40'],
+    t4d_w:['-12.10','-14.90','-16.70','-18.20','-19.10','-20.20','-21.60'],
+    t5d_w:['-11.50','-14.20','-16.00','-17.50','-18.40','-19.50','-20.90'],
+    cc:{apartments:'0.9500',cultural:'1.0000',hospital:'0.9700',hotel:'0.9900',industrial:'0.9800',kindergarten:'1.0200',nursing_home:'1.0100',office:'0.9700',residential:'0.9400',school:'0.9700',sports_venue:'0.8600',store:'0.7400',university:'0.9300'}},
+  'Stavanger': {lat:'58.960000',lon:'5.700000',fil:'E:\\Sites\\Climates\\TMY_Stavanger_CERRA_1991-2020_tmy-no.csv',mean:'8.50',
+    ds:{dt:'12.1',hum:'1.17',gr:'0.14'},
+    dw:{dt:'4.6',hum:'1.09',gr:'0.17'},
+    t1d_s:['22.40','24.30','25.70','26.90','27.60','28.50','29.80'],
+    t2d_s:['21.70','23.80','25.10','26.30','27.00','27.90','29.10'],
+    t3d_s:['21.20','23.20','24.60','25.80','26.50','27.40','28.60'],
+    t4d_s:['20.80','22.80','24.10','25.30','26.00','26.90','28.10'],
+    t5d_s:['20.40','22.40','23.80','24.90','25.60','26.50','27.70'],
+    t1d_w:['-4.30','-6.50','-8.00','-9.20','-9.90','-10.90','-12.10'],
+    t2d_w:['-3.60','-5.80','-7.30','-8.60','-9.30','-10.20','-11.50'],
+    t3d_w:['-3.10','-5.20','-6.70','-8.00','-8.70','-9.60','-10.80'],
+    t4d_w:['-2.70','-4.80','-6.20','-7.50','-8.20','-9.10','-10.30'],
+    t5d_w:['-2.30','-4.30','-5.80','-7.00','-7.70','-8.60','-9.80'],
+    cc:{apartments:'0.9500',cultural:'1.0000',hospital:'0.9700',hotel:'0.9900',industrial:'0.9800',kindergarten:'1.0200',nursing_home:'1.0100',office:'0.9700',residential:'0.9400',school:'0.9700',sports_venue:'0.8600',store:'0.7400',university:'0.9300'}},
+  'Sandnes':   {lat:'58.800000',lon:'5.700000',fil:'E:\\Sites\\Climates\\TMY_Sandnes_CERRA_1991-2020_tmy-no.csv',mean:'7.70',
+    ds:{dt:'12.1',hum:'1.17',gr:'0.14'},
+    dw:{dt:'4.6',hum:'1.09',gr:'0.17'},
+    t1d_s:['22.40','24.30','25.70','26.90','27.60','28.50','29.80'],
+    t2d_s:['21.70','23.80','25.10','26.30','27.00','27.90','29.10'],
+    t3d_s:['21.20','23.20','24.60','25.80','26.50','27.40','28.60'],
+    t4d_s:['20.80','22.80','24.10','25.30','26.00','26.90','28.10'],
+    t5d_s:['20.40','22.40','23.80','24.90','25.60','26.50','27.70'],
+    t1d_w:['-4.30','-6.50','-8.00','-9.20','-9.90','-10.90','-12.10'],
+    t2d_w:['-3.60','-5.80','-7.30','-8.60','-9.30','-10.20','-11.50'],
+    t3d_w:['-3.10','-5.20','-6.70','-8.00','-8.70','-9.60','-10.80'],
+    t4d_w:['-2.70','-4.80','-6.20','-7.50','-8.20','-9.10','-10.30'],
+    t5d_w:['-2.30','-4.30','-5.80','-7.00','-7.70','-8.60','-9.80'],
+    cc:{apartments:'0.9500',cultural:'1.0000',hospital:'0.9700',hotel:'0.9900',industrial:'0.9800',kindergarten:'1.0200',nursing_home:'1.0100',office:'0.9700',residential:'0.9400',school:'0.9700',sports_venue:'0.8600',store:'0.7400',university:'0.9300'}},
+  'Trondheim': {lat:'63.500000',lon:'10.350000',fil:'E:\\Sites\\Climates\\TMY_Trondheim_CERRA_1991-2020_tmy-no.csv',mean:'6.90',
+    ds:{dt:'12.0',hum:'12.78',gr:'0.14'},
+    dw:{dt:'3.9',hum:'1.88',gr:'0.19'},
+    t1d_s:['21.20','23.30','24.80','26.30','27.20','28.30','29.80'],
+    t2d_s:['20.50','22.60','24.20','25.60','26.50','27.60','29.20'],
+    t3d_s:['19.90','21.90','23.20','24.50','25.30','26.30','27.60'],
+    t4d_s:['19.40','21.40','22.70','23.90','24.70','25.60','26.90'],
+    t5d_s:['19.10','21.10','22.50','23.80','24.50','25.50','26.80'],
+    t1d_w:['-12.70','-16.10','-18.30','-20.40','-21.60','-23.00','-25.00'],
+    t2d_w:['-11.50','-15.10','-17.50','-19.70','-21.00','-22.60','-24.70'],
+    t3d_w:['-10.60','-14.20','-16.70','-19.00','-20.40','-22.00','-24.40'],
+    t4d_w:['-9.90','-13.40','-15.80','-18.00','-19.20','-20.80','-22.90'],
+    t5d_w:['-9.20','-12.70','-15.00','-17.10','-18.40','-19.90','-22.00'],
+    cc:{apartments:'1.1000',cultural:'1.0500',hospital:'1.0200',hotel:'1.0400',industrial:'1.0400',kindergarten:'1.0500',nursing_home:'1.0400',office:'1.0300',residential:'1.0500',school:'1.0400',sports_venue:'1.0000',store:'0.8800',university:'1.0100'}},
+  'Kristiansand':{lat:'58.200000',lon:'8.040000',fil:'E:\\Sites\\Climates\\TMY_Kristiansand_CERRA_1991-2020_tmy-no.csv',mean:'8.30',
+    ds:{dt:'9.3',hum:'7.87',gr:'0.15'},
+    dw:{dt:'2.6',hum:'1.77',gr:'0.16'},
+    t1d_s:['21.00','22.80','23.90','24.80','25.30','25.80','26.50'],
+    t2d_s:['20.60','22.30','23.40','24.30','24.80','25.40','26.10'],
+    t3d_s:['20.20','22.00','23.10','24.00','24.50','25.10','25.90'],
+    t4d_s:['19.90','21.60','22.70','23.60','24.10','24.70','25.40'],
+    t5d_s:['19.70','21.40','22.40','23.30','23.70','24.30','24.90'],
+    t1d_w:['-8.50','-11.80','-14.00','-16.10','-17.20','-18.70','-20.60'],
+    t2d_w:['-7.30','-10.70','-12.90','-15.00','-16.30','-17.70','-19.60'],
+    t3d_w:['-6.50','-9.70','-11.90','-14.00','-15.20','-16.60','-18.70'],
+    t4d_w:['-5.80','-9.00','-11.20','-13.20','-14.30','-15.60','-17.50'],
+    t5d_w:['-5.40','-8.50','-10.60','-12.70','-13.80','-15.20','-17.00'],
+    cc:{apartments:'0.7300',cultural:'0.8300',hospital:'0.8400',hotel:'0.8400',industrial:'0.8200',kindergarten:'0.8900',nursing_home:'0.8700',office:'0.8000',residential:'0.7900',school:'0.7700',sports_venue:'0.7300',store:'0.6900',university:'0.7900'}},
+  'Tromsø':    {lat:'69.650000',lon:'18.950000',fil:'E:\\Sites\\Climates\\TMY_Tromsø_CERRA_1991-2020_tmy-no.csv',mean:'3.00',
+    ds:{dt:'9.9',hum:'15.50',gr:'0.19'},
+    dw:{dt:'4.1',hum:'1.27',gr:'0.35'},
+    t1d_s:['17.90','19.70','20.80','21.80','22.40','23.10','23.90'],
+    t2d_s:['17.10','18.90','20.00','21.10','21.60','22.40','23.30'],
+    t3d_s:['16.50','18.40','19.50','20.60','21.20','22.00','23.00'],
+    t4d_s:['16.00','17.80','19.00','20.10','20.80','21.60','22.70'],
+    t5d_s:['15.60','17.40','18.70','19.90','20.50','21.40','22.50'],
+    t1d_w:['-10.60','-12.70','-14.10','-15.30','-16.00','-16.90','-18.10'],
+    t2d_w:['-10.10','-11.90','-13.10','-14.20','-14.70','-15.40','-16.40'],
+    t3d_w:['-9.40','-11.00','-12.00','-13.00','-13.50','-14.20','-15.00'],
+    t4d_w:['-8.90','-10.40','-11.40','-12.40','-12.90','-13.60','-14.50'],
+    t5d_w:['-8.50','-10.00','-11.00','-12.00','-12.60','-13.30','-14.30'],
+    cc:{apartments:'1.6200',cultural:'1.3500',hospital:'1.2600',hotel:'1.3200',industrial:'1.3700',kindergarten:'1.2800',nursing_home:'1.2600',office:'1.3500',residential:'1.4900',school:'1.4100',sports_venue:'1.4900',store:'1.2300',university:'1.3400'}},
+  'Bodø':      {lat:'67.240000',lon:'14.360000',fil:'E:\\Sites\\Climates\\TMY_Bodø_CERRA_1991-2020_tmy-no.csv',mean:'5.40',
+    ds:{dt:'9.9',hum:'12.90',gr:'0.15'},
+    dw:{dt:'2.9',hum:'1.85',gr:'0.17'},
+    t1d_s:['19.80','21.90','23.20','24.40','25.00','25.90','27.00'],
+    t2d_s:['19.20','21.30','22.70','23.90','24.50','25.40','26.40'],
+    t3d_s:['18.60','20.90','22.20','23.40','24.00','24.80','25.90'],
+    t4d_s:['18.10','20.40','21.80','23.00','23.70','24.50','25.50'],
+    t5d_s:['17.60','19.80','21.20','22.40','23.10','23.90','25.00'],
+    t1d_w:['-9.80','-11.70','-12.90','-13.90','-14.50','-15.20','-16.00'],
+    t2d_w:['-9.10','-10.90','-12.10','-13.20','-13.80','-14.60','-15.50'],
+    t3d_w:['-8.50','-10.40','-11.50','-12.60','-13.20','-13.90','-14.80'],
+    t4d_w:['-8.00','-9.90','-11.10','-12.20','-12.80','-13.50','-14.40'],
+    t5d_w:['-7.50','-9.40','-10.60','-11.70','-12.30','-13.00','-13.90'],
+    cc:{apartments:'1.3700',cultural:'1.2300',hospital:'1.1300',hotel:'1.1900',industrial:'1.2200',kindergarten:'1.1800',nursing_home:'1.1600',office:'1.2200',residential:'1.2800',school:'1.2300',sports_venue:'1.2100',store:'0.9600',university:'1.1800'}},
+};
+
+const KOMMUNE_NR={'Bergen':'4601','Oslo':'0301','Stavanger':'1103','Sandnes':'1108','Trondheim':'5001','Kristiansand':'4204','Tromsø':'5401','Bodø':'1804'};
+
+function klimaTempBlock(td,name){
+  const keys=['two_year','five_year','ten_year','twenty_year','thirty_year','fifty_year','hundred_year'];
+  const rows=['t1d','t2d','t3d','t4d','t5d'];
+  return rows.map((r,ri)=>{
+    const vals=keys.map((k,ki)=>`${k}="${td[r+'_'+name][ki]}"`).join(' ');
+    return `        <temp_${ri+1}d ${vals}></temp_${ri+1}d>`;
+  }).join('\n');
+}
+
+function klimaBlock(k,kname){
+  const cc=Object.entries(k.cc).map(([a,v])=>`${a}="${v}"`).join(' ');
+  return `  <climate id="klima#0" name="${kname}" comment="">
+    <new_location name="${kname}" hour_val_file="${k.fil}" latitude="${k.lat}" longitude="${k.lon}" time_zone="1" mean_temperature="${k.mean}">
+      <dim_summer delta_t="${k.ds.dt}" humidity="${k.ds.hum}" ground_reflection="${k.ds.gr}" wind_velocity="2.5" max_temp_time="14.50">
+${klimaTempBlock(k,'s')}
+      </dim_summer>
+      <dim_winter delta_t="${k.dw.dt}" humidity="${k.dw.hum}" ground_reflection="${k.dw.gr}" wind_velocity="1.5" max_temp_time="13.50">
+${klimaTempBlock(k,'w')}
+      </dim_winter>
+      <climate_correction ${cc}></climate_correction>
+    </new_location>
+  </climate>`;
+}
+
+// 96 time-slot profile helpers
+function makeProfile(onFrom, onTo, onVal, offVal){
+  // onFrom/onTo in decimal hours e.g. 7.0, 17.0
+  const slots=[];
+  for(let h=0;h<24;h++){for(let m=0;m<60;m+=15){
+    const t=h+m/60;
+    const key=`percentage_${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}-${String(m===45?h+1:h).padStart(2,'0')}${String((m+15)%60).padStart(2,'0')}`;
+    slots.push(`${key}="${t>=onFrom&&t<onTo?onVal:offVal}"`);
+  }}
+  return slots.join(' ');
+}
+const KONTOR_VENT_PROFILE=makeProfile(7,17,100,30);
+const KONTOR_LYS_PROFILE=makeProfile(7,17,100,0);
+const KONTOR_TAP_PROFILE=makeProfile(7,17,100,0);
+
+function sfpLookup(y){
+  if(!y||isNaN(y))return 2.0;
+  const yr=parseInt(y);
+  if(yr<2000)return 4.0;if(yr<=2009)return 3.0;if(yr<=2019)return 2.5;return 2.0;
+}
+function tekKode(y){
+  const yr=parseInt(y);
+  if(yr<=2006)return'tek97';if(yr<=2009)return'tek07';if(yr<=2015)return'tek10';return'tek17';
+}
+
+function buildSXI(proj){
+  const {prosjektnamn,adresse,klimasted,byggeaar,kommunenr} = proj;
+  const k=KLIMA[klimasted];
+  const today=new Date().toISOString().slice(0,10);
+  const sfp=sfpLookup(byggeaar);
+  const sfp80=(sfp*0.9).toFixed(2);
+  const sfp60=(sfp*0.8).toFixed(2);
+  const sfp40=(sfp*0.7).toFixed(2);
+  const sfp20=(sfp*0.6).toFixed(2);
+  const tek=tekKode(byggeaar);
+
+  // Collect all unique logical zones (by groupId or individual)
+  // Use the same approach as renderTable: sum area/volume for linked zones
+  const logicalZones=[];
+  const seenGroups=new Set();
+  floors.forEach((fl,fli)=>{
+    fl.zones.forEach((z,zi)=>{
+      if(z.groupId){
+        if(seenGroups.has(z.groupId))return;
+        seenGroups.add(z.groupId);
+        // collect all instances
+        const instances=floors.flatMap(f=>f.zones).filter(x=>x.groupId===z.groupId);
+        logicalZones.push({z,instances,fli,zi});
+      } else {
+        logicalZones.push({z,instances:[z],fli,zi});
+      }
+    });
+  });
+
+  // ID counter
+  let idN=3;
+  const zoneId=()=>'zone#'+(idN++);
+  const nextId=(prefix)=>prefix+'#'+(idN++);
+
+  // Build zones XML
+  let zonesXml='';
+  const zoneIds=[];
+  logicalZones.forEach(({z,instances})=>{
+    const thisZoneId='zone#'+(idN);
+    idN++;
+    zoneIds.push(thisZoneId);
+
+    const totalBra=instances.reduce((s,lz)=>{const a=getAreaM2(lz);return s+(a||0);},0);
+    const totalVol=instances.reduce((s,lz)=>{const v=getVolum(lz);return s+(v||0);},0);
+    const std=entroStandard(z.byggeaar||byggeaar);
+    const uVegg=z.uVegg??std?.uVegg??0.26;
+    const uTak=z.uTak??std?.uTak??0.18;
+    const uGulv=z.uGulv??std?.uGulv??0.35;
+    const uVindu=z.uVindu??std?.uVindu??1.60;
+    const n50=z.n50??std?.n50??3.5;
+    const kuldebro=z.kuldebro??std?.kuldebro??0.09;
+
+    // Collect all segments from all instances
+    const nd=parseFloat(northI.value)||0;
+    let facXml='';
+    let facN=idN;
+
+    // Group segments by direction across all instances
+    // For each instance/floor, get segments and windows
+    instances.forEach(lz=>{
+      const segs=calcSegments(lz.pts,getHoyde(lz));
+      if(!segs)return;
+      const sk=lz.skillevegg||new Set();
+      const dirCount={};
+      segs.forEach(s=>{if(!sk.has(s.idx))dirCount[s.dir]=(dirCount[s.dir]||0)+1;});
+      const dirSeen={};
+
+      segs.forEach(seg=>{
+        if(sk.has(seg.idx))return; // skip skillevegg
+        dirSeen[seg.dir]=(dirSeen[seg.dir]||0)+1;
+        const nm=dirCount[seg.dir]>1?seg.dir+'-'+dirSeen[seg.dir]:seg.dir;
+        const ov=lz.segOverrides?.[seg.idx]||{};
+        const lenM=ov.lenM??seg.lenM??0;
+        const fhM=getHoyde(lz);
+        const grossA=(ov.areaM2??seg.areaM2??(lenM*fhM))??0;
+        const effectiveU=lz.uPerSeg?.['seg_'+seg.idx]??uVegg;
+        const faceId=nextId('facade');
+
+        // Windows on this segment
+        const wins=(lz.windows||[]).filter(w=>w.segIdx===seg.idx);
+        let winsXml='';
+        wins.forEach(w=>{
+          const wId=nextId('window');
+          const uW=w.uVerdi??lz.uVindu??uVindu;
+          winsXml+=`      <window id="${wId}" name="${w.name||(w.type==='dor'?'Dør':'Vindauge')}" comment="" number="${w.antal}" height="${(w.hoyMm/1000).toFixed(3)}" width="${(w.breddeMm/1000).toFixed(3)}" given_frame_width="no" frame_width="0.08" frame_factor="0.20" total_uvalue="yes" uvalue="${uW}" window_type="Standardvalg" uvalue_pane="0.80" uvalue_frame="1.00" thermal_bridge_frame="0.10" pane_type="Standardvalg" frame_type="Standardvalg" spacer_type="Standardvalg" shading_type="konstant" const_solar_factor="0.50" const_sun_shading="Standardvalg" var_solar_factor="0.51" var_solar_factor_shaded="0.06" auto_shading="no" auto_shading_flux="100.00" var_sun_shading="Standardvalg" overhang="no" depth_overhang="1.20" distance_overhang="0.60" vert_extension_left="no" depth_extension_left="1.20" distance_extension_left="1.00" vert_extension_right="no" depth_extension_right="1.20" distance_extension_right="1.00" direction="${seg.dir==='Nord'?0:seg.dir==='Nordøst'?45:seg.dir==='Øst'?90:seg.dir==='Sørøst'?135:seg.dir==='Sør'?180:seg.dir==='Sørvest'?225:seg.dir==='Vest'?270:315}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></window>\n`;
+        });
+
+        const dirDeg=seg.dir==='Nord'?0:seg.dir==='Nordøst'?45:seg.dir==='Øst'?90:seg.dir==='Sørøst'?135:seg.dir==='Sør'?180:seg.dir==='Sørvest'?225:seg.dir==='Vest'?270:315;
+        facXml+=`    <facade id="${faceId}" name="${nm}" comment="" area="${grossA.toFixed(2)}" uvalue="${effectiveU}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0">\n${winsXml}    </facade>\n`;
+      });
+    });
+
+    // Tak — one per logical zone (sum area from all instances)
+    const takId=nextId('roof');
+    const gulvId=nextId('floor');
+    const cavId=nextId('cav');
+    const igId=nextId('internal-gain');
+    const twId=nextId('tap-water');
+    const htId=nextId('new-heating-system');
+
+    const bra=totalBra.toFixed(2);
+    const vol=totalVol.toFixed(1);
+
+    // Per-instance tak/gulv (same area as zone)
+    let takXml='',gulvXml='';
+    instances.forEach(lz=>{
+      const a=getAreaM2(lz);
+      const aStr=(a??0).toFixed(2);
+      const perim=getUtvOmkrets(lz)??getPerimM(lz)??0;
+      const thisTakId=nextId('roof');
+      const thisGulvId=nextId('floor');
+      takXml+=`    <roof id="${thisTakId}" name="Tak" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="100" inclination="0" horizon_sector_n="9.0" horizon_sector_ne="9.0" horizon_sector_e="9.0" horizon_sector_se="9.0" horizon_sector_s="9.0" horizon_sector_sw="9.0" horizon_sector_w="9.0" horizon_sector_nw="9.0"></roof>\n`;
+      gulvXml+=`    <floor id="${thisGulvId}" name="Gulv mot grunn" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" floor_type="grunn" perimeter="${perim.toFixed(2)}" foundation="0.30" ground_condition="Standardvalg" ground_thermal_cond="1.50" ground_thermal_cap="556.00" edge_insulation="yes" edge_insulation_type="vertikal" edge_insulation_depth="0.60" edge_insulation_thickness="5.00" edge_insulation_product="Standardvalg" edge_insulation_lambda="0.037" unheated_zone="" heat_loss_coeff="0.95"></floor>\n`;
+    });
+
+    const zId=thisZoneId;
+    zonesXml+=`  <zone id="${zId}" name="${z.name}" comment="" building_type="Kontorbygning" building_subtype="Kontorer, enkle" area="${bra}" volume="${vol}" n50="${n50}" furniture="Middels møblert" thermal_cap_furniture="4.00" shielding="moderat" facades="flere" thermal_bridge_type="normalisert" norm_thermal_bridge="${kuldebro}" working_days="Mandag-fredag" working_days_en="Mon-Fri" working_days_jan="1111100111110011111001111100111" working_days_feb="11111001111100111110011111001111" working_days_mar="1111100111110011111001111100111" working_days_apr="111110011111001111100111110011111" working_days_may="1111100111110011111001111100111" working_days_jun="11111001111100111110011111001111" working_days_jul="1111100111110011111001111100111" working_days_aug="1111100111110011111001111100111" working_days_sep="11111001111100111110011111001111" working_days_oct="1111100111110011111001111100111" working_days_nov="11111001111100111110011111001111" working_days_dec="1111100111110011111001111100111">
+${facXml}${takXml}${gulvXml}    <ventilation id="${nextId('cav')}" name="Balansert ventilasjon" comment="" sfp_input="prosent" sfp_100="${sfp}" sfp_80="${sfp80}" sfp_60="${sfp60}" sfp_40="${sfp40}" sfp_20="${sfp20}" position_supply_fan="etter" position_extract_fan="etter" supply_temp="19.00" summer_scheme="no" supply_temp_summer="17.00" first_summer_month="mai" last_summer_month="august" heating_coil="ja" heating_coil_cap="30.00" heating_coil_efficiency="0.98" heating_coil_type="lokal" distr_heating_id="" heating_coil_spp="0.50" heating_coil_supply_temp="45.00" heating_coil_return_temp="30.00" cooling_coil="nei" cooling_coil_cap="30.0" cooling_coil_efficiency="2.0" cooling_coil_type="lokal" distr_cooling_id="" cooling_coil_spp="0.50" cooling_coil_supply_temp="10.0" cooling_coil_return_temp="15.0" heat_exchanger="yes" exchanger_efficiency_input="prosent" efficiency_exchanger="0.80" efficiency_exchanger_100="0.79" efficiency_exchanger_80="0.81" efficiency_exchanger_60="0.83" efficiency_exchanger_40="0.81" efficiency_exchanger_20="0.76" frost_protection="no" frost_protect_temp="-10.00" hygroscopic_exchanger="no" humidity_efficiency="0.60" contamination_risk="no" night_cooling="no" start_time_night_cooling="23.00" end_time_night_cooling="06.00" room_temp_night_cooling="22.00" ext_temp_night_cooling="20.00" max_room_temp_night_cooling="24.00" min_room_temp_night_cooling="18.00" min_supply_temp_night_cooling="12.00" night_cooling_holiday="no" reduced_airflow="no" reduced_airflow_temp="-15.00" heating_coil_distr_description="forenklet" heating_coil_specific_length_pipes="0.20" heating_coil_uvalue_pipes="0.20" heating_coil_share_heated_room="50.00" heating_coil_temp_unheated_room="10.00" cooling_coil_distr_description="forenklet" cooling_coil_specific_length_pipes="0.20" cooling_coil_uvalue_pipes="0.20" cooling_coil_share_heated_room="50.0" cooling_coil_temp_unheated_room="10.0" type="balansert" supply_air="2.50" extract_air="2.50" supply_temp_type="konstant" max_supply_temp="19.00" min_supply_temp="16.00" high_extract_temp="24.00" low_extract_temp="21.00" usage_holiday="28.60" supply_airflow_night_cooling="1.20" extract_airflow_night_cooling="1.20" supply_airflow_reduced="0" extract_airflow_reduced="2.50" norm_airflow="no" norm_air_on="2.50" norm_air_off="0" norm_sfp_on="1.50" norm_sfp_off="1.50" cooling_coil_water_flow="variable" heating_coil_water_flow="variable" frost_protection_type="preheat">
+      <usage_ventilation name="Kontor normert (CAV) NS3031:2025" ${KONTOR_VENT_PROFILE}></usage_ventilation>
+    </ventilation>
+    <new_heating id="${nextId('new-heating-system')}" name="Elektrisk direktevarme" comment="" setpoint_temp_on="21.00" setpoint_temp_off="21.00" on_time="07.00" off_time="17.00" summer_scheme="no" summer_scheme_reg="dato" start_date_summer="15.05" stop_date_summer="15.09" ext_temperature_summer="10.00" setpoint_temp_on_summer="20.00" setpoint_temp_off_summer="16.00" on_time_summer="07.00" off_time_summer="17.00" delta_t_setpoint="0.00">
+      <new_local_heater_dir_el heater_type="frittstaende" name="Panelovner" capacity="100" convective_share="0.50" integrated_constr_id="" res_integrated_heater="" thermal_resistance="0.25" integrated_area="20.0" priority="1"></new_local_heater_dir_el>
+    </new_heating>
+    <internal_gain id="${nextId('internal-gain')}" name="Interne laster" comment="" normalized="yes" lighting="yes" power_lighting="15" power_lighting_holiday="0.00" gain_lighting_on="100.00" gain_lighting_holiday="100.00" equipment="yes" power_equipment="12" power_equipment_holiday="0.00" gain_equipment_on="100.00" gain_equipment_holiday="100.00" person="yes" person_input="tilskudd_w_m2" person_gain="9.5" persons="1.90" percent_persons_holiday="0.00" persons_clothing="1.20" persons_activity="1.00" hot_fill_dishwasher="no" energy_share_dishwasher="10.00" hot_fill_washingmachine="no" energy_share_washingmachine="10.00" hot_fill_dryer="no" energy_share_dryer="10.00" norm_type="NS3031_2025">
+      <usage_lighting name="Normert bruksmønster kontor NS3031:2025" ${KONTOR_LYS_PROFILE}></usage_lighting>
+      <usage_equipment name="Normert bruksmønster kontor NS3031:2025" ${KONTOR_LYS_PROFILE}></usage_equipment>
+      <usage_person name="Normert bruksmønster kontor NS3031:2025" ${KONTOR_LYS_PROFILE}></usage_person>
+    </internal_gain>
+    <tap_water id="${nextId('tap-water')}" name="Tappevann 1" comment="" normalized="yes" type="lokal" local_power="1.00" local_temp="65.00" local_volume="100.00" local_specific_loss="1.60" local_placement="oppv_rom" zone_id="${zId}" local_ambient_temp="10.00" distr_system_id="" max_power="8.80" gain="0.00" distr_type="ikke_sirkulerende" distr_description="forenklet" specific_length_pipes="0.03" uvalue_pipes="1.00" share_heated_room="50.00" temp_unheated_room="10.00" specific_length_pipes_open="0.20" tap_cycles="10.00" share_heated_room_open="50.00" recuperation="no" efficiency_recuperation="0.45" lossfactor_connection_recuperation="0.80" lossfactor_usage_recuperation="0.60" percentage_recuperation="50.00" norm_type="NS3031_2025" specific_pump_power="0.20">
+      <usage_tap_water name="Normert bruksmønster kontor NS3031:2025" ${KONTOR_TAP_PROFILE}></usage_tap_water>
+    </tap_water>
+  </zone>\n`;
+  });
+
+  // energymark26
+  const totalBra=logicalZones.reduce((s,{instances})=>s+instances.reduce((ss,lz)=>{const a=getAreaM2(lz);return ss+(a||0);},0),0);
+  const emId=nextId('energymark26');
+  const includedZones=zoneIds.map(id=>`    <included_zone id="${id}"></included_zone>`).join('\n');
+  const em=`  <energymark26 id="${emId}" name="Energimerke 2026 1" comment="" language="nb" units="1" project_type="old_building" building_code="${tek}" built="${byggeaar}" company="Entro AS" company_id="" person="Knut Nedkvitne" personal_id="7b009268-c247-4c34-beb2-d587272fb229" energy_measured="no" infiltration_measured="no" measure_date_n50="${today}" unheated_floor_area="0" tech_check="yes" section_description="" matrikkelenhet_ident="" bygg_ident="" bruksenhet_ident="" adresse_ident="" vegadresse_ident="" lighting_system="normal" ventilation_system="cav" ventilation_input="real" lowered_temperature="no" distr_system_space_heating_detailed="no" distr_system_heating_coil_detailed="no" distr_system_space_cooling_detailed="no" distr_system_cooling_coil_detailed="no" distr_system_tap_water_detailed="no" spp_space_heating_detailed="no" spp_heating_coil_detailed="no" spp_space_cooling_detailed="no" spp_cooling_coil_detailed="no" spp_tap_water_detailed="no" json_file="no" red_factor_lighting="0.70" description_no_measures="" include_measures="no" total_floor_area="${totalBra.toFixed(2)}">
+    <measured_energy single_year="no" energy_measure_year1="2023" energy_measure_year2="2024" energy_measure_year3="2025"></measured_energy>
+    <building_id id_type="matrikkel" municipality="${klimasted}" municipality_no="${kommunenr}" zip_address="" zip_number="0"></building_id>
+${includedZones}
+  </energymark26>`;
+
+  const sxi=`<?xml version="1.0" encoding="utf-8"?>
+<simien_project id="project#1" name="${prosjektnamn}" comment="" person="Knut H. Nedkvitne" user="Knut Nedkvitne" company="Entro AS" version="8.0.34.3">
+${klimaBlock(k,klimasted)}
+  <input_documentation25></input_documentation25>
+  <global_vars conv_share_lighting_gain="0.30" conv_share_equipment_gain="0.50" conv_share_person_gain="0.50" conv_share_solar_gain="0.50" heat_gain_pr_person="95" conv_thermal_transfer_coeff_wall="2.50" conv_thermal_transfer_coeff_ceiling="2.00" conv_thermal_transfer_coeff_floor="3.00" thermal_cond_acc_layer="20.00" bypass_cooling_coil="0.25" int_res_window_pane="0.13" air_velocity="0.15" distance_from_window="0.60" turbulence_intensity="25.00" el_energy_cost="1.50" export_energy_cost="1.00" el_co2_emission="130.00" min_cold_water_temp="6.00" max_cold_water_temp="13.00" transmissivity_jan="0.88" transmissivity_jul="0.71" co2_consentration="400.00" el_price="constant" primary_energy_factor_el="1.00" primary_energy_factor_bio_gas="0.45" primary_energy_factor_bio_solid="0.45" primary_energy_factor_district_heating="0.45" primary_energy_factor_district_cooling="0.45" primary_energy_factor_other="1.00" power_tariff="no" primary_energy_factor_fossil_oil="1.00" primary_energy_factor_fossil_gas="1.00" primary_energy_factor_fossil_solid="1.00" primary_energy_factor_bio_oil="0.45" weight_factor_el="1.00" weight_factor_fossil_oil="1.00" weight_factor_fossil_gas="1.00" weight_factor_fossil_solid="1.00" weight_factor_bio_oil="0.45" weight_factor_bio_gas="0.45" weight_factor_bio_solid="0.45" weight_factor_district_heating="0.45" weight_factor_district_cooling="0.45" weight_factor_other="1.00" weight_factor_el_export="0.00" el_export_co2_emission="65.00" primary_energy_factor_el_export="0.00">
+    <power_steps hours="3">
+      <power_step power="2.0" cost="125.0"></power_step>
+      <power_step power="5.0" cost="206.0"></power_step>
+      <power_step power="10.0" cost="350.0"></power_step>
+      <power_step power="15.0" cost="494.0"></power_step>
+      <power_step power="20.0" cost="638.0"></power_step>
+    </power_steps>
+  </global_vars>
+${zonesXml}${em}
+</simien_project>`;
+  return sxi;
+}
+
+// ── SXI Dialog ────────────────────────────────────────────────
+(function(){
+  // Create dialog HTML
+  const dlg=document.createElement('div');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.5);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+  dlg.id='sxiDlg';
+  dlg.innerHTML=`
+  <div style="background:#fff;border-radius:16px;padding:28px;width:420px;max-width:96vw;box-shadow:0 12px 48px rgba(13,27,42,.2);border:1px solid var(--border)">
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:9px">
+      <span style="width:28px;height:28px;background:linear-gradient(140deg,#23917f,#0e5a50);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;flex-shrink:0">⬇</span>
+      Eksporter til SIMIEN SXI
+    </div>
+    <div style="font-size:12.5px;color:var(--text3);margin-bottom:20px;line-height:1.7">Fyll inn prosjektinfo — tekniske anlegg vert satt til Entro-standardverdiar.</div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:12px;color:var(--text3);width:120px;font-weight:500;flex-shrink:0">Prosjektnamn</label>
+        <input id="sxi_namn" type="text" placeholder="Storgata 10" style="flex:1;padding:8px 11px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:12px;color:var(--text3);width:120px;font-weight:500;flex-shrink:0">Adresse</label>
+        <input id="sxi_adresse" type="text" placeholder="Storgata 10, 5000 Bergen" style="flex:1;padding:8px 11px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:12px;color:var(--text3);width:120px;font-weight:500;flex-shrink:0">Byggeår</label>
+        <input id="sxi_byggeaar" type="number" placeholder="1985" min="1800" max="2025" style="flex:1;padding:8px 11px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:'DM Mono',monospace;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:12px;color:var(--text3);width:120px;font-weight:500;flex-shrink:0">Klimasted</label>
+        <select id="sxi_klima" style="flex:1;padding:8px 11px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:inherit;background:#fff;cursor:pointer">
+          <option>Bergen</option><option>Oslo</option><option>Stavanger</option><option>Sandnes</option>
+          <option>Trondheim</option><option>Kristiansand</option><option>Tromsø</option><option>Bodø</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:12px;color:var(--text3);width:120px;font-weight:500;flex-shrink:0">Kommunenr.</label>
+        <input id="sxi_kommunenr" type="text" placeholder="4601" maxlength="6" style="flex:1;padding:8px 11px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:'DM Mono',monospace;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+      </div>
+    </div>
+    <div id="sxi_err" style="display:none;background:#fef0ef;border:1px solid #f2b8b5;border-radius:7px;padding:9px 12px;font-size:12px;color:#c0302a;margin-top:14px"></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:20px">
+      <button id="sxi_cancel" style="padding:9px 18px;border:1px solid var(--border2);border-radius:8px;background:#fff;color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500">Avbryt</button>
+      <button id="sxi_ok" style="padding:9px 22px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;box-shadow:0 1px 4px rgba(26,122,110,.3)">Last ned SXI ⬇</button>
+    </div>
+  </div>`;
+  document.body.appendChild(dlg);
+
+  // Auto-fill kommunenr when klimasted changes
+  document.getElementById('sxi_klima').addEventListener('change',function(){
+    const nr=KOMMUNE_NR[this.value]||'';
+    document.getElementById('sxi_kommunenr').value=nr;
+  });
+
+  document.getElementById('sxiBtn').onclick=()=>{
+    const allZones=floors.flatMap(f=>f.zones);
+    if(!allZones.length){
+      alert('Ingen soner teikna enno.');return;
+    }
+    // Pre-fill byggeår from first zone that has it
+    const firstBy=allZones.find(z=>z.byggeaar);
+    if(firstBy)document.getElementById('sxi_byggeaar').value=firstBy.byggeaar;
+    // Pre-fill kommunenr from current klimasted selection
+    const kl=document.getElementById('sxi_klima').value;
+    document.getElementById('sxi_kommunenr').value=KOMMUNE_NR[kl]||'';
+    document.getElementById('sxi_err').style.display='none';
+    dlg.style.display='flex';
+    setTimeout(()=>document.getElementById('sxi_namn').focus(),50);
+  };
+  document.getElementById('sxi_cancel').onclick=()=>{dlg.style.display='none';};
+  dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.style.display='none';});
+
+  document.getElementById('sxi_ok').onclick=()=>{
+    const errEl=document.getElementById('sxi_err');
+    const namn=document.getElementById('sxi_namn').value.trim();
+    const adresse=document.getElementById('sxi_adresse').value.trim();
+    const byggeaar=document.getElementById('sxi_byggeaar').value.trim();
+    const klimasted=document.getElementById('sxi_klima').value;
+    const kommunenr=document.getElementById('sxi_kommunenr').value.trim();
+    const errs=[];
+    if(!namn)errs.push('Prosjektnamn manglar.');
+    if(!byggeaar||isNaN(parseInt(byggeaar)))errs.push('Byggeår manglar eller er ugyldig.');
+    if(!kommunenr)errs.push('Kommunenr. manglar.');
+    if(errs.length){errEl.textContent=errs.join(' ');errEl.style.display='block';return;}
+    errEl.style.display='none';
+    let sxi;
+    try{
+      sxi=buildSXI({prosjektnamn:namn,adresse,klimasted,byggeaar:parseInt(byggeaar),kommunenr});
+    }catch(e){
+      errEl.textContent='Feil ved generering: '+e.message;errEl.style.display='block';return;
+    }
+    // Download
+    const blob=new Blob([sxi],{type:'application/xml'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=(namn.replace(/\s+/g,'_'))+'.sxi';
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+    dlg.style.display='none';
+  };
+})();
+
+// ── Sidebar resize drag ────────────────────────────────────────
+(function(){
+  const handle=document.getElementById('sidebar-resize');
+  const sidebar=document.getElementById('sidebar');
+  let draggingResize=false,startX=0,startW=0;
+  handle.addEventListener('mousedown',e=>{
+    draggingResize=true;startX=e.clientX;startW=sidebar.offsetWidth;
+    handle.classList.add('dragging');e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!draggingResize)return;
+    const dx=startX-e.clientX; // dragging left handle: drag left = wider
+    const newW=Math.max(200,Math.min(650,startW+dx));
+    sidebar.style.width=newW+'px';
+    resize();
+  });
+  document.addEventListener('mouseup',()=>{
+    if(draggingResize){draggingResize=false;handle.classList.remove('dragging');}
+  });
+})();
+(function init(){
+  const r=cwrap.getBoundingClientRect();
+  cv.width=r.width;cv.height=r.height;
+  drawCompass();
+})();
+</script>
+</body>
+</html>
