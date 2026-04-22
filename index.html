@@ -1019,31 +1019,54 @@ function draw(){
     }
 
     // Draw windows/doors on zone
-    (z.windows||[]).forEach(w=>{
+    (z.windows||[]).forEach((w,wi)=>{
       const seg=calcSegments(z.pts)?.[w.segIdx];
       if(!seg)return;
-      // Project window onto segment
       const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
       const segLen=Math.hypot(dx,dy);
       if(segLen<1)return;
       const ux=dx/segLen,uy=dy/segLen;
       const perp={x:-uy,y:ux};
-      // w.t0, w.t1 are 0-1 along segment
       const s0i={x:seg.p1.x+ux*w.t0*segLen,y:seg.p1.y+uy*w.t0*segLen};
       const s1i={x:seg.p1.x+ux*w.t1*segLen,y:seg.p1.y+uy*w.t1*segLen};
       const s0=i2s(s0i.x,s0i.y),s1=i2s(s1i.x,s1i.y);
+      const isHov=hoveredWin&&hoveredWin.wi===wi&&hoveredWin.zi===ci&&hoveredWin.fli===activeFloor;
+      const baseColor=w.type==='dor'?'#f59e0b':'#06b6d4';
+      // Highlight glow
+      if(isHov){
+        ctx.beginPath();ctx.moveTo(s0.x,s0.y);ctx.lineTo(s1.x,s1.y);
+        ctx.strokeStyle=w.type==='dor'?'rgba(245,158,11,.35)':'rgba(6,182,212,.35)';
+        ctx.lineWidth=9;ctx.stroke();
+      }
       ctx.beginPath();ctx.moveTo(s0.x,s0.y);ctx.lineTo(s1.x,s1.y);
-      ctx.strokeStyle=w.type==='dor'?'#f59e0b':'#06b6d4';
-      ctx.lineWidth=3.5;ctx.stroke();
+      ctx.strokeStyle=isHov?'#fff':baseColor;
+      ctx.lineWidth=isHov?5:3.5;ctx.stroke();
+      if(isHov){
+        ctx.beginPath();ctx.moveTo(s0.x,s0.y);ctx.lineTo(s1.x,s1.y);
+        ctx.strokeStyle=baseColor;ctx.lineWidth=2.5;ctx.stroke();
+      }
       // Label
       const mx=(s0.x+s1.x)/2,my=(s0.y+s1.y)/2;
       const psx=perp.x*sc,psy=perp.y*sc;
       const plen=Math.hypot(psx,psy)||1;
-      ctx.font='9px Inter,sans-serif';
-      ctx.fillStyle=w.type==='dor'?'#f59e0b':'#06b6d4';
+      ctx.font=`${isHov?'bold ':''}9px Inter,sans-serif`;
+      ctx.fillStyle=baseColor;
       ctx.textAlign='center';ctx.textBaseline='middle';
       const _cl=(w.name||(w.type==='dor'?'D':'V'))+(w.antal>1?'×'+w.antal:'');
-      ctx.fillText(_cl,mx+psx/plen*10,my+psy/plen*10);
+      const lx=mx+psx/plen*12,ly=my+psy/plen*12;
+      if(isHov){
+        const tw=ctx.measureText(_cl).width+10;
+        ctx.fillStyle='rgba(255,255,255,.92)';
+        ctx.beginPath();ctx.roundRect(lx-tw/2,ly-8,tw,16,4);ctx.fill();
+        ctx.fillStyle=baseColor;
+      }
+      ctx.fillText(_cl,lx,ly);
+      // Right-click hint on hover
+      if(isHov){
+        ctx.font='8px Inter,sans-serif';
+        ctx.fillStyle='rgba(100,116,139,.8)';
+        ctx.fillText('⌥ høgreklikk for å redigere',lx,ly+14);
+      }
     });
   });
 
@@ -1713,42 +1736,57 @@ function showCopyWindowMenu(w, srcZone, srcZi, srcFloor, srcFi){
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const box=document.createElement('div');
-  box.style.cssText='background:#fff;border-radius:14px;padding:22px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 12px 40px rgba(13,27,42,.15)';
+  box.style.cssText='background:#fff;border-radius:14px;padding:22px;width:380px;max-height:85vh;overflow-y:auto;box-shadow:0 12px 40px rgba(13,27,42,.15)';
   const wLabel=w.name||(w.type==='dor'?'Dør':'Vindauge');
-  box.innerHTML=`<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Kopier "${wLabel}"</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${w.breddeMm}×${w.hoyMm} mm · ${w.antal} stk<br>Vel kva fasade du vil kopiere til:</div>`;
+  const icon=w.type==='dor'?'🚪':'▭';
+
+  // Antal input
+  const antalWrap=document.createElement('div');
+  antalWrap.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)';
+  antalWrap.innerHTML=`<span style="font-size:12px;color:var(--text3);flex:1">Antal stk ved kopiering:</span>`;
+  const antalInp=document.createElement('input');
+  antalInp.type='number';antalInp.min='1';antalInp.max='999';antalInp.value=w.antal||1;
+  antalInp.style.cssText="width:56px;padding:4px 8px;font-size:13px;border:1px solid var(--border2);border-radius:6px;text-align:right;font-family:'DM Mono',monospace;background:#fff";
+  antalWrap.appendChild(antalInp);
+
+  box.innerHTML=`<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">${icon} Kopier "${wLabel}"</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">${w.breddeMm}×${w.hoyMm} mm · vel fasade å kopiere til:</div>`;
+  box.appendChild(antalWrap);
+
   let added=0;
   floors.forEach((fl,fli)=>{
     fl.zones.forEach((tz,tzi)=>{
-      const tsegs=calcSegments(tz.pts)||[];
+      const tsegs=calcSegments(tz.pts,getHoyde(tz))||[];
       if(!tsegs.length)return;
       const tsk=tz.skillevegg||new Set();
       const yvSegs=tsegs.filter(s=>!tsk.has(s.idx));
       if(!yvSegs.length)return;
       const isCurrentZone=(fli===srcFi&&tzi===srcZi);
-      // Section header per zone
+      const tlabels=getFacadeLabels(tz,tsegs);
       const zhdr=document.createElement('div');
       zhdr.style.cssText='font-size:11px;font-weight:700;color:var(--text3);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.05em';
       zhdr.textContent=(fl.name!==floors[srcFi].name?fl.name+' — ':'')+tz.name+(isCurrentZone?' (denne)':'');
       box.appendChild(zhdr);
-      yvSegs.forEach(seg=>{
+      tsegs.forEach((seg,si)=>{
+        if(tsk.has(seg.idx))return; // skip SK
         const isSameSeg=(isCurrentZone&&seg.idx===w.segIdx);
+        const nm=tlabels[si];
         const btn=document.createElement('button');
         btn.style.cssText=`width:100%;padding:7px 12px;border:1px solid ${isSameSeg?'var(--border)':'var(--border2)'};border-radius:6px;background:${isSameSeg?'var(--surface2)':'#fff'};cursor:${isSameSeg?'default':'pointer'};text-align:left;font-family:inherit;font-size:12px;color:${isSameSeg?'var(--text3)':'var(--text)'};margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;transition:all .12s`;
         const lenStr=seg.lenM!=null?seg.lenM.toFixed(1)+' m':'—';
-        btn.innerHTML=`<span style="font-weight:600">${seg.dir}</span><span style="color:var(--text3);font-size:11px">${lenStr}</span>`;
+        btn.innerHTML=`<span style="font-weight:600">${nm}</span><span style="color:var(--text3);font-size:11px">${lenStr}</span>${isSameSeg?'<span style="font-size:10px;color:var(--text3)">kjelda</span>':''}`;
         if(!isSameSeg){
           btn.onmouseenter=()=>{btn.style.borderColor='var(--accent)';btn.style.background='var(--accent-dim)';};
           btn.onmouseleave=()=>{btn.style.borderColor='var(--border2)';btn.style.background='#fff';};
           btn.onclick=()=>{
             if(!tz.windows)tz.windows=[];
-            // Count same type for auto-name
             const sameType=tz.windows.filter(x=>x.type===w.type).length+1;
             const typeL=w.type==='dor'?'Dør':'Vindauge';
+            const antal=Math.max(1,parseInt(antalInp.value)||1);
             tz.windows.push({
               segIdx:seg.idx,dir:seg.dir,
-              t0:w.t0,t1:Math.min(w.t1,1), // keep same relative position
-              breddeMm:w.breddeMm,hoyMm:w.hoyMm,antal:w.antal,
+              t0:w.t0,t1:Math.min(w.t1,1),
+              breddeMm:w.breddeMm,hoyMm:w.hoyMm,antal,
               type:w.type,name:w.name||typeL+' '+sameType
             });
             document.body.removeChild(overlay);
@@ -1761,11 +1799,14 @@ function showCopyWindowMenu(w, srcZone, srcZi, srcFloor, srcFi){
     });
   });
   if(!added){
-    box.innerHTML+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">Ingen fasadar tilgjengeleg</div>';
+    const noFac=document.createElement('div');
+    noFac.style.cssText='font-size:12px;color:var(--text3);text-align:center;padding:16px';
+    noFac.textContent='Ingen fasadar tilgjengeleg';
+    box.appendChild(noFac);
   }
   const cancel=document.createElement('button');
   cancel.textContent='Avbryt';
-  cancel.style.cssText='width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px;margin-top:8px';
+  cancel.style.cssText='width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:13px;margin-top:10px';
   cancel.onclick=()=>document.body.removeChild(overlay);
   box.appendChild(cancel);
   overlay.appendChild(box);document.body.appendChild(overlay);
@@ -2206,6 +2247,17 @@ cwrap.addEventListener('wheel',e=>{
   const f=e.deltaY<0?1.1:1/1.1;
   offX=mx-(mx-offX)*f;offY=my-(my-offY)*f;sc*=f;draw();
 },{passive:false});
+let hoveredWin=null;
+cwrap.addEventListener('mousemove',e=>{
+  if(dragging||dragCorner)return;
+  const r=cv.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  const hit=findWindowAtScreen(sx,sy);
+  const prev=hoveredWin;
+  hoveredWin=hit||null;
+  if((prev==null)!==(hoveredWin==null))draw();
+  cwrap.style.cursor=hoveredWin?'pointer':(mode==='navigate'?'grab':'crosshair');
+});
 cwrap.addEventListener('mousedown',e=>{
   if(e.button===1||(e.button===0&&e.altKey)||(e.button===0&&mode==='navigate')){
     dragging=true;const r=cv.getBoundingClientRect();
@@ -2222,14 +2274,169 @@ cwrap.addEventListener('mousedown',e=>{
 cwrap.addEventListener('mouseup',()=>{dragging=false;if(dragCorner){updateResults();dragCorner=null;}});
 cwrap.addEventListener('contextmenu',e=>{
   e.preventDefault();
-  if(mode!=='edit'||editZoneIdx===null)return;
+
   const r=cv.getBoundingClientRect();
   const sx=e.clientX-r.left,sy=e.clientY-r.top;
+
+  // ── Høgreklikk på vindauge/dør (alle moduser) ──
+  const hit=findWindowAtScreen(sx,sy);
+  if(hit){
+    showWindowContextMenu(e.clientX,e.clientY,hit);
+    return;
+  }
+
+  // ── Høgreklikk på hjørne i edit-modus ──
+  if(mode!=='edit'||editZoneIdx===null)return;
   const z=zones[editZoneIdx];if(z.pts.length<=3)return;
   let best=14,bpi=-1;
   z.pts.forEach((p,pi)=>{const sp=i2s(p.x,p.y);const d=Math.hypot(sx-sp.x,sy-sp.y);if(d<best){best=d;bpi=pi;}});
   if(bpi>=0){z.pts.splice(bpi,1);updateResults();draw();}
 });
+
+// ── Hit-test: finn vindauge/dør nær skjermpunkt ──────────────
+function findWindowAtScreen(sx,sy){
+  const THRESH=10;
+  let best=null,bestD=THRESH;
+  floors.forEach((fl,fli)=>{
+    fl.zones.forEach((z,zi)=>{
+      const segs=calcSegments(z.pts,getHoyde(z));
+      if(!segs)return;
+      (z.windows||[]).forEach((w,wi)=>{
+        const seg=segs[w.segIdx];
+        if(!seg)return;
+        const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+        const segLen=Math.hypot(dx,dy);if(segLen<1)return;
+        const ux=dx/segLen,uy=dy/segLen;
+        const s0i={x:seg.p1.x+ux*w.t0*segLen,y:seg.p1.y+uy*w.t0*segLen};
+        const s1i={x:seg.p1.x+ux*w.t1*segLen,y:seg.p1.y+uy*w.t1*segLen};
+        const s0=i2s(s0i.x,s0i.y),s1=i2s(s1i.x,s1i.y);
+        // Distance from point to line segment
+        const ex=s1.x-s0.x,ey=s1.y-s0.y;
+        const elen=Math.hypot(ex,ey)||1;
+        const t=Math.max(0,Math.min(1,((sx-s0.x)*ex+(sy-s0.y)*ey)/(elen*elen)));
+        const px=s0.x+t*ex,py=s0.y+t*ey;
+        const d=Math.hypot(sx-px,sy-py);
+        // Also check midpoint label
+        const mx=(s0.x+s1.x)/2,my=(s0.y+s1.y)/2;
+        const dm=Math.hypot(sx-mx,sy-my);
+        const dist=Math.min(d,dm);
+        if(dist<bestD){bestD=dist;best={w,wi,z,zi,fli,fl,seg,segs};}
+      });
+    });
+  });
+  return best;
+}
+
+// ── Kontekstmeny for vindauge/dør ────────────────────────────
+function showWindowContextMenu(cx,cy,hit){
+  document.getElementById('winCtxMenu')?.remove();
+  const {w,wi,z,zi,fli}=hit;
+  const label=w.name||(w.type==='dor'?'Dør':'Vindauge');
+  const menu=document.createElement('div');
+  menu.id='winCtxMenu';
+  menu.style.cssText=`position:fixed;left:${cx}px;top:${cy}px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 24px rgba(13,27,42,.15);z-index:600;min-width:190px;padding:6px;font-family:inherit`;
+
+  const header=document.createElement('div');
+  header.style.cssText='font-size:11px;font-weight:700;color:var(--text3);padding:4px 8px 6px;border-bottom:1px solid var(--border);margin-bottom:4px';
+  header.textContent=(w.type==='dor'?'🚪 ':'▭ ')+label+' · '+w.breddeMm+'×'+w.hoyMm+' mm';
+  menu.appendChild(header);
+
+  const mkItem=(icon,txt,cb,danger=false)=>{
+    const btn=document.createElement('button');
+    btn.style.cssText=`width:100%;padding:7px 10px;border:none;border-radius:6px;background:transparent;cursor:pointer;text-align:left;font-family:inherit;font-size:12.5px;color:${danger?'#dc2626':'var(--text)'};display:flex;align-items:center;gap:8px`;
+    btn.innerHTML=`<span style="font-size:13px">${icon}</span>${txt}`;
+    btn.onmouseenter=()=>{btn.style.background=danger?'#fef2f2':'var(--surface2)';};
+    btn.onmouseleave=()=>{btn.style.background='transparent';};
+    btn.onclick=()=>{menu.remove();cb();};
+    menu.appendChild(btn);
+  };
+
+  mkItem('✏️','Rediger',()=>showWindowEditDialog(w,wi,z,zi,fli));
+  mkItem('📋','Kopier til fasade…',()=>{showCopyWindowMenu(w,z,zi,floors[fli],fli);});
+  mkItem('🗑','Slett',()=>{
+    z.windows.splice(wi,1);updateResults();renderTable();draw();
+  },true);
+
+  document.body.appendChild(menu);
+  // Close on outside click
+  const close=ev=>{if(!menu.contains(ev.target)){menu.remove();document.removeEventListener('mousedown',close);}};
+  setTimeout(()=>document.addEventListener('mousedown',close),0);
+
+  // Reposition if off-screen
+  const mr=menu.getBoundingClientRect();
+  if(mr.right>window.innerWidth)menu.style.left=(cx-mr.width)+'px';
+  if(mr.bottom>window.innerHeight)menu.style.top=(cy-mr.height)+'px';
+}
+
+// ── Rediger vindauge/dør dialog ───────────────────────────────
+function showWindowEditDialog(w,wi,z,zi,fli){
+  document.getElementById('winEditDlg')?.remove();
+  const dlg=document.createElement('div');
+  dlg.id='winEditDlg';
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:700;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  const typeL=w.type==='dor'?'Dør':'Vindauge';
+  const box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:340px;box-shadow:0 12px 40px rgba(13,27,42,.18)';
+
+  const mkRow=(lbl,inp)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:10px';
+    const l=document.createElement('label');
+    l.style.cssText='font-size:12px;color:var(--text3);width:110px;flex-shrink:0;font-weight:500';
+    l.textContent=lbl;
+    row.appendChild(l);row.appendChild(inp);
+    return row;
+  };
+  const mkInput=(val,type='text',width='100%')=>{
+    const i=document.createElement('input');
+    i.type=type;i.value=val;
+    i.style.cssText=`flex:1;padding:6px 10px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:${type==='number'?"'DM Mono',monospace":'inherit'};width:${width}`;
+    i.onfocus=()=>{i.style.borderColor='var(--accent)';};
+    i.onblur=()=>{i.style.borderColor='var(--border2)';};
+    return i;
+  };
+
+  const nameI=mkInput(w.name||'');
+  const brI=mkInput(w.breddeMm,'number');brI.min=1;brI.step=1;
+  const hoI=mkInput(w.hoyMm,'number');hoI.min=1;hoI.step=1;
+  const antI=mkInput(w.antal,'number');antI.min=1;antI.max=999;antI.step=1;
+  const uI=mkInput(w.uVerdi||'','number');uI.min=0;uI.step=0.01;uI.placeholder='standard';
+
+  box.innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px">${w.type==='dor'?'🚪':'▭'} Rediger ${typeL}</div>`;
+  box.appendChild(mkRow('Namn',nameI));
+  box.appendChild(mkRow('Breidde (mm)',brI));
+  box.appendChild(mkRow('Høgde (mm)',hoI));
+  box.appendChild(mkRow('Antal stk',antI));
+  box.appendChild(mkRow('U-verdi W/m²K',uI));
+
+  const errEl=document.createElement('div');
+  errEl.style.cssText='display:none;background:#fef0ef;border:1px solid #f2b8b5;border-radius:7px;padding:8px 12px;font-size:12px;color:#c0302a;margin-bottom:10px';
+  box.appendChild(errEl);
+
+  const btnRow=document.createElement('div');
+  btnRow.style.cssText='display:flex;gap:8px;justify-content:flex-end;margin-top:6px';
+  const cancel=document.createElement('button');
+  cancel.textContent='Avbryt';
+  cancel.style.cssText='padding:8px 16px;border:1px solid var(--border2);border-radius:8px;background:#fff;color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px';
+  cancel.onclick=()=>dlg.remove();
+  const save=document.createElement('button');
+  save.textContent='Lagre ✓';
+  save.style.cssText='padding:8px 18px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600';
+  save.onclick=()=>{
+    const br=parseInt(brI.value),ho=parseInt(hoI.value),ant=parseInt(antI.value);
+    if(!br||!ho||!ant){errEl.textContent='Breidde, høgde og antal må fyllast inn.';errEl.style.display='block';return;}
+    w.name=nameI.value.trim()||typeL;
+    w.breddeMm=br;w.hoyMm=ho;w.antal=ant;
+    const uv=parseFloat(uI.value);w.uVerdi=isNaN(uv)?undefined:uv;
+    dlg.remove();updateResults();renderTable();draw();
+  };
+  btnRow.appendChild(cancel);btnRow.appendChild(save);
+  box.appendChild(btnRow);
+  dlg.appendChild(box);
+  document.body.appendChild(dlg);
+  dlg.addEventListener('click',ev=>{if(ev.target===dlg)dlg.remove();});
+  setTimeout(()=>nameI.focus(),50);
+}
 
 cv.addEventListener('click',e=>{
   if(e.button!==0||e.altKey||dragging||dragCorner)return;
@@ -2821,10 +3028,7 @@ function buildSXI(proj){
     // Collect all segments from all instances
     const nd=parseFloat(northI.value)||0;
     let facXml='';
-    let facN=idN;
 
-    // Group segments by direction across all instances
-    // For each instance/floor, get segments and windows
     instances.forEach(lz=>{
       const segs=calcSegments(lz.pts,getHoyde(lz));
       if(!segs)return;
@@ -2832,41 +3036,47 @@ function buildSXI(proj){
       const sxiLabels=getFacadeLabels(lz,segs);
 
       segs.forEach((seg,si)=>{
-        if(sk.has(seg.idx))return; // skip skillevegg
+        const isSK=sk.has(seg.idx);
         const nm=sxiLabels[si];
         const ov=lz.segOverrides?.[seg.idx]||{};
         const lenM=ov.lenM??seg.lenM??0;
         const fhM=getHoyde(lz);
         const grossA=(ov.areaM2??seg.areaM2??(lenM*fhM))??0;
-        const effectiveU=lz.uPerSeg?.['seg_'+seg.idx]??uVegg;
-        const faceId=nextId('facade');
 
-        // Windows on this segment
-        const wins=(lz.windows||[]).filter(w=>w.segIdx===seg.idx);
-        let winsXml='';
-        wins.forEach(w=>{
-          const wId=nextId('window');
-          const uW=w.uVerdi??lz.uVindu??uVindu;
-          winsXml+=`      <window id="${wId}" name="${w.name||(w.type==='dor'?'Dør':'Vindauge')}" comment="" number="${w.antal}" height="${(w.hoyMm/1000).toFixed(3)}" width="${(w.breddeMm/1000).toFixed(3)}" given_frame_width="no" frame_width="0.08" frame_factor="0.20" total_uvalue="yes" uvalue="${uW}" window_type="Standardvalg" uvalue_pane="0.80" uvalue_frame="1.00" thermal_bridge_frame="0.10" pane_type="Standardvalg" frame_type="Standardvalg" spacer_type="Standardvalg" shading_type="konstant" const_solar_factor="0.50" const_sun_shading="Standardvalg" var_solar_factor="0.51" var_solar_factor_shaded="0.06" auto_shading="no" auto_shading_flux="100.00" var_sun_shading="Standardvalg" overhang="no" depth_overhang="1.20" distance_overhang="0.60" vert_extension_left="no" depth_extension_left="1.20" distance_extension_left="1.00" vert_extension_right="no" depth_extension_right="1.20" distance_extension_right="1.00" direction="${seg.dir==='Nord'?0:seg.dir==='Nordøst'?45:seg.dir==='Øst'?90:seg.dir==='Sørøst'?135:seg.dir==='Sør'?180:seg.dir==='Sørvest'?225:seg.dir==='Vest'?270:315}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></window>\n`;
-        });
+        if(isSK){
+          // Skiljevegg — internal_wall
+          const uSK=lz.uPerSeg?.['seg_'+seg.idx]??0.80;
+          const iwId=nextId('partition');
+          facXml+=`    <partition id="${iwId}" name="${nm}" comment="" area="${grossA.toFixed(2)}" uvalue="${uSK}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+        } else {
+          // Yttervegg
+          const effectiveU=lz.uPerSeg?.['seg_'+seg.idx]??uVegg;
+          const faceId=nextId('facade');
+          const dirDeg=seg.dir==='Nord'?0:seg.dir==='Nordøst'?45:seg.dir==='Øst'?90:seg.dir==='Sørøst'?135:seg.dir==='Sør'?180:seg.dir==='Sørvest'?225:seg.dir==='Vest'?270:315;
 
-        const dirDeg=seg.dir==='Nord'?0:seg.dir==='Nordøst'?45:seg.dir==='Øst'?90:seg.dir==='Sørøst'?135:seg.dir==='Sør'?180:seg.dir==='Sørvest'?225:seg.dir==='Vest'?270:315;
-        facXml+=`    <facade id="${faceId}" name="${nm}" comment="" area="${grossA.toFixed(2)}" uvalue="${effectiveU}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0">\n${winsXml}    </facade>\n`;
+          // Windows and doors on this segment
+          const wins=(lz.windows||[]).filter(w=>w.segIdx===seg.idx);
+          let openingsXml='';
+          wins.forEach(w=>{
+            const uW=w.uVerdi??lz.uVindu??uVindu;
+            const wName=w.name||(w.type==='dor'?'Dør':'Vindauge');
+            if(w.type==='dor'){
+              const dId=nextId('door');
+              openingsXml+=`      <door id="${dId}" name="${wName}" comment="" number="${w.antal}" height="${(w.hoyMm/1000).toFixed(3)}" width="${(w.breddeMm/1000).toFixed(3)}" uvalue="${uW}" door_type="Standardvalg"></door>\n`;
+            } else {
+              const wId=nextId('window');
+              openingsXml+=`      <window id="${wId}" name="${wName}" comment="" number="${w.antal}" height="${(w.hoyMm/1000).toFixed(3)}" width="${(w.breddeMm/1000).toFixed(3)}" given_frame_width="no" frame_width="0.08" frame_factor="0.20" total_uvalue="yes" uvalue="${uW}" window_type="Standardvalg" uvalue_pane="0.80" uvalue_frame="1.00" thermal_bridge_frame="0.10" pane_type="Standardvalg" frame_type="Standardvalg" spacer_type="Standardvalg" shading_type="konstant" const_solar_factor="0.50" const_sun_shading="Standardvalg" var_solar_factor="0.51" var_solar_factor_shaded="0.06" auto_shading="no" auto_shading_flux="100.00" var_sun_shading="Standardvalg" overhang="no" depth_overhang="1.20" distance_overhang="0.60" vert_extension_left="no" depth_extension_left="1.20" distance_extension_left="1.00" vert_extension_right="no" depth_extension_right="1.20" distance_extension_right="1.00" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></window>\n`;
+            }
+          });
+
+          facXml+=`    <facade id="${faceId}" name="${nm}" comment="" area="${grossA.toFixed(2)}" uvalue="${effectiveU}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0">\n${openingsXml}    </facade>\n`;
+        }
       });
     });
 
-    // Tak — one per logical zone (sum area from all instances)
-    const takId=nextId('roof');
-    const gulvId=nextId('floor');
-    const cavId=nextId('cav');
-    const igId=nextId('internal-gain');
-    const twId=nextId('tap-water');
-    const htId=nextId('new-heating-system');
-
-    const bra=totalBra.toFixed(2);
-    const vol=totalVol.toFixed(1);
-
-    // Per-instance tak/gulv (same area as zone)
+    // Tak og gulv — per instans
+    const takType=z.taktype||'Tak mot det fri'; // may be 'Skiljetak' etc in future
+    const gulvType=z.gulvtype||'Gulv mot grunn';
     let takXml='',gulvXml='';
     instances.forEach(lz=>{
       const a=getAreaM2(lz);
@@ -2874,10 +3084,22 @@ function buildSXI(proj){
       const perim=getUtvOmkrets(lz)??getPerimM(lz)??0;
       const thisTakId=nextId('roof');
       const thisGulvId=nextId('floor');
-      takXml+=`    <roof id="${thisTakId}" name="Tak" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="100" inclination="0" horizon_sector_n="9.0" horizon_sector_ne="9.0" horizon_sector_e="9.0" horizon_sector_se="9.0" horizon_sector_s="9.0" horizon_sector_sw="9.0" horizon_sector_w="9.0" horizon_sector_nw="9.0"></roof>\n`;
-      gulvXml+=`    <floor id="${thisGulvId}" name="Gulv mot grunn" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" floor_type="grunn" perimeter="${perim.toFixed(2)}" foundation="0.30" ground_condition="Standardvalg" ground_thermal_cond="1.50" ground_thermal_cap="556.00" edge_insulation="yes" edge_insulation_type="vertikal" edge_insulation_depth="0.60" edge_insulation_thickness="5.00" edge_insulation_product="Standardvalg" edge_insulation_lambda="0.037" unheated_zone="" heat_loss_coeff="0.95"></floor>\n`;
+      const isSkiljeTak=takType.toLowerCase().includes('skil');
+      const isSkiljeGulv=gulvType.toLowerCase().includes('skil');
+      if(isSkiljeTak){
+        takXml+=`    <partition id="${thisTakId}" name="Himling mot varm sone" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="himling" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+      } else {
+        takXml+=`    <roof id="${thisTakId}" name="Tak" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="100" inclination="0" horizon_sector_n="9.0" horizon_sector_ne="9.0" horizon_sector_e="9.0" horizon_sector_se="9.0" horizon_sector_s="9.0" horizon_sector_sw="9.0" horizon_sector_w="9.0" horizon_sector_nw="9.0"></roof>\n`;
+      }
+      if(isSkiljeGulv){
+        gulvXml+=`    <partition id="${thisGulvId}" name="Gulv mot varm sone" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="gulv" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+      } else {
+        gulvXml+=`    <floor id="${thisGulvId}" name="Gulv mot grunn" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" floor_type="grunn" perimeter="${perim.toFixed(2)}" foundation="0.30" ground_condition="Standardvalg" ground_thermal_cond="1.50" ground_thermal_cap="556.00" edge_insulation="yes" edge_insulation_type="vertikal" edge_insulation_depth="0.60" edge_insulation_thickness="5.00" edge_insulation_product="Standardvalg" edge_insulation_lambda="0.037" unheated_zone="" heat_loss_coeff="0.95"></floor>\n`;
+      }
     });
 
+    const bra=totalBra.toFixed(2);
+    const vol=totalVol.toFixed(1);
     const zId=thisZoneId;
     zonesXml+=`  <zone id="${zId}" name="${z.name}" comment="" building_type="Kontorbygning" building_subtype="Kontorer, enkle" area="${bra}" volume="${vol}" n50="${n50}" furniture="Middels møblert" thermal_cap_furniture="4.00" shielding="moderat" facades="flere" thermal_bridge_type="normalisert" norm_thermal_bridge="${kuldebro}" working_days="Mandag-fredag" working_days_en="Mon-Fri" working_days_jan="1111100111110011111001111100111" working_days_feb="11111001111100111110011111001111" working_days_mar="1111100111110011111001111100111" working_days_apr="111110011111001111100111110011111" working_days_may="1111100111110011111001111100111" working_days_jun="11111001111100111110011111001111" working_days_jul="1111100111110011111001111100111" working_days_aug="1111100111110011111001111100111" working_days_sep="11111001111100111110011111001111" working_days_oct="1111100111110011111001111100111" working_days_nov="11111001111100111110011111001111" working_days_dec="1111100111110011111001111100111">
 ${facXml}${takXml}${gulvXml}    <ventilation id="${nextId('cav')}" name="Balansert ventilasjon" comment="" sfp_input="prosent" sfp_100="${sfp}" sfp_80="${sfp80}" sfp_60="${sfp60}" sfp_40="${sfp40}" sfp_20="${sfp20}" position_supply_fan="etter" position_extract_fan="etter" supply_temp="19.00" summer_scheme="no" supply_temp_summer="17.00" first_summer_month="mai" last_summer_month="august" heating_coil="ja" heating_coil_cap="30.00" heating_coil_efficiency="0.98" heating_coil_type="lokal" distr_heating_id="" heating_coil_spp="0.50" heating_coil_supply_temp="45.00" heating_coil_return_temp="30.00" cooling_coil="nei" cooling_coil_cap="30.0" cooling_coil_efficiency="2.0" cooling_coil_type="lokal" distr_cooling_id="" cooling_coil_spp="0.50" cooling_coil_supply_temp="10.0" cooling_coil_return_temp="15.0" heat_exchanger="yes" exchanger_efficiency_input="prosent" efficiency_exchanger="0.80" efficiency_exchanger_100="0.79" efficiency_exchanger_80="0.81" efficiency_exchanger_60="0.83" efficiency_exchanger_40="0.81" efficiency_exchanger_20="0.76" frost_protection="no" frost_protect_temp="-10.00" hygroscopic_exchanger="no" humidity_efficiency="0.60" contamination_risk="no" night_cooling="no" start_time_night_cooling="23.00" end_time_night_cooling="06.00" room_temp_night_cooling="22.00" ext_temp_night_cooling="20.00" max_room_temp_night_cooling="24.00" min_room_temp_night_cooling="18.00" min_supply_temp_night_cooling="12.00" night_cooling_holiday="no" reduced_airflow="no" reduced_airflow_temp="-15.00" heating_coil_distr_description="forenklet" heating_coil_specific_length_pipes="0.20" heating_coil_uvalue_pipes="0.20" heating_coil_share_heated_room="50.00" heating_coil_temp_unheated_room="10.00" cooling_coil_distr_description="forenklet" cooling_coil_specific_length_pipes="0.20" cooling_coil_uvalue_pipes="0.20" cooling_coil_share_heated_room="50.0" cooling_coil_temp_unheated_room="10.0" type="balansert" supply_air="7.00" extract_air="7.00" supply_temp_type="konstant" max_supply_temp="19.00" min_supply_temp="16.00" high_extract_temp="24.00" low_extract_temp="21.00" usage_holiday="28.60" supply_airflow_night_cooling="1.20" extract_airflow_night_cooling="1.20" supply_airflow_reduced="0" extract_airflow_reduced="7.00" norm_airflow="no" norm_air_on="7.00" norm_air_off="0" norm_sfp_on="1.50" norm_sfp_off="1.50" cooling_coil_water_flow="variable" heating_coil_water_flow="variable" frost_protection_type="preheat">
