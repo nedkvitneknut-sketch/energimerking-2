@@ -5267,7 +5267,7 @@ ${zonesXml}${emXml}
               const isDoor=ew.type==='dor';
               const sillH=isDoor?0:0.9;
               const openH=ew.hoyMm/1000;
-              const openW=(ew.t1-ew.t0)*segLen;
+              const openW=ew.breddeMm/1000; // alltid frå breddeMm, ikkje t1-t0
               const openCentreT=(ew.t0+ew.t1)/2;
               const ocx=p1.x+dx*openCentreT,ocz=p1.z+dz*openCentreT;
               const ocy=baseY+sillH+openH/2;
@@ -5491,16 +5491,26 @@ ${zonesXml}${emXml}
 // fordelt jamnt innanfor det opphavlege t0→t1-intervallet.
 function expandWindows(w, segLenM){
   const n=w.antal||1;
-  if(n<=1||segLenM<=0)return[w];
+  // Bruk alltid breddeMm for faktisk breidde — t0/t1 er berre senterposisjon
   const winWidthM=w.breddeMm/1000;
-  const totalSpanM=(w.t1-w.t0)*segLenM;
+  const centreT=(w.t0+w.t1)/2;
+  if(n<=1||segLenM<=0){
+    // Eit vindauge — berekn t0/t1 frå breddeMm og senter
+    const halfT=(winWidthM/2)/segLenM;
+    const t0=Math.max(0,centreT-halfT);
+    const t1=Math.min(1,centreT+halfT);
+    return[{...w,antal:1,t0,t1}];
+  }
+  // Fleire vindauge — fordel jamnt rundt sentrum
   const totalWinWidth=winWidthM*n;
-  const totalGap=totalSpanM-totalWinWidth;
-  const gap=Math.max(0,totalGap/(n+1));
+  const gapFraction=0.02; // 2% av segLenM som mellomrom
+  const gap=Math.max(gapFraction*segLenM,(segLenM*0.1)/n);
+  const totalSpan=totalWinWidth+gap*(n-1);
+  const startM=centreT*segLenM-totalSpan/2;
   return Array.from({length:n},(_,i)=>{
-    const startM=gap*(i+1)+winWidthM*i;
-    const t0=w.t0+startM/segLenM;
-    const t1=w.t0+(startM+winWidthM)/segLenM;
+    const wStartM=startM+i*(winWidthM+gap);
+    const t0=Math.max(0,wStartM/segLenM);
+    const t1=Math.min(1,(wStartM+winWidthM)/segLenM);
     return{...w,antal:1,t0,t1};
   });
 }
