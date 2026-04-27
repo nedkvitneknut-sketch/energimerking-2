@@ -276,7 +276,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     <div id="floor-tabs"></div>
     <button id="addFloorBtn" class="add-floor-btn">+ Etasje</button>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.3</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.4</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -756,11 +756,12 @@ function entroStandard(year){
   let uGulv=y<1959?1.30:y<=1989?0.70:y<=1999?0.40:y<=2007?0.35:y<=2009?0.18:y<=2016?0.15:0.10;
   // U-vindu
   let uVindu=y<1920?4.80:y<=1968?2.80:y<=1986?2.80:y<=1996?2.40:y<=2006?1.60:y<=2009?1.40:1.20;
+  let uDor=uVindu;
   // n50
   let n50=y<1940?9.0:y<=1960?9.0:y<=1980?7.0:y<=2000?5.0:y<=2007?3.5:y<=2009?3.0:1.5;
   // Kuldebro
   let kuldebro=y>=1997?0.09:0.12;
-  return {uVegg,uTak,uGulv,uVindu,n50,kuldebro};
+  return {uVegg,uTak,uGulv,uVindu,uDor,n50,kuldebro};
 }
 
 function getAreaM2(z){return z.areaOverride!=null?z.areaOverride:calcAreaM2(z.pts);}
@@ -4785,6 +4786,7 @@ function buildSXI(proj){
     const uTak=z.uTak??std?.uTak??0.18;
     const uGulv=z.uGulv??std?.uGulv??0.35;
     const uVindu=z.uVindu??std?.uVindu??1.60;
+    const uDor=z.uDor??std?.uDor??2.00;
     const n50=z.n50??std?.n50??3.5;
     const kuldebro=z.kuldebro??std?.kuldebro??0.09;
 
@@ -4819,14 +4821,20 @@ function buildSXI(proj){
           const wins=(lz.windows||[]).filter(w=>w.segIdx===seg.idx);
           let openingsXml='';
           wins.forEach(w=>{
-            const uW=w.uVerdi??lz.uVindu??uVindu;
+            const uW=w.type==='dor'?(w.uVerdi??lz.uDor??uDor):(w.uVerdi??lz.uVindu??uVindu);
             const wName=(w.name||(w.type==='dor'?'Dør':'Vindauge'))+flSuffix;
             if(w.type==='dor'){
               const dId=nextId('door');
-              openingsXml+=`      <door id="${dId}" name="${wName}" comment="" number="${w.antal}" height="${(w.hoyMm/1000).toFixed(3)}" width="${(w.breddeMm/1000).toFixed(3)}" uvalue="${uW}" door_type="Standardvalg"></door>\n`;
+              const dH=Math.max(0.1,(w.hoyMm||2100)/1000);
+              const dW=Math.max(0.1,(w.breddeMm||900)/1000);
+              const dAntal=w.antal||1;
+              const dArea=(dW*dH*dAntal).toFixed(2);
+              openingsXml+=`      <door uvalue="${uW}" area="${dArea}" type="Standardvalg" gate="no" id="${dId}" name="${wName}" comment=""></door>\n`;
             } else {
               const wId=nextId('window');
-              openingsXml+=`      <window id="${wId}" name="${wName}" comment="" number="${w.antal}" height="${(w.hoyMm/1000).toFixed(3)}" width="${(w.breddeMm/1000).toFixed(3)}" given_frame_width="no" frame_width="0.08" frame_factor="0.20" total_uvalue="yes" uvalue="${uW}" window_type="Standardvalg" uvalue_pane="0.80" uvalue_frame="1.00" thermal_bridge_frame="0.10" pane_type="Standardvalg" frame_type="Standardvalg" spacer_type="Standardvalg" shading_type="konstant" const_solar_factor="0.50" const_sun_shading="Standardvalg" var_solar_factor="0.51" var_solar_factor_shaded="0.06" auto_shading="no" auto_shading_flux="100.00" var_sun_shading="Standardvalg" overhang="no" depth_overhang="1.20" distance_overhang="0.60" vert_extension_left="no" depth_extension_left="1.20" distance_extension_left="1.00" vert_extension_right="no" depth_extension_right="1.20" distance_extension_right="1.00" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></window>\n`;
+              const wH=Math.max(0.1,(w.hoyMm||1200)/1000).toFixed(3);
+              const wW=Math.max(0.1,(w.breddeMm||1200)/1000).toFixed(3);
+              openingsXml+=`      <window id="${wId}" name="${wName}" comment="" number="${w.antal||1}" height="${wH}" width="${wW}" given_frame_width="no" frame_width="0.08" frame_factor="0.20" total_uvalue="yes" uvalue="${uW}" window_type="Standardvalg" uvalue_pane="0.80" uvalue_frame="1.00" thermal_bridge_frame="0.10" pane_type="Standardvalg" frame_type="Standardvalg" spacer_type="Standardvalg" shading_type="konstant" const_solar_factor="0.50" const_sun_shading="Standardvalg" var_solar_factor="0.51" var_solar_factor_shaded="0.06" auto_shading="no" auto_shading_flux="100.00" var_sun_shading="Standardvalg" overhang="no" depth_overhang="1.20" distance_overhang="0.60" vert_extension_left="no" depth_extension_left="1.20" distance_extension_left="1.00" vert_extension_right="no" depth_extension_right="1.20" distance_extension_right="1.00" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></window>\n`;
             }
           });
           facXml+=`    <facade id="${faceId}" name="${nm}${flSuffix}" comment="" area="${grossA.toFixed(2)}" uvalue="${effectiveU}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0">\n${openingsXml}    </facade>\n`;
