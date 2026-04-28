@@ -276,7 +276,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     <div id="floor-tabs"></div>
     <button id="addFloorBtn" class="add-floor-btn">+ Etasje</button>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.4</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.5</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -714,13 +714,22 @@ function calcSegments(pts,fhM){
   if(pts.length<2)return null;
   if(fhM==null)fhM=parseFloat(fhI.value)||3.0;
   const nd=parseFloat(northI.value)||0;
+  // Bestem om polygon er CW eller CCW (shoelace sum)
+  let area2=0;
+  for(let i=0;i<pts.length;i++){const j=(i+1)%pts.length;area2+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}
+  // Canvas Y-akse peikar ned, så positiv area2 = CW i skjermkoordinatar = CCW i matematisk
+  // Utvendig normal: CW polygon → normal er 90° til venstre for veggretning (wallAngle-90)
+  //                  CCW polygon → normal er 90° til høgre (wallAngle+90)
+  const normalOffset=area2>0?-90:90;
   return pts.map((p1,i)=>{
     const p2=pts[(i+1)%pts.length];
     const lenPx=Math.hypot(p2.x-p1.x,p2.y-p1.y);
     const lenM=mmPerImgPx?lenPx*mmPerImgPx/1000:null;
     const areaM2=(lenM!==null)?lenM*fhM:null;
     const wallAngle=Math.atan2(p2.y-p1.y,p2.x-p1.x)*180/Math.PI;
-    const normalAz=((wallAngle-nd)%360+360)%360;
+    const normalAngle=wallAngle+normalOffset;
+    // Juster for nord-rotasjon og konverter til kompassazimut (0=Nord, 90=Aust)
+    const normalAz=((normalAngle-nd+90)%360+360)%360;
     const dirIdx=Math.round(normalAz/45)%8;
     const dir=DIRS[dirIdx>=0&&dirIdx<8?dirIdx:0];
     return{idx:i,dir,lenM,lenPx,areaM2,midImgX:(p1.x+p2.x)/2,midImgY:(p1.y+p2.y)/2,wallAngle,p1,p2};
@@ -1856,19 +1865,25 @@ function updateResults(){
       // ── Grouped zone badge + breakdown ──
       if(isGrouped){
         const breakdown=document.createElement('div');
-        breakdown.style.cssText='background:var(--accent-dim);border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:11px';
-        let rows=linked.map(lz=>{
+        breakdown.style.cssText='background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px';
+        const bHdr=document.createElement('div');
+        bHdr.style.cssText='font-size:10px;font-weight:700;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:5px';
+        bHdr.innerHTML=`<span>⇌</span><span>Kopla soner (${linked.length})</span>`;
+        breakdown.appendChild(bHdr);
+        linked.forEach(lz=>{
           const lf=floors.find(fl=>fl.zones.includes(lz));
           const la=getAreaM2(lz);
           const isCur=lz===z;
-          return `<div style="display:flex;justify-content:space-between;padding:2px 0;color:${isCur?'var(--accent)':'var(--text2)'}">
-            <span style="font-weight:${isCur?'600':'400'}">${lf?lf.name:'?'}</span>
-            <span style="font-family:'DM Mono',monospace;font-size:10.5px">${la!=null?la.toFixed(1)+' m²':'—'}</span></div>`;
-        }).join('');
+          const row=document.createElement('div');
+          row.style.cssText=`display:flex;justify-content:space-between;align-items:center;padding:3px 6px;border-radius:5px;margin-bottom:2px;background:${isCur?'rgba(99,102,241,.12)':'transparent'}`;
+          row.innerHTML=`<span style="font-weight:${isCur?'700':'400'};color:${isCur?'#4338ca':'var(--text2)'}">${lz.name}${lf&&floors.length>1?' <span style="font-size:9px;color:var(--text3)">('+lf.name+')</span>':''}</span><span style="font-family:'DM Mono',monospace;font-size:10.5px;color:${isCur?'#4338ca':'var(--text3)'}">${la!=null?la.toFixed(1)+' m²':'—'}</span>`;
+          breakdown.appendChild(row);
+        });
         const totalA=getTotalAreaM2(z);
-        rows+=`<div style="display:flex;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px solid rgba(26,122,110,.2);font-weight:700;color:var(--accent)">
-          <span>Sum</span><span style="font-family:'DM Mono',monospace">${totalA!=null?totalA.toFixed(1)+' m²':'—'}</span></div>`;
-        breakdown.innerHTML=rows;
+        const sumRow=document.createElement('div');
+        sumRow.style.cssText='display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid #c7d2fe;font-weight:700;color:#4338ca';
+        sumRow.innerHTML=`<span>Sum</span><span style="font-family:'DM Mono',monospace">${totalA!=null?totalA.toFixed(1)+' m²':'—'}</span>`;
+        breakdown.appendChild(sumRow);
         card.appendChild(breakdown);
       }
 
@@ -1978,9 +1993,9 @@ function updateResults(){
         return mkRow(lbl,sel);
       };
       const isPrimaryInGroup=!isGrouped||(linked[0]===z);
-      if(isPrimaryInGroup){
-        settings.appendChild(mkSelRow('Gulv',GULV_OPT,z.gulvtype||'Gulv på grunn',v=>{z.gulvtype=v;renderTable();}));
-        settings.appendChild(mkSelRow('Tak',TAK_OPT,z.taktype||'Tak',v=>{z.taktype=v;renderTable();}));
+      // Tak og gulv: alltid synleg per sone — kopla soner kan ha ulike konstruksjonstypar
+      settings.appendChild(mkSelRow('Gulv',GULV_OPT,z.gulvtype||'Gulv på grunn',v=>{z.gulvtype=v;renderTable();}));
+      settings.appendChild(mkSelRow('Tak',TAK_OPT,z.taktype||'Tak',v=>{z.taktype=v;renderTable();}));
 
         // Takvinkel — berre synleg når taktype = 'Tak' (standard tak mot det fri)
         if((z.taktype||'Tak')==='Tak'){
@@ -2012,7 +2027,6 @@ function updateResults(){
           tvWrap.appendChild(tvCb);tvWrap.appendChild(tvCbLbl);tvWrap.appendChild(tvInp);tvWrap.appendChild(tvU);tvWrap.appendChild(tvPreview);
           settings.appendChild(mkRow('Takvinkel',tvWrap));
         }
-      }
 
       // Standard U-verdiar badge
       if(std){
@@ -3696,7 +3710,7 @@ function autosave(){
     const serFloors=floors.map(f=>{
       const obj={
         id:f.id,name:f.name,
-        mmPerImgPx:f.mmPerImgPx,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,defaultHoyde:f.defaultHoyde??3.0,defaultHoyde:f.defaultHoyde??3.0,
+        mmPerImgPx:f.mmPerImgPx,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,
         sc:f.sc,offX:f.offX,offY:f.offY,
         pdfPage:f.pdfPage,totalPages:f.totalPages,
         zones:f.zones.map(z=>({...z,skillevegg:z.skillevegg?Array.from(z.skillevegg):[]}))
@@ -3760,16 +3774,37 @@ function restoreAutosave(){
       localStorage.removeItem(AUTOSAVE_KEY);
     };
 
-    document.getElementById('toast-restore').onclick=()=>{
+    document.getElementById('toast-restore').onclick=async()=>{
       toast.remove();
-      // Do the actual restore
-      floors=proj.floors.map(f=>({
-        id:f.id,name:f.name,
-        mmPerImgPx:f.mmPerImgPx??null,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,defaultHoyde:f.defaultHoyde??3.0,
-        sc:f.sc??1,offX:f.offX??0,offY:f.offY??0,
-        pdfPage:f.pdfPage??1,totalPages:f.totalPages??1,
-        bgImg:null,pdfDoc:null,
-        zones:(f.zones||[]).map(z=>({...z,skillevegg:new Set(z.skillevegg||[])}))
+      // Bygg floors-array — last bgImg frå lagra bgImgData
+      floors=await Promise.all(proj.floors.map(async f=>{
+        const floor={
+          id:f.id,name:f.name,
+          mmPerImgPx:f.mmPerImgPx??null,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,
+          sc:f.sc??1,offX:f.offX??0,offY:f.offY??0,
+          pdfPage:f.pdfPage??1,totalPages:f.totalPages??1,
+          bgImg:null,pdfDoc:null,
+          zones:(f.zones||[]).map(z=>({...z,skillevegg:new Set(z.skillevegg||[])}))
+        };
+        if(f.bgImgData){
+          try{
+            await new Promise((res,rej)=>{
+              const img=new Image();
+              img.onload=()=>{
+                // Juster sc for ev. nedskalert bilete
+                if(f.bgImgScale&&f.bgImgScale<1){
+                  floor.sc=(f.sc??1)/f.bgImgScale;
+                  floor.offX=(f.offX??0)/f.bgImgScale;
+                  floor.offY=(f.offY??0)/f.bgImgScale;
+                }
+                floor.bgImg=img;res();
+              };
+              img.onerror=rej;
+              img.src=f.bgImgData;
+            });
+          }catch(e){console.warn('Kunne ikkje laste autolaga bilete:',e);}
+        }
+        return floor;
       }));
       activeFloor=Math.min(proj.activeFloor??0,floors.length-1);
       globalNorth=proj.globalNorth??0;
@@ -3780,7 +3815,7 @@ function restoreAutosave(){
       syncFloorState();
       editZoneIdx=null;curPts=[];draftZones=[];winPts=[];
       renderFloorTabs();updateResults();renderTable();draw();
-      hintText.textContent='Autolaga prosjekt gjenoppretta — last opp PDF-ar på nytt om nødvendig';
+      hintText.textContent='Autolaga prosjekt gjenoppretta.';
       localStorage.removeItem(AUTOSAVE_KEY);
     };
     document.getElementById('toast-dismiss').onclick=dismiss;
@@ -3994,7 +4029,7 @@ document.getElementById('saveBtn').onclick=()=>{
   const serFloors=floors.map(f=>{
     const obj={
       id:f.id,name:f.name,
-      mmPerImgPx:f.mmPerImgPx,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,defaultHoyde:f.defaultHoyde??3.0,
+      mmPerImgPx:f.mmPerImgPx,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,
       sc:f.sc,offX:f.offX,offY:f.offY,
       pdfPage:f.pdfPage,totalPages:f.totalPages,
       zones:f.zones.map(z=>({
@@ -4047,7 +4082,7 @@ document.getElementById('loadFi').onchange=async function(){
     const newFloors=await Promise.all(proj.floors.map(async f=>{
       const floor={
         id:f.id,name:f.name,
-        mmPerImgPx:f.mmPerImgPx??null,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,defaultHoyde:f.defaultHoyde??3.0,
+        mmPerImgPx:f.mmPerImgPx??null,ownCal:f.ownCal||false,defaultHoyde:f.defaultHoyde??3.0,
         sc:f.sc??1,offX:f.offX??0,offY:f.offY??0,
         pdfPage:f.pdfPage??1,totalPages:f.totalPages??1,
         pdfDoc:null,bgImg:null,
