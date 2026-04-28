@@ -4877,11 +4877,11 @@ function buildSXI(proj){
       });
     });
 
-    // Tak og gulv — per instans
-    const takType=z.taktype||'Tak';
-    const gulvType=z.gulvtype||'Gulv på grunn';
+    // Tak og gulv — per instans med eigne konstruksjonstypar
     let takXml='',gulvXml='';
     instances.forEach(lz=>{
+      const takType=lz.taktype||'Tak';
+      const gulvType=lz.gulvtype||'Gulv på grunn';
       const a=getAreaM2(lz);
       const aStr=(a??0).toFixed(2);
       const perim=getUtvOmkrets(lz)??getPerimM(lz)??0;
