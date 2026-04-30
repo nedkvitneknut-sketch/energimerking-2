@@ -276,7 +276,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     <div id="floor-tabs"></div>
     <button id="addFloorBtn" class="add-floor-btn">+ Etasje</button>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.5</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.6</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -310,32 +310,56 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     <div class="dialog-overlay" id="calOverlay">
       <div class="dialog">
         <h3>📏 Kalibrér skala</h3>
-        <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden">
-          <button id="calTabLen" onclick="switchCalTab('length')" style="flex:1;padding:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:inherit">Lengde</button>
-          <button id="calTabArea" onclick="switchCalTab('area')" style="flex:1;padding:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:#fff;color:var(--text2);font-family:inherit;border-left:1px solid var(--border2)">Areal</button>
-        </div>
-        <!-- Length mode -->
-        <div id="calModeLen">
-          <p>Du målte <strong id="calPxSpan" style="color:var(--accent)">—</strong> px.<br>Kor lang er denne strekninga i verkelegheita?</p>
-          <div class="irow">
-            <label>Faktisk lengde</label>
-            <input type="number" class="big-input" id="calMmInput" min="1" step="1" placeholder="5000">
-            <span class="unit">mm</span>
+
+        <!-- Steg 1: vel metode -->
+        <div id="calStep1">
+          <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Vel korleis du vil kalibrere:</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button id="calChooseLen" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--border2);border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;transition:all .12s">
+              <span style="font-size:22px">📐</span>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:var(--text)">Kjend lengde</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Klikk to punkt med kjend avstand (t.d. ein vegg)</div>
+              </div>
+            </button>
+            <button id="calChooseArea" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--border2);border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;transition:all .12s">
+              <span style="font-size:22px">⬡</span>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:var(--text)">Kjend areal</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Klikk på ei sone du kjenner arealet til</div>
+              </div>
+            </button>
+          </div>
+          <div class="dbtns" style="margin-top:16px">
+            <button class="dcancel" id="calCancel">Avbryt</button>
           </div>
         </div>
-        <!-- Area mode -->
-        <div id="calModeArea" style="display:none">
-          <p>Du teikna eit polygon på eit kjend rom.<br>Kor stort er dette arealet i verkelegheita?</p>
-          <div class="irow">
-            <label>Faktisk areal</label>
-            <input type="number" class="big-input" id="calAreaInput" min="0.01" step="0.01" placeholder="42.0">
-            <span class="unit">m²</span>
+
+        <!-- Steg 2: tast inn verdi (vises etter teikning) -->
+        <div id="calStep2" style="display:none">
+          <!-- Length mode -->
+          <div id="calModeLen">
+            <p>Du målte <strong id="calPxSpan" style="color:var(--accent)">—</strong> px.<br>Kor lang er denne strekninga i verkelegheita?</p>
+            <div class="irow">
+              <label>Faktisk lengde</label>
+              <input type="number" class="big-input" id="calMmInput" min="1" step="1" placeholder="5000">
+              <span class="unit">mm</span>
+            </div>
           </div>
-          <p style="font-size:11px;color:var(--text3);margin-top:-10px">Teikn polygon rundt rommet i tegnemodus, merk arealet i px² som vert synt, og skriv inn faktisk m².</p>
-        </div>
-        <div class="dbtns">
-          <button class="dcancel" id="calCancel">Avbryt</button>
-          <button class="dok" id="calOk">Sett skala ✓</button>
+          <!-- Area mode -->
+          <div id="calModeArea" style="display:none">
+            <p id="calAreaDesc">Kor stort er arealet i verkelegheita?</p>
+            <div class="irow">
+              <label>Faktisk areal</label>
+              <input type="number" class="big-input" id="calAreaInput" min="0.01" step="0.01" placeholder="42.0">
+              <span class="unit">m²</span>
+            </div>
+            <p id="calAreaHint" style="font-size:11px;color:var(--text3);margin-top:-10px"></p>
+          </div>
+          <div class="dbtns">
+            <button class="dcancel" id="calBack">← Tilbake</button>
+            <button class="dok" id="calOk">Sett skala ✓</button>
+          </div>
         </div>
       </div>
     </div>
@@ -898,9 +922,9 @@ const calBtn=document.getElementById('calBtn');
 
 const HINTS={
   navigate:'Scroll for zoom · klikk+dra for å flytte rundt',
-  draw:'Klikk hjørner · dobbelklikk eller klikk startpunkt for å avslutte · Esc for å avbryte',
+  draw:'Klikk hjørner · Shift for 90° · dobbelklikk eller klikk startpunkt for å avslutte · Esc for å avbryte',
   edit:'Dra hjørner · klikk + for å leggje til · høgreklikk for å slette · Esc for å avslutte',
-  calibrate:'Klikk startpunkt → klikk endepunkt på ei kjend lengde',
+  calibrate:'Lengde: klikk start → klikk slutt  ·  Areal: klikk på ei sone du kjenner arealet til',
   window:'Klikk éin ende av vindauget/døra på fasaden, så den andre enden',
   measure:'Klikk startpunkt → klikk endepunkt for å kontrollmåle. Klikk igjen for ny måling. Esc for å avslutte.',
 };
@@ -1227,6 +1251,9 @@ document.addEventListener('touchend',()=>{compassDragging=false;});
 function draw(){
   ctx.clearRect(0,0,cv.width,cv.height);
 
+  // Vis/skjul dropzone basert på om det er eit bilete
+  dropz.style.display=bgImg?'none':'flex';
+
   // Nord-sjekk: rotate canvas so north points up
   const nordRad = nordCheck ? -(globalNorth * Math.PI / 180) : 0;
   const cx2 = cv.width/2, cy2 = cv.height/2;
@@ -1468,6 +1495,16 @@ function draw(){
     const lineEndY=snapTarget?snapTarget.y:(mouse?mouse.y:null);
     if(lineEndX!==null)ctx.lineTo(lineEndX,lineEndY);
     ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+    // Ortho-indikator (Shift halden)
+    if(shiftHeld&&curPts.length>0&&lineEndX!==null){
+      ctx.font='bold 10px Inter,sans-serif';
+      ctx.fillStyle='rgba(59,130,246,.9)';
+      const lbl='90°';
+      const tw=ctx.measureText(lbl).width+8;
+      ctx.beginPath();ctx.roundRect(lineEndX+8,lineEndY-9,tw,16,3);ctx.fill();
+      ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText(lbl,lineEndX+12,lineEndY);
+    }
     // Live area
     if(curPts.length>=2&&mouse&&mmPerImgPx){
       const testPt=drawSnap?{x:drawSnap.x,y:drawSnap.y}:s2i(mouse.x,mouse.y);
@@ -1559,33 +1596,48 @@ function draw(){
   // Calibration area polygon
   if(mode==='calibrate'&&calMode==='area'&&calPts.length>0){
     ctx.beginPath();
-    // calPts are image coords in area mode
     const cap0=i2s(calPts[0].x,calPts[0].y);ctx.moveTo(cap0.x,cap0.y);
     calPts.forEach((p,i)=>{if(i>0){const pp=i2s(p.x,p.y);ctx.lineTo(pp.x,pp.y);}});
-    const _alsr=calSnap?i2s(calSnap.x,calSnap.y):null;
-    if(_alsr){ctx.lineTo(_alsr.x,_alsr.y);}else if(mouse){ctx.lineTo(mouse.x,mouse.y);}
+    // For polygon mode: show live edge to mouse
+    if(calPts.length<3||(pendingCalAreaPx2===0)){
+      const _alsr=calSnap?i2s(calSnap.x,calSnap.y):null;
+      if(_alsr){ctx.lineTo(_alsr.x,_alsr.y);}else if(mouse){ctx.lineTo(mouse.x,mouse.y);}
+    }
     ctx.closePath();
-    ctx.fillStyle='rgba(26,122,110,.1)';ctx.fill();
-    ctx.strokeStyle='#1a7a6e';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
-    calPts.forEach((p,i)=>{
-      const pp=i2s(p.x,p.y);
-      ctx.beginPath();ctx.arc(pp.x,pp.y,i===0?6:4,0,Math.PI*2);
-      ctx.fillStyle='#1a7a6e';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-    });
+    ctx.fillStyle='rgba(99,102,241,0.15)';ctx.fill();
+    ctx.strokeStyle='#6366f1';ctx.lineWidth=2.5;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
+    // Senter-label
+    const mx=calPts.reduce((s,p)=>s+i2s(p.x,p.y).x,0)/calPts.length;
+    const my=calPts.reduce((s,p)=>s+i2s(p.x,p.y).y,0)/calPts.length;
+    ctx.font='bold 11px Inter,sans-serif';
+    const lbl='Valt areal';
+    const tw=ctx.measureText(lbl).width+12;
+    ctx.fillStyle='rgba(99,102,241,0.88)';ctx.beginPath();ctx.roundRect(mx-tw/2,my-9,tw,18,4);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,mx,my);
+    // Punktar berre for polygon-modus
+    if(pendingCalAreaPx2===0){
+      calPts.forEach((p,i)=>{
+        const pp=i2s(p.x,p.y);
+        ctx.beginPath();ctx.arc(pp.x,pp.y,i===0?6:4,0,Math.PI*2);
+        ctx.fillStyle='#6366f1';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+      });
+    }
   }
 
   // Calibration line
   if(mode==='calibrate'&&calMode==='length'&&calPts.length>0){
-    const _csr=calSnap&&calPts.length<2?i2s(calSnap.x,calSnap.y):null;
-    const ex=calPts.length===2?calPts[1].x:(_csr?_csr.x:mouse?mouse.x:calPts[0].x);
-    const ey=calPts.length===2?calPts[1].y:(_csr?_csr.y:mouse?mouse.y:calPts[0].y);
+    const _csr=calSnap&&calPts.length<2&&!calSnap._ortho?i2s(calSnap.x,calSnap.y):null;
+    // Ortho: bruk calSnap om det er _ortho, elles vanleg
+    const _ort=calSnap&&calSnap._ortho&&calPts.length<2?i2s(calSnap.x,calSnap.y):null;
+    const ex=calPts.length===2?calPts[1].x:(_ort?_ort.x:_csr?_csr.x:mouse?mouse.x:calPts[0].x);
+    const ey=calPts.length===2?calPts[1].y:(_ort?_ort.y:_csr?_csr.y:mouse?mouse.y:calPts[0].y);
     ctx.beginPath();ctx.moveTo(calPts[0].x,calPts[0].y);ctx.lineTo(ex,ey);
     ctx.strokeStyle='#f59e0b';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
     [calPts[0],...(calPts.length===2?[calPts[1]]:[])].forEach(p=>{
       ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);
       ctx.fillStyle='#d97706';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
     });
-    if(calSnap&&calPts.length<2){
+    if(calSnap&&calPts.length<2&&!calSnap._ortho){
       const _si=i2s(calSnap.x,calSnap.y);
       ctx.beginPath();
       if(calSnap.type==='corner'){const _r=7;ctx.rect(_si.x-_r,_si.y-_r,_r*2,_r*2);ctx.strokeStyle='#d97706';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(217,119,6,.15)';ctx.fill();}
@@ -1595,7 +1647,7 @@ function draw(){
       const d=Math.hypot(ex-calPts[0].x,ey-calPts[0].y);
       const imgD=(d/sc).toFixed(0);
       const est=mmPerImgPx?(imgD*mmPerImgPx/1000).toFixed(2)+' m':'';
-      const lbl=imgD+' px'+(est?' ≈ '+est:'');
+      const lbl=(shiftHeld?'90° · ':'')+imgD+' px'+(est?' ≈ '+est:'');
       ctx.font='11px Inter,sans-serif';const tw=ctx.measureText(lbl).width+12;
       ctx.fillStyle='rgba(217,119,6,.9)';ctx.beginPath();ctx.roundRect(ex+8,ey-11,tw,18,4);ctx.fill();
       ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(lbl,ex+14,ey);
@@ -1664,15 +1716,61 @@ function switchCalTab(tab){
   document.getElementById('calTabLen').style.color=tab==='length'?'#fff':'var(--text2)';
   document.getElementById('calTabArea').style.background=tab==='area'?'var(--accent)':'#fff';
   document.getElementById('calTabArea').style.color=tab==='area'?'#fff':'var(--text2)';
+  if(tab==='area'&&!calOverlay.classList.contains('show')){
+    // Reset area state when switching to area tab
+    pendingCalAreaPx2=0;calPts=[];
+    document.getElementById('calAreaDesc').textContent='Klikk på ei sone du kjenner arealet til for å kalibrere.';
+    document.getElementById('calAreaHint').textContent='';
+    hintText.textContent='Areal: klikk på ei sone du kjenner arealet til';
+  }
+}
+
+function showCalStep1(){
+  document.getElementById('calStep1').style.display='';
+  document.getElementById('calStep2').style.display='none';
+}
+function showCalStep2(mode){
+  document.getElementById('calStep1').style.display='none';
+  document.getElementById('calStep2').style.display='';
+  document.getElementById('calModeLen').style.display=mode==='length'?'':'none';
+  document.getElementById('calModeArea').style.display=mode==='area'?'':'none';
 }
 
 calBtn.onclick=()=>{
-  calPts=[];curPts=[];
+  calPts=[];pendingCalAreaPx2=0;
   calMode='length';
-  switchCalTab('length');
+  showCalStep1();
+  calOverlay.classList.add('show');
+};
+
+// Hover-effekt på metodeval-knappane
+['calChooseLen','calChooseArea'].forEach(id=>{
+  const btn=document.getElementById(id);
+  btn.onmouseenter=()=>{btn.style.borderColor='var(--accent)';btn.style.background='var(--accent-dim)';};
+  btn.onmouseleave=()=>{btn.style.borderColor='var(--border2)';btn.style.background='#fff';};
+});
+
+document.getElementById('calChooseLen').onclick=()=>{
+  calMode='length';
+  calOverlay.classList.remove('show');
+  calPts=[];
   setMode('calibrate');
-  hintText.textContent='Lengde: klikk to punkt med kjend avstand — eller bytt til Areal-fana og teikn eit kjend rom i tegnemodus.';
+  hintText.textContent='Klikk startpunkt → klikk endepunkt på ei kjend lengde';
   draw();
+};
+
+document.getElementById('calChooseArea').onclick=()=>{
+  calMode='area';
+  calOverlay.classList.remove('show');
+  calPts=[];pendingCalAreaPx2=0;
+  setMode('calibrate');
+  hintText.textContent='Klikk på ei sone du kjenner arealet til';
+  draw();
+};
+
+document.getElementById('calBack').onclick=()=>{
+  showCalStep1();
+  calPts=[];pendingCalAreaPx2=0;
 };
 
 document.getElementById('calOk').onclick=()=>{
@@ -1703,7 +1801,7 @@ document.getElementById('calOk').onclick=()=>{
 };
 
 document.getElementById('calCancel').onclick=()=>{
-  calOverlay.classList.remove('show');calPts=[];setMode('navigate');
+  calOverlay.classList.remove('show');calPts=[];pendingCalAreaPx2=0;setMode('navigate');
 };
 document.getElementById('calMmInput').addEventListener('keydown',e=>{
   if(e.key==='Enter')document.getElementById('calOk').click();
@@ -2770,7 +2868,21 @@ function renderTable(){
   });
 }
 
-// ── Canvas interaction ────────────────────────────────────────
+// ── Ortho-snapping (Shift) ─────────────────────────────────────
+let shiftHeld=false;
+document.addEventListener('keydown',e=>{if(e.key==='Shift')shiftHeld=true;});
+document.addEventListener('keyup',e=>{if(e.key==='Shift')shiftHeld=false;});
+
+// Returner snappa skjermkoordinat ved ortho-modus (hald Shift)
+function orthoSnap(sx, sy, prevScreenPt){
+  if(!shiftHeld||!prevScreenPt)return{x:sx,y:sy};
+  const dx=sx-prevScreenPt.x, dy=sy-prevScreenPt.y;
+  // Snap til næraste 90° akse
+  if(Math.abs(dx)>=Math.abs(dy)) return{x:sx,y:prevScreenPt.y}; // horisontal
+  else return{x:prevScreenPt.x,y:sy};                            // vertikal
+}
+
+// ── Canvas interaction ─────────────────────────────────────────
 cwrap.addEventListener('mousemove',e=>{
   const r=cv.getBoundingClientRect();
   mouse={x:e.clientX-r.left,y:e.clientY-r.top};
@@ -2785,9 +2897,21 @@ cwrap.addEventListener('mousemove',e=>{
   // Snap to existing geometry in draw mode
   if(mode==='draw'){
     drawSnap=zones.length>0?snapDrawPoint(mouse.x,mouse.y):null;
+    // Shift ortho override — snappar til 90° frå førre punkt
+    if(shiftHeld&&curPts.length>0&&!drawSnap){
+      const prev=i2s(curPts[curPts.length-1].x,curPts[curPts.length-1].y);
+      const snapped=orthoSnap(mouse.x,mouse.y,prev);
+      drawSnap={x:s2i(snapped.x,snapped.y).x,y:s2i(snapped.x,snapped.y).y,_ortho:true};
+    }
   }
   if(mode==='calibrate'){
     calSnap=zones.length>0?snapDrawPoint(mouse.x,mouse.y):null;
+    // Shift ortho for lengdemodus og arealmodus
+    if(shiftHeld&&calPts.length>0&&!calSnap){
+      const prevS=i2s(calPts[calPts.length-1].x,calPts[calPts.length-1].y);
+      const snapped=orthoSnap(mouse.x,mouse.y,prevS);
+      calSnap={x:s2i(snapped.x,snapped.y).x,y:s2i(snapped.x,snapped.y).y,_ortho:true};
+    }
   }
   draw();
 });
@@ -3366,31 +3490,91 @@ cv.addEventListener('click',e=>{
   }
   if(mode==='draw'){
     if(curPts.length>=3){const p0=i2s(curPts[0].x,curPts[0].y);if(Math.hypot(sx-p0.x,sy-p0.y)<12){finishZone();return;}}
-    const pt=drawSnap?{x:drawSnap.x,y:drawSnap.y}:s2i(sx,sy);
-    curPts.push(pt);drawSnap=null;draw();return;
+    // Ortho snap: om Shift heldt, lås til 90° frå førre punkt
+    let rawPt=drawSnap&&!drawSnap._ortho?{x:drawSnap.x,y:drawSnap.y}:s2i(sx,sy);
+    if(shiftHeld&&curPts.length>0){
+      const prevS=i2s(curPts[curPts.length-1].x,curPts[curPts.length-1].y);
+      const snapped=orthoSnap(sx,sy,prevS);
+      rawPt=s2i(snapped.x,snapped.y);
+    } else if(drawSnap&&!drawSnap._ortho){
+      rawPt={x:drawSnap.x,y:drawSnap.y};
+    }
+    curPts.push(rawPt);drawSnap=null;draw();return;
   }
   if(mode==='calibrate'){
     if(calMode==='area'){
-      // Area mode: add point to a temporary polygon
-      const _asp=calSnap?{x:calSnap.x,y:calSnap.y}:s2i(sx,sy);
-      calPts.push(_asp);calSnap=null;
+      const ip=s2i(sx,sy);
+      // Sjekk om brukaren klikka på ein eksisterande sone
+      let clickedZone=null;
+      for(let zi=0;zi<zones.length;zi++){
+        if(zones[zi].pts.length>=3&&pointInPolygon(ip,zones[zi].pts)){
+          clickedZone=zones[zi];break;
+        }
+      }
+      if(clickedZone){
+        // Bruk sona sin piksel-area direkte
+        let a=0;
+        const pts=clickedZone.pts;
+        for(let i=0;i<pts.length;i++){
+          const j=(i+1)%pts.length;
+          a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;
+        }
+        pendingCalAreaPx2=Math.abs(a)/2;
+        calPts=clickedZone.pts.map(p=>({...p})); // vis sona sin kontur
+        // Om allereie kalibrert: vis gjeldande areal som forslag
+        const existM2=mmPerImgPx?(pendingCalAreaPx2*(mmPerImgPx/1000)**2):null;
+        document.getElementById('calAreaInput').value=existM2?existM2.toFixed(2):'';
+        document.getElementById('calAreaHint').textContent=`Klikka på «${clickedZone.name}» — skriv inn faktisk areal i m²`;
+        document.getElementById('calAreaDesc').textContent='Kor stort er arealet til «'+clickedZone.name+'» i verkelegheita?';
+        showCalStep2('area');
+        calOverlay.classList.add('show');
+        setTimeout(()=>{const el=document.getElementById('calAreaInput');el.select();el.focus();},50);
+        draw();return;
+      }
+      // Areal-kalibrering: legg til punkt med ortho-snap
+      let ip2=s2i(sx,sy);
+      if(shiftHeld&&calPts.length>0){
+        const prevS=i2s(calPts[calPts.length-1].x,calPts[calPts.length-1].y);
+        const snapped=orthoSnap(sx,sy,prevS);
+        ip2=s2i(snapped.x,snapped.y);
+      } else if(calSnap&&!calSnap._ortho){
+        ip2={x:calSnap.x,y:calSnap.y};
+      }
+      // Klikk første punkt = avslutt (same som dobbelklikk og sone-teikning)
       if(calPts.length>=3){
-        hintText.textContent=calPts.length+' punkt. Dobbelklikk for å avslutte og berekne areal.';
+        const p0s=i2s(calPts[0].x,calPts[0].y);
+        if(Math.hypot(sx-p0s.x,sy-p0s.y)<12){
+          // Avslutt polygon
+          finishAreaCal();
+          return;
+        }
+      }
+      calPts.push(ip2);calSnap=null;
+      if(calPts.length>=3){
+        hintText.textContent=calPts.length+' punkt. Klikk startpunktet eller dobbelklikk for å avslutte.';
       } else {
-        hintText.textContent='Klikk hjørner rundt det kjende rommet. '+calPts.length+' punkt.';
+        hintText.textContent='Klikka utanfor soner. Klikk hjørner for manuelt polygon'+( calPts.length===0?' eller klikk på ei sone.':'.');
       }
       draw();return;
     }
-    // Length mode — use snap if available
-    const _csp=calSnap?i2s(calSnap.x,calSnap.y):null;
-    calPts.push({x:_csp?_csp.x:sx,y:_csp?_csp.y:sy});calSnap=null;
+    // Lengde-kalibrering med ortho-snap
+    let calClickPt;
+    if(shiftHeld&&calPts.length>0){
+      const prevS=i2s(calPts[calPts.length-1].x,calPts[calPts.length-1].y);
+      const snapped=orthoSnap(sx,sy,prevS);
+      calClickPt={x:snapped.x,y:snapped.y};
+    } else {
+      const _csp=calSnap&&!calSnap._ortho?i2s(calSnap.x,calSnap.y):null;
+      calClickPt={x:_csp?_csp.x:sx,y:_csp?_csp.y:sy};
+    }
+    calPts.push({x:calClickPt.x,y:calClickPt.y});calSnap=null;
     if(calPts.length===2){
       const d=Math.hypot(calPts[1].x-calPts[0].x,calPts[1].y-calPts[0].y);
       const imgD=d/sc;pendingCalImgPx=imgD;
       calPxSpan.textContent=Math.round(d)+'px = '+Math.round(imgD)+' biletpx';
       if(mmPerImgPx)document.getElementById('calMmInput').value=Math.round(imgD*mmPerImgPx);
       else document.getElementById('calMmInput').value='';
-      switchCalTab('length');
+      showCalStep2('length');
       calOverlay.classList.add('show');
       setTimeout(()=>{document.getElementById('calMmInput').select();document.getElementById('calMmInput').focus();},50);
       draw();
@@ -3457,6 +3641,23 @@ cv.addEventListener('click',e=>{
     }
   }
 });
+function finishAreaCal(){
+  if(calPts.length<3)return;
+  let a=0;
+  for(let i=0;i<calPts.length;i++){
+    const j=(i+1)%calPts.length;
+    a+=calPts[i].x*calPts[j].y-calPts[j].x*calPts[i].y;
+  }
+  pendingCalAreaPx2=Math.abs(a)/2;
+  if(mmPerImgPx) document.getElementById('calAreaInput').value=(pendingCalAreaPx2*(mmPerImgPx/1000)**2).toFixed(2);
+  else document.getElementById('calAreaInput').value='';
+  document.getElementById('calAreaDesc').textContent='Kor stort er dette arealet i verkelegheita?';
+  document.getElementById('calAreaHint').textContent='';
+  showCalStep2('area');
+  calOverlay.classList.add('show');
+  setTimeout(()=>{const el=document.getElementById('calAreaInput');el.select();el.focus();},50);
+}
+
 let lastClickTime=0;
 cv.addEventListener('dblclick',e=>{
   if(mode==='draw'&&curPts.length>=3){
@@ -3464,20 +3665,8 @@ cv.addEventListener('dblclick',e=>{
     finishZone();
   }
   if(mode==='calibrate'&&calMode==='area'&&calPts.length>=3){
-    // calPts are image-px points (stored as {x,y} in image space for area mode)
-    if(calPts.length>0) calPts.pop(); // remove dblclick duplicate
-    // Compute area in image px²
-    let a=0;
-    for(let i=0;i<calPts.length;i++){
-      const j=(i+1)%calPts.length;
-      a+=calPts[i].x*calPts[j].y-calPts[j].x*calPts[i].y;
-    }
-    pendingCalAreaPx2=Math.abs(a)/2;
-    if(mmPerImgPx) document.getElementById('calAreaInput').value=(pendingCalAreaPx2*(mmPerImgPx/1000)**2).toFixed(2);
-    else document.getElementById('calAreaInput').value='';
-    switchCalTab('area');
-    calOverlay.classList.add('show');
-    setTimeout(()=>{document.getElementById('calAreaInput').select();document.getElementById('calAreaInput').focus();},50);
+    if(calPts.length>0) calPts.pop(); // fjern dobbelklikk-duplikat
+    finishAreaCal();
   }
 });
 document.addEventListener('keydown',e=>{
@@ -3791,11 +3980,16 @@ function restoreAutosave(){
             await new Promise((res,rej)=>{
               const img=new Image();
               img.onload=()=>{
-                // Juster sc for ev. nedskalert bilete
+                // bgImg er nedskalert med bgImgScale (img.width = original.width * bgImgScale)
+                // pts er i original biletepiksel
+                // For at i2s(pts.x) viser riktig: pts.x * sc_ny + offX = pts.x * sc_orig + offX
+                // → sc_ny = sc_orig  (uendra — pts er framleis i original-px)
+                // Men bgImg.width*sc_ny må gi same skjermbreidd som original*sc_orig:
+                // bgImg.width*sc_ny = original.width*bgImgScale*sc_ny = original.width*sc_orig
+                // → sc_ny = sc_orig / bgImgScale ✓
+                // offX/offY er skjermkoordinatar — uendra ✓
                 if(f.bgImgScale&&f.bgImgScale<1){
                   floor.sc=(f.sc??1)/f.bgImgScale;
-                  floor.offX=(f.offX??0)/f.bgImgScale;
-                  floor.offY=(f.offY??0)/f.bgImgScale;
                 }
                 floor.bgImg=img;res();
               };
@@ -4094,7 +4288,12 @@ document.getElementById('loadFi').onchange=async function(){
       if(f.bgImgData){
         await new Promise(res=>{
           const img=new Image();
-          img.onload=()=>{floor.bgImg=img;res();};
+          img.onload=()=>{
+            if(f.bgImgScale&&f.bgImgScale<1){
+              floor.sc=(f.sc??1)/f.bgImgScale;
+            }
+            floor.bgImg=img;res();
+          };
           img.onerror=()=>res();
           img.src=f.bgImgData;
         });
