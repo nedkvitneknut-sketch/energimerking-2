@@ -3907,13 +3907,10 @@ function autosave(){
       if(f.bgImg){
         try{
           const tmp=document.createElement('canvas');
-          // Cap at 2000px for autosave to keep localStorage small
-          const maxPx=2000;
-          const s=Math.min(1,maxPx/Math.max(f.bgImg.width,f.bgImg.height));
-          tmp.width=Math.round(f.bgImg.width*s);tmp.height=Math.round(f.bgImg.height*s);
-          tmp.getContext('2d').drawImage(f.bgImg,0,0,tmp.width,tmp.height);
-          obj.bgImgData=tmp.toDataURL('image/jpeg',0.7);
-          obj.bgImgScale=s;
+          tmp.width=f.bgImg.width;tmp.height=f.bgImg.height;
+          tmp.getContext('2d').drawImage(f.bgImg,0,0);
+          obj.bgImgData=tmp.toDataURL('image/jpeg',0.85);
+          // Ingen bgImgScale — biletet er lagra i same oppløysing som bgImg
         }catch(e){}
       }
       return obj;
@@ -3979,20 +3976,7 @@ function restoreAutosave(){
           try{
             await new Promise((res,rej)=>{
               const img=new Image();
-              img.onload=()=>{
-                // bgImg er nedskalert med bgImgScale (img.width = original.width * bgImgScale)
-                // pts er i original biletepiksel
-                // For at i2s(pts.x) viser riktig: pts.x * sc_ny + offX = pts.x * sc_orig + offX
-                // → sc_ny = sc_orig  (uendra — pts er framleis i original-px)
-                // Men bgImg.width*sc_ny må gi same skjermbreidd som original*sc_orig:
-                // bgImg.width*sc_ny = original.width*bgImgScale*sc_ny = original.width*sc_orig
-                // → sc_ny = sc_orig / bgImgScale ✓
-                // offX/offY er skjermkoordinatar — uendra ✓
-                if(f.bgImgScale&&f.bgImgScale<1){
-                  floor.sc=(f.sc??1)/f.bgImgScale;
-                }
-                floor.bgImg=img;res();
-              };
+              img.onload=()=>{floor.bgImg=img;res();};
               img.onerror=rej;
               img.src=f.bgImgData;
             });
@@ -4288,12 +4272,7 @@ document.getElementById('loadFi').onchange=async function(){
       if(f.bgImgData){
         await new Promise(res=>{
           const img=new Image();
-          img.onload=()=>{
-            if(f.bgImgScale&&f.bgImgScale<1){
-              floor.sc=(f.sc??1)/f.bgImgScale;
-            }
-            floor.bgImg=img;res();
-          };
+          img.onload=()=>{floor.bgImg=img;res();};
           img.onerror=()=>res();
           img.src=f.bgImgData;
         });
