@@ -3676,74 +3676,77 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();document.getElementById('saveBtn').click();return;}
   if((e.ctrlKey||e.metaKey)&&e.key==='o'){e.preventDefault();document.getElementById('loadBtn').click();return;}
 
-  // ── Sone kopier/lim inn ──
+  // ── Kopier (Ctrl+C) — sone eller vindauge avhengig av kva musa er over ──
   if((e.ctrlKey||e.metaKey)&&e.key==='c'){
-    if(hoveredZone&&!hoveredWin){
+    if(hoveredWin){
+      // Vindauge har prioritet om musa er over eit vindauge
+      winClipboard=JSON.parse(JSON.stringify(hoveredWin.w));
+      zoneClipboard=null;
+      hintText.textContent='Kopierte «'+(winClipboard.name||winClipboard.type)+'» — Ctrl+V for å lime inn på fasade';
+      e.preventDefault();return;
+    } else if(hoveredZone){
+      // Sone
       zoneClipboard=JSON.parse(JSON.stringify(hoveredZone.z));
       zoneClipboard.skillevegg=Array.from(hoveredZone.z.skillevegg||[]);
-      winClipboard=null; // klår vindauge-utklippstavla
-      hintText.textContent='Kopierte sone «'+zoneClipboard.name+'» — trykk Ctrl+V for å lime inn';
+      winClipboard=null;
+      hintText.textContent='Kopierte sone «'+zoneClipboard.name+'» — Ctrl+V for å lime inn';
       e.preventDefault();return;
     }
-    // Vindauge-kopi (eksisterande logikk under)
-  }
-  if((e.ctrlKey||e.metaKey)&&e.key==='v'&&zoneClipboard&&!winClipboard){
-    snapshot();
-    const copy=JSON.parse(JSON.stringify(zoneClipboard));
-    copy.name='Sone '+(++_nextZoneId);
-    copy.skillevegg=new Set(zoneClipboard.skillevegg||[]);
-    delete copy.groupId;
-    zones.push(copy);
-    renderFloorTabs();updateResults();renderTable();draw();
-    hintText.textContent='✓ Lima inn «'+copy.name+'» på aktiv etasje. Ctrl+V igjen for ei til.';
-    e.preventDefault();return;
   }
 
-  // ── Vindauge kopier/lim inn ──
-  if((e.ctrlKey||e.metaKey)&&e.key==='c'){
-    if(hoveredWin){
-      winClipboard=JSON.parse(JSON.stringify(hoveredWin.w));
-      hintText.textContent='Kopierte «'+(winClipboard.name||winClipboard.type)+'» — trykk Ctrl+V for å lime inn på same fasade';
+  // ── Lim inn (Ctrl+V) ──
+  if((e.ctrlKey||e.metaKey)&&e.key==='v'){
+    // Sone
+    if(zoneClipboard&&!winClipboard){
+      snapshot();
+      const copy=JSON.parse(JSON.stringify(zoneClipboard));
+      copy.name='Sone '+(++_nextZoneId);
+      copy.skillevegg=new Set(zoneClipboard.skillevegg||[]);
+      delete copy.groupId;
+      zones.push(copy);
+      renderFloorTabs();updateResults();renderTable();draw();
+      hintText.textContent='✓ Lima inn «'+copy.name+'» på aktiv etasje. Ctrl+V igjen for ei til.';
       e.preventDefault();return;
     }
-  }
-  if((e.ctrlKey||e.metaKey)&&e.key==='v'&&winClipboard){
-    const width=winClipboard.t1-winClipboard.t0;
-    if(hoveredWin){
-      snapshot();
-      const {w:refW,z,seg}=hoveredWin;
-      let t0=refW.t1+0.02,t1=t0+width;
-      if(t1>1){t0=Math.max(0,1-width);t1=1;}
-      const copy={...winClipboard,t0,t1,segIdx:refW.segIdx,dir:seg.dir};
-      if(!z.windows)z.windows=[];
-      copy.name=uniqueWinName(winClipboard.name||(winClipboard.type==='dor'?'Dør':'Vindauge'),z.windows);
-      z.windows.push(copy);
-      updateResults();renderTable();draw();
-      hintText.textContent='✓ Lima inn «'+(copy.name||copy.type)+'» på same fasade. Ctrl+V igjen for ei til.';
-    } else if(mouse){
-      const result=snapScreenToSegment(mouse.x,mouse.y);
-      if(result&&result.snap){
+    // Vindauge
+    if(winClipboard){
+      const width=winClipboard.t1-winClipboard.t0;
+      if(hoveredWin){
         snapshot();
-        const {zi,seg}=result.snap;
-        const z=zones[zi];
-        if(z&&seg){
-          const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
-          const segLen=Math.hypot(dx,dy);
-          const ip=s2i(mouse.x,mouse.y);
-          const tMid=Math.max(0,Math.min(1,((ip.x-seg.p1.x)*dx+(ip.y-seg.p1.y)*dy)/(segLen*segLen)));
-          const t0=Math.max(0,Math.min(1-width,tMid-width/2));
-          const t1=Math.min(1,t0+width);
-          if(!z.windows)z.windows=[];
-          const copy={...winClipboard,t0,t1,segIdx:seg.idx,dir:seg.dir,name:uniqueWinName(winClipboard.name||(winClipboard.type==='dor'?'Dør':'Vindauge'),z.windows)};
-          z.windows.push(copy);
-          updateResults();renderTable();draw();
-          hintText.textContent='✓ Lima inn «'+(copy.name||copy.type)+'» på fasade.';
+        const {w:refW,z,seg}=hoveredWin;
+        let t0=refW.t1+0.02,t1=t0+width;
+        if(t1>1){t0=Math.max(0,1-width);t1=1;}
+        const copy={...winClipboard,t0,t1,segIdx:refW.segIdx,dir:seg.dir};
+        if(!z.windows)z.windows=[];
+        copy.name=uniqueWinName(winClipboard.name||(winClipboard.type==='dor'?'Dør':'Vindauge'),z.windows);
+        z.windows.push(copy);
+        updateResults();renderTable();draw();
+        hintText.textContent='✓ Lima inn «'+(copy.name||copy.type)+'» på same fasade. Ctrl+V igjen for ei til.';
+      } else if(mouse){
+        const result=snapScreenToSegment(mouse.x,mouse.y);
+        if(result&&result.snap){
+          snapshot();
+          const {zi,seg}=result.snap;
+          const z=zones[zi];
+          if(z&&seg){
+            const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+            const segLen=Math.hypot(dx,dy);
+            const ip=s2i(mouse.x,mouse.y);
+            const tMid=Math.max(0,Math.min(1,((ip.x-seg.p1.x)*dx+(ip.y-seg.p1.y)*dy)/(segLen*segLen)));
+            const t0=Math.max(0,Math.min(1-width,tMid-width/2));
+            const t1=Math.min(1,t0+width);
+            if(!z.windows)z.windows=[];
+            const copy={...winClipboard,t0,t1,segIdx:seg.idx,dir:seg.dir,name:uniqueWinName(winClipboard.name||(winClipboard.type==='dor'?'Dør':'Vindauge'),z.windows)};
+            z.windows.push(copy);
+            updateResults();renderTable();draw();
+            hintText.textContent='✓ Lima inn «'+(copy.name||copy.type)+'» på fasade.';
+          }
+        } else {
+          hintText.textContent='Hald muspeikar over ein fasade eller eit vindauge for å lime inn.';
         }
-      } else {
-        hintText.textContent='Hald muspeikar over ein fasade eller eit vindauge for å lime inn.';
       }
+      e.preventDefault();return;
     }
-    e.preventDefault();return;
   }
 
   if(e.key==='Escape'){
@@ -4062,27 +4065,51 @@ setTimeout(()=>restoreAutosave(),300);
     ${[
       ['Generelt',''],
       ['Ctrl+Z / ⌘Z','Angre siste handling'],
-      ['Esc','Avbryt / avslutt modus'],
+      ['Ctrl+Y / Ctrl+Shift+Z','Gjere om'],
+      ['Ctrl+S','Lagre prosjekt'],
+      ['Ctrl+O','Opne prosjekt'],
+      ['Esc','Avbryt / avslutt til navigeringsmodus'],
+      ['?','Vis/skjul denne oversikta'],
       ['',''],
-      ['Teikning',''],
+      ['Teikning av sone',''],
       ['Klikk','Legg til hjørne'],
+      ['Shift + klikk','Lås til 90° (horisontal/vertikal)'],
       ['Dobbelklikk / klikk startpunkt','Fullfør sone'],
       ['Backspace / Delete','Fjern siste punkt'],
       ['',''],
-      ['Redigering',''],
+      ['Kopiering',''],
+      ['Ctrl+C over sone','Kopier sone'],
+      ['Ctrl+C over vindauge/dør','Kopier vindauge/dør'],
+      ['Ctrl+V over sone','Lim inn sone på aktiv etasje'],
+      ['Ctrl+V over fasade','Lim inn vindauge/dør på fasaden'],
+      ['Høgreklikk på fasade','Lim inn-meny (med noko i utklippstavla)'],
+      ['',''],
+      ['Redigering av sone',''],
       ['Dra hjørne','Flytt hjørne'],
       ['Klikk midtpunkt','Legg til hjørne'],
       ['Høgreklikk hjørne','Slett hjørne'],
       ['',''],
+      ['Vindauge og dører',''],
+      ['Dra vindauge (navigeringsmodus)','Flytt vindauge langs fasaden'],
+      ['',''],
+      ['Kalibrering',''],
+      ['Shift under teikning','Lås til 90°'],
+      ['Klikk på sone (arealmodus)','Bruk sona sitt areal til kalibrering'],
+      ['Dobbelklikk / klikk startpunkt (arealmodus)','Fullfør polygon'],
+      ['',''],
+      ['Måleverktøy',''],
+      ['Klikk start → klikk slutt','Mål avstand'],
+      ['Esc','Avslutt og fjern målingar'],
+      ['',''],
       ['Navigering',''],
       ['Scroll','Zoom inn/ut'],
       ['Klikk+dra','Flytt plantegning'],
-      ['Høgreklikk sone','Kontekstmeny (kopier, slett…)'],
+      ['Høgreklikk sone','Kontekstmeny (rediger, kopier, slett…)'],
     ].map(([k,v])=>k===''?`<div style="height:8px"></div>`:v===''?
       `<div style="font-size:10px;font-weight:700;color:#0e6b5e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;margin-top:4px">${k}</div>`:
-      `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:12.5px">
-        <span style="font-family:'JetBrains Mono',monospace;background:#f3f4f6;padding:2px 7px;border-radius:4px;font-size:11px;color:#374151">${k}</span>
-        <span style="color:#4b5563">${v}</span>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:12.5px;gap:12px">
+        <span style="font-family:'JetBrains Mono',monospace;background:#f3f4f6;padding:2px 7px;border-radius:4px;font-size:11px;color:#374151;white-space:nowrap">${k}</span>
+        <span style="color:#4b5563;text-align:right">${v}</span>
       </div>`
     ).join('')}
   </div>`;
