@@ -276,7 +276,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     <div id="floor-tabs"></div>
     <button id="addFloorBtn" class="add-floor-btn" title="Legg til ny etasje — drag fanane for å endre rekkjefølge">+ Etasje</button>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.7</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.8</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -3299,36 +3299,35 @@ function uniqueWinName(name, existingWindows){
 function findWindowAtScreen(sx,sy){
   const THRESH=10;
   let best=null,bestD=THRESH;
-  floors.forEach((fl,fli)=>{
-    fl.zones.forEach((z,zi)=>{
-      const segs=calcSegments(z.pts,getHoyde(z));
-      if(!segs)return;
-      (z.windows||[]).forEach((w,wi)=>{
-        const seg=segs[w.segIdx];
-        if(!seg)return;
-        const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
-        const segLen=Math.hypot(dx,dy);if(segLen<1)return;
-        const ux=dx/segLen,uy=dy/segLen;
-        const tC=(w.t0+w.t1)/2;
-        let halfT;
-        if(mmPerImgPx&&w.breddeMm){const hp=w.breddeMm/mmPerImgPx/2;halfT=hp/segLen;}
-        else{halfT=(w.t1-w.t0)/2;}
-        const t0v=Math.max(0,tC-halfT),t1v=Math.min(1,tC+halfT);
-        const s0i={x:seg.p1.x+ux*t0v*segLen,y:seg.p1.y+uy*t0v*segLen};
-        const s1i={x:seg.p1.x+ux*t1v*segLen,y:seg.p1.y+uy*t1v*segLen};
-        const s0=i2s(s0i.x,s0i.y),s1=i2s(s1i.x,s1i.y);
-        // Distance from point to line segment
-        const ex=s1.x-s0.x,ey=s1.y-s0.y;
-        const elen=Math.hypot(ex,ey)||1;
-        const t=Math.max(0,Math.min(1,((sx-s0.x)*ex+(sy-s0.y)*ey)/(elen*elen)));
-        const px=s0.x+t*ex,py=s0.y+t*ey;
-        const d=Math.hypot(sx-px,sy-py);
-        // Also check midpoint label
-        const mx=(s0.x+s1.x)/2,my=(s0.y+s1.y)/2;
-        const dm=Math.hypot(sx-mx,sy-my);
-        const dist=Math.min(d,dm);
-        if(dist<bestD){bestD=dist;best={w,wi,z,zi,fli,fl,seg,segs};}
-      });
+  // Berre søk i aktiv etasje — vindauge på andre etasjar skal ikkje påverkast
+  const fl=curFloor();
+  const fli=activeFloor;
+  fl.zones.forEach((z,zi)=>{
+    const segs=calcSegments(z.pts,getHoyde(z));
+    if(!segs)return;
+    (z.windows||[]).forEach((w,wi)=>{
+      const seg=segs[w.segIdx];
+      if(!seg)return;
+      const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+      const segLen=Math.hypot(dx,dy);if(segLen<1)return;
+      const ux=dx/segLen,uy=dy/segLen;
+      const tC=(w.t0+w.t1)/2;
+      let halfT;
+      if(mmPerImgPx&&w.breddeMm){const hp=w.breddeMm/mmPerImgPx/2;halfT=hp/segLen;}
+      else{halfT=(w.t1-w.t0)/2;}
+      const t0v=Math.max(0,tC-halfT),t1v=Math.min(1,tC+halfT);
+      const s0i={x:seg.p1.x+ux*t0v*segLen,y:seg.p1.y+uy*t0v*segLen};
+      const s1i={x:seg.p1.x+ux*t1v*segLen,y:seg.p1.y+uy*t1v*segLen};
+      const s0=i2s(s0i.x,s0i.y),s1=i2s(s1i.x,s1i.y);
+      const ex=s1.x-s0.x,ey=s1.y-s0.y;
+      const elen=Math.hypot(ex,ey)||1;
+      const t=Math.max(0,Math.min(1,((sx-s0.x)*ex+(sy-s0.y)*ey)/(elen*elen)));
+      const px=s0.x+t*ex,py=s0.y+t*ey;
+      const d=Math.hypot(sx-px,sy-py);
+      const mx=(s0.x+s1.x)/2,my=(s0.y+s1.y)/2;
+      const dm=Math.hypot(sx-mx,sy-my);
+      const dist=Math.min(d,dm);
+      if(dist<bestD){bestD=dist;best={w,wi,z,zi,fli,fl,seg,segs};}
     });
   });
   return best;
@@ -3755,15 +3754,27 @@ document.addEventListener('keydown',e=>{
     else if(mode==='draw'){curPts=[];setMode('navigate');draw();}
     else if(mode==='window'){winPts=[];winSnapPreview=null;setMode('navigate');draw();}
   }
-  if((e.key==='Backspace'||e.key==='Delete')&&mode==='draw'){
-    if(curPts.length>0){
-      curPts.pop();
-      hintText.textContent=curPts.length>0
-        ?curPts.length+' punkt. Backspace for å angre, dobbelklikk for å avslutte.'
-        :'Alle punkt fjerna. Klikk for å starte på nytt.';
-      draw();
+  if(e.key==='Backspace'||e.key==='Delete'){
+    // Slett hovered vindauge/dør
+    if(hoveredWin&&mode==='navigate'){
+      snapshot();
+      const {wi,z}=hoveredWin;
+      z.windows.splice(wi,1);
+      hoveredWin=null;
+      updateResults();renderTable();draw();
+      e.preventDefault();return;
     }
-    e.preventDefault();
+    // Fjern siste punkt under teikning
+    if(mode==='draw'){
+      if(curPts.length>0){
+        curPts.pop();
+        hintText.textContent=curPts.length>0
+          ?curPts.length+' punkt. Backspace for å angre, dobbelklikk for å avslutte.'
+          :'Alle punkt fjerna. Klikk for å starte på nytt.';
+        draw();
+      }
+      e.preventDefault();
+    }
   }
 });
 
@@ -4091,6 +4102,7 @@ setTimeout(()=>restoreAutosave(),300);
       ['',''],
       ['Vindauge og dører',''],
       ['Dra vindauge (navigeringsmodus)','Flytt vindauge langs fasaden'],
+      ['Backspace / Delete over vindauge','Slett vindauge/dør'],
       ['',''],
       ['Kalibrering',''],
       ['Shift under teikning','Lås til 90°'],
