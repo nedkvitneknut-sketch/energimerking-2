@@ -29,6 +29,179 @@
   --shadow-md:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
   --shadow-lg:0 10px 32px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.06);
 }
+[data-theme="lumon"]{
+  --bg:#001a33;
+  --surface:#002244;
+  --surface2:#00183a;
+  --surface3:#001630;
+  --accent:#00aaff;--accent-dim:#001e33;--accent-hover:#0088cc;
+  --accent-light:#33bbff;
+  --amber:#00aaff;--amber-dim:#001e33;
+  --red:#ff4466;--red-dim:#1a0011;
+  --text:#b8d4f0;--text2:#7aadd4;--text3:#3d6a8a;
+  --border:#003366;--border2:#004488;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.6);
+  --shadow-sm:0 1px 3px rgba(0,170,255,.15),0 1px 2px rgba(0,0,0,.5);
+  --shadow-md:0 4px 12px rgba(0,170,255,.12),0 1px 3px rgba(0,0,0,.5);
+  --shadow-lg:0 10px 32px rgba(0,170,255,.15),0 2px 8px rgba(0,0,0,.6);
+}
+/* ── LUMON INDUSTRIES THEME ───────────────────────────────── */
+/* Custom cursor for Lumon mode */
+#lumonCursor{
+  display:none;position:fixed;pointer-events:none;z-index:99998;
+  width:24px;height:24px;transform:translate(-4px,-4px);
+  transition:width .1s,height .1s;
+}
+[data-theme="lumon"] #lumonCursor{display:block;}
+[data-theme="lumon"] *{cursor:none!important;}
+
+/* Floating number canvas overlay on the 2D canvas */
+#lumonNumbers{
+  display:none;position:absolute;inset:0;pointer-events:none;z-index:5;opacity:.18;
+}
+[data-theme="lumon"] #lumonNumbers{display:block;}
+
+[data-theme="lumon"]{
+  --bg:#000d1a;
+  --surface:#001428;
+  --surface2:#000f20;
+  --surface3:#001830;
+  --accent:#00b4ff;--accent-dim:#001e33;--accent-hover:#00ccff;
+  --accent-light:#33ccff;
+  --amber:#00b4ff;--amber-dim:#001e33;
+  --red:#ff4488;--red-dim:#1a0015;
+  --text:#9dd4f0;--text2:#5a9abf;--text3:#2d5a78;
+  --border:#002244;--border2:#003366;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.7);
+  --shadow-sm:0 0 0 1px rgba(0,180,255,.08),0 2px 8px rgba(0,0,0,.6);
+  --shadow-md:0 0 0 1px rgba(0,180,255,.1),0 4px 16px rgba(0,0,0,.6),0 0 20px rgba(0,180,255,.06);
+  --shadow-lg:0 0 0 1px rgba(0,180,255,.12),0 8px 32px rgba(0,0,0,.7),0 0 40px rgba(0,180,255,.1);
+}
+[data-theme="lumon"] body{
+  font-family:'Courier New',Courier,monospace!important;
+  background:#000d1a!important;
+}
+[data-theme="lumon"] #toolbar{
+  background:linear-gradient(180deg,#001020 0%,#000d1a 100%)!important;
+  border-bottom:1px solid rgba(0,180,255,.18)!important;
+  box-shadow:0 1px 0 rgba(0,180,255,.08),0 2px 20px rgba(0,0,0,.5)!important;
+}
+[data-theme="lumon"] .tg{border-right-color:rgba(0,180,255,.12)!important;}
+[data-theme="lumon"] .btn{
+  font-family:'Courier New',Courier,monospace!important;
+  text-transform:uppercase;letter-spacing:.1em;font-size:9px!important;
+  background:rgba(0,20,40,.8)!important;color:#00b4ff!important;
+  border:1px solid rgba(0,180,255,.2)!important;
+  transition:all .15s!important;
+}
+[data-theme="lumon"] .btn:hover{
+  background:rgba(0,40,80,.9)!important;
+  border-color:rgba(0,180,255,.5)!important;
+  box-shadow:0 0 12px rgba(0,180,255,.25),inset 0 0 8px rgba(0,180,255,.05)!important;
+  color:#fff!important;
+}
+[data-theme="lumon"] .btn.on,.btn.teal[data-theme="lumon"]{
+  background:rgba(0,60,120,.9)!important;
+  border-color:#00b4ff!important;color:#fff!important;
+  box-shadow:0 0 16px rgba(0,180,255,.3)!important;
+}
+[data-theme="lumon"] .btn.teal{
+  background:rgba(0,60,120,.8)!important;
+  border-color:rgba(0,180,255,.5)!important;
+}
+[data-theme="lumon"] #cwrap{background:#000810!important;}
+[data-theme="lumon"] #sidebar{
+  background:linear-gradient(180deg,#000f20 0%,#000810 100%)!important;
+  border-left:1px solid rgba(0,180,255,.12)!important;
+}
+[data-theme="lumon"] .card{
+  background:rgba(0,20,40,.7)!important;
+  border:1px solid rgba(0,180,255,.12)!important;
+  transition:all .2s!important;
+}
+[data-theme="lumon"] .card:hover{
+  border-color:rgba(0,180,255,.28)!important;
+  box-shadow:0 0 16px rgba(0,180,255,.08)!important;
+}
+[data-theme="lumon"] input,[data-theme="lumon"] select,[data-theme="lumon"] textarea{
+  font-family:'Courier New',Courier,monospace!important;
+  background:rgba(0,15,30,.9)!important;color:#9dd4f0!important;
+  border-color:rgba(0,180,255,.25)!important;
+}
+[data-theme="lumon"] input:focus,[data-theme="lumon"] select:focus{
+  outline:none!important;
+  box-shadow:0 0 0 2px rgba(0,180,255,.2),0 0 12px rgba(0,180,255,.1)!important;
+  border-color:rgba(0,180,255,.5)!important;
+}
+[data-theme="lumon"] #scaleBadge{
+  font-family:'Courier New',Courier,monospace!important;
+  background:rgba(0,20,40,.95)!important;
+  border-color:rgba(0,180,255,.3)!important;
+  color:#00b4ff!important;
+  box-shadow:0 0 16px rgba(0,180,255,.15)!important;
+}
+[data-theme="lumon"] .floor-tab{
+  font-family:'Courier New',Courier,monospace!important;
+  text-transform:uppercase;letter-spacing:.08em;
+  background:#000810!important;color:#5a9abf!important;
+  border-color:rgba(0,180,255,.15)!important;
+}
+[data-theme="lumon"] .floor-tab.active{
+  background:#001428!important;border-top:2px solid #00b4ff!important;
+  color:#00b4ff!important;box-shadow:0 0 12px rgba(0,180,255,.15)!important;
+}
+[data-theme="lumon"] #floor-tabs-bar{
+  background:#000810!important;
+  border-top:1px solid rgba(0,180,255,.12)!important;
+}
+[data-theme="lumon"] #hintBar{
+  background:#000d1a!important;
+  border-top:1px solid rgba(0,180,255,.1)!important;
+  color:rgba(0,180,255,.45)!important;
+  font-family:'Courier New',Courier,monospace!important;font-size:10px!important;
+  letter-spacing:.05em;
+}
+[data-theme="lumon"] .dialog-overlay{background:rgba(0,5,15,.92)!important;}
+[data-theme="lumon"] .dialog{
+  background:linear-gradient(160deg,#001020 0%,#000810 100%)!important;
+  border:1px solid rgba(0,180,255,.28)!important;
+  box-shadow:0 0 60px rgba(0,180,255,.12),0 20px 60px rgba(0,0,0,.8)!important;
+}
+[data-theme="lumon"] .dialog h3{
+  color:#00b4ff!important;
+  font-family:'Courier New',Courier,monospace!important;
+  text-transform:uppercase;letter-spacing:.2em;
+  text-shadow:0 0 20px rgba(0,180,255,.4)!important;
+}
+/* Scanlines over heile vinduet */
+[data-theme="lumon"]::after{
+  content:'';
+  position:fixed;inset:0;pointer-events:none;z-index:99990;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);
+}
+/* Subtle vignette */
+[data-theme="lumon"] #cwrap::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:6;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,20,.5) 100%);
+}
+[data-theme="lumon"] .ttitle{color:rgba(0,180,255,.5)!important;letter-spacing:.2em;}
+[data-theme="lumon"] .ctx-menu{
+  background:#001020!important;border-color:rgba(0,180,255,.25)!important;
+  box-shadow:0 0 30px rgba(0,180,255,.1),0 8px 30px rgba(0,0,0,.8)!important;
+}
+[data-theme="lumon"] .ctx-menu-item{
+  color:#9dd4f0!important;font-family:'Courier New',Courier,monospace!important;
+  font-size:11px!important;text-transform:uppercase;letter-spacing:.08em;
+}
+[data-theme="lumon"] .ctx-menu-item:hover{background:rgba(0,60,120,.5)!important;}
+/* Logo */
+#lumonLogo{
+  display:none;position:fixed;bottom:52px;right:14px;z-index:200;
+  opacity:0;pointer-events:none;transition:opacity 1s;
+}
+[data-theme="lumon"] #lumonLogo{opacity:.15;display:block;animation:lumonPulse 5s ease-in-out infinite;}
+@keyframes lumonPulse{0%,100%{opacity:.1;filter:drop-shadow(0 0 4px #00b4ff44);}50%{opacity:.2;filter:drop-shadow(0 0 12px #00b4ff88);}}
+
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;font-size:13px}
 
 /* ── Header ── */
@@ -223,6 +396,25 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
 <body>
 <div id="header">
   <a id="logo" style="display:none"></a>
+  <!-- Entro Industries logo easter egg -->
+  <svg id="lumonLogo" width="110" height="110" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="100" cy="100" rx="88" ry="88" fill="none" stroke="#00b4ff" stroke-width="3"/>
+    <ellipse cx="100" cy="100" rx="52" ry="88" fill="none" stroke="#00b4ff" stroke-width="1.8"/>
+    <ellipse cx="100" cy="100" rx="88" ry="36" fill="none" stroke="#00b4ff" stroke-width="1.8"/>
+    <ellipse cx="100" cy="100" rx="88" ry="62" fill="none" stroke="#00b4ff" stroke-width="1.2" opacity=".5"/>
+    <line x1="12" y1="100" x2="188" y2="100" stroke="#00b4ff" stroke-width="1.5"/>
+    <text x="100" y="110" text-anchor="middle" font-family="Courier New,monospace" font-size="26" font-weight="bold" fill="#00b4ff" letter-spacing="4">ENTR&#9679;</text>
+  </svg>
+
+  <!-- Custom Lumon cursor -->
+  <svg id="lumonCursor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="4,2 4,20 9,15 13,22 15,21 11,14 18,14" fill="#00b4ff" opacity=".95" filter="url(#cg)"/>
+    <defs><filter id="cg"><feGaussianBlur stdDeviation="0.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  </svg>
+
+  <!-- Number overlay canvas (shown in Lumon mode over 2D canvas) -->
+  <canvas id="lumonNumbers"></canvas>
+
   <div id="toolbar">
     <div class="tg">
       <button class="btn teal" id="upBtn">↑ Last opp</button>
@@ -276,7 +468,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     <div id="floor-tabs"></div>
     <button id="addFloorBtn" class="add-floor-btn" title="Legg til ny etasje — drag fanane for å endre rekkjefølge">+ Etasje</button>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.8</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.0.9</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -495,6 +687,7 @@ function setGlobalNorth(nd){
   northI.value=globalNorth;
   const lbl=document.getElementById('northLabel');
   if(lbl)lbl.textContent=globalNorth+'°';
+  if(window._trackNorthRotation)window._trackNorthRotation(globalNorth);
 }
 
 function curFloor(){return floors[activeFloor];}
@@ -1270,6 +1463,10 @@ function draw(){
   if(bgImg){
     ctx.fillStyle='#d0d6de';ctx.fillRect(0,0,cv.width,cv.height);
     ctx.drawImage(bgImg,offX,offY,bgImg.width*sc,bgImg.height*sc);
+  } else {
+    const theme=document.documentElement.getAttribute('data-theme');
+    ctx.fillStyle=theme==='lumon'?'#000810':'#d0d6de';
+    ctx.fillRect(0,0,cv.width,cv.height);
   }
 
   // Completed zones
@@ -4061,7 +4258,202 @@ setTimeout(()=>restoreAutosave(),300);
   });
 })();
 
-// ── 4. Tastatursnarvegar-panel ────────────────────────────────
+// ── Lumon custom cursor + tal-overlay ─────────────────────────
+(()=>{
+  const cursor=document.getElementById('lumonCursor');
+  const numCanvas=document.getElementById('lumonNumbers');
+  let numCtx=null,numCells=[],numCols=0,numRows=0;
+  let lmx=0,lmy=0,numRunning=false;
+
+  // Custom cursor
+  document.addEventListener('mousemove',e=>{
+    lmx=e.clientX;lmy=e.clientY;
+    cursor.style.left=e.clientX+'px';
+    cursor.style.top=e.clientY+'px';
+  });
+
+  function initNumCanvas(){
+    const cw=numCanvas.parentElement?.offsetWidth||window.innerWidth;
+    const ch=numCanvas.parentElement?.offsetHeight||window.innerHeight;
+    numCanvas.width=cw;numCanvas.height=ch;
+    numCtx=numCanvas.getContext('2d');
+    numCols=Math.floor(cw/24)+2;
+    numRows=Math.floor(ch/28)+2;
+    numCells=Array.from({length:numRows},()=>
+      Array.from({length:numCols},()=>({
+        v:Math.floor(Math.random()*10),
+        sz:1,op:Math.random()*.18+.04,
+        sz_:1,op_:.08,
+        timer:Math.floor(Math.random()*180),
+      }))
+    );
+  }
+
+  function drawNumCanvas(){
+    if(!numRunning||!numCtx)return;
+    const cw=numCanvas.width,ch=numCanvas.height;
+    numCtx.clearRect(0,0,cw,ch);
+    const cellW=cw/numCols,cellH=ch/numRows;
+    // Map mouse to canvas local coords
+    const rect=numCanvas.getBoundingClientRect();
+    const mx2=lmx-rect.left,my2=lmy-rect.top;
+    numCells.forEach((row,r)=>{
+      row.forEach((cell,c)=>{
+        const cx=c*cellW+cellW/2,cy=r*cellH+cellH/2;
+        const dist=Math.hypot(cx-mx2,cy-my2);
+        const inf=Math.max(0,1-dist/140);
+        cell.sz_=1+inf*1.8;
+        cell.op_=.05+inf*.55;
+        cell.sz+=(cell.sz_-cell.sz)*.1;
+        cell.op+=(cell.op_-cell.op)*.1;
+        cell.timer--;
+        if(cell.timer<=0){
+          cell.v=Math.floor(Math.random()*10);
+          cell.timer=inf>.4?Math.floor(Math.random()*15)+3:Math.floor(Math.random()*160)+30;
+        }
+        const fs=Math.round(11*cell.sz);
+        numCtx.font=`${cell.sz>1.4?'bold ':''} ${fs}px "Courier New",monospace`;
+        numCtx.fillStyle=`rgba(0,180,255,${cell.op})`;
+        numCtx.textAlign='center';numCtx.textBaseline='middle';
+        numCtx.fillText(cell.v,cx,cy);
+      });
+    });
+    requestAnimationFrame(drawNumCanvas);
+  }
+
+  // Resize
+  const ro=new ResizeObserver(()=>{if(numRunning)initNumCanvas();});
+  const cwrap=document.getElementById('cwrap');
+  if(cwrap)ro.observe(cwrap);
+
+  window._lumonStart=()=>{
+    numRunning=true;
+    initNumCanvas();
+    drawNumCanvas();
+  };
+  window._lumonStop=()=>{
+    numRunning=false;
+    if(numCtx)numCtx.clearRect(0,0,numCanvas.width,numCanvas.height);
+  };
+
+  // Auto-start if already in lumon mode (reload)
+  if(document.documentElement.getAttribute('data-theme')==='lumon'){
+    setTimeout(window._lumonStart,100);
+  }
+})();
+(()=>{
+  const saved=localStorage.getItem('entro_theme');
+  const lumon=false; // Alltid start med lyst tema
+  localStorage.removeItem('entro_theme'); // Nullstill lagra tema ved oppstart
+
+  let totalRotation=0;
+  let lastNorth=0;
+  let lumonActive=lumon;
+
+  function activateLumon(){
+    if(lumonActive)return;
+    lumonActive=true;
+    document.documentElement.setAttribute('data-theme','lumon');
+    localStorage.setItem('entro_theme','lumon');
+    totalRotation=0;
+
+    const msg=document.createElement('div');
+    msg.style.cssText='position:fixed;inset:0;background:#000d1a;z-index:9999;display:flex;flex-direction:column;opacity:0;transition:opacity .5s;font-family:"Courier New",monospace;overflow:hidden;';
+    const gc=document.createElement('canvas');
+    gc.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
+    msg.appendChild(gc);
+    const ui=document.createElement('div');
+    ui.style.cssText='position:absolute;inset:0;display:flex;flex-direction:column;pointer-events:none;';
+    const pct=Math.floor(Math.random()*30)+5;
+    ui.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid #00b4ff22;background:rgba(0,13,26,.7);backdrop-filter:blur(2px);">
+        <div style="font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:#00b4ff;">Entro Industries</div>
+        <div style="display:flex;align-items:center;gap:18px;color:#00b4ff;">
+          <div style="font-size:11px;letter-spacing:.2em;opacity:.7;">${pct}% FULLFØRT</div>
+          <svg width="40" height="40" viewBox="0 0 200 200">
+            <ellipse cx="100" cy="100" rx="88" ry="88" fill="none" stroke="#00b4ff" stroke-width="3"/>
+            <ellipse cx="100" cy="100" rx="52" ry="88" fill="none" stroke="#00b4ff" stroke-width="1.8"/>
+            <ellipse cx="100" cy="100" rx="88" ry="36" fill="none" stroke="#00b4ff" stroke-width="1.8"/>
+            <line x1="12" y1="100" x2="188" y2="100" stroke="#00b4ff" stroke-width="1.5"/>
+            <text x="100" y="110" text-anchor="middle" font-family="Courier New" font-size="26" font-weight="bold" fill="#00b4ff" letter-spacing="4">ENTR&#9679;</text>
+          </svg>
+        </div>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="padding:14px 24px;border-top:1px solid #00b4ff22;background:rgba(0,13,26,.7);backdrop-filter:blur(2px);">
+        <div style="display:flex;gap:16px;">
+          ${[1,2,3,4,5].map(i=>{const p=Math.floor(Math.random()*40)+5;return`<div style="flex:1"><div style="font-size:9px;letter-spacing:.15em;opacity:.5;margin-bottom:4px;color:#00b4ff;">0${i}</div><div style="height:5px;background:#00b4ff18;border-radius:2px;"><div style="height:100%;width:${p}%;background:#00b4ff;border-radius:2px;"></div></div><div style="font-size:9px;margin-top:3px;opacity:.5;color:#00b4ff;">${p}%</div></div>`;}).join('')}
+        </div>
+        <div style="margin-top:8px;font-size:8px;letter-spacing:.3em;opacity:.2;color:#00b4ff;text-align:center;">MAKRODATA-AVDELING // 0x${Math.floor(Math.random()*0xFFFFFF).toString(16).toUpperCase().padStart(6,'0')}</div>
+      </div>`;
+    msg.appendChild(ui);
+    document.body.appendChild(msg);
+    requestAnimationFrame(()=>{msg.style.opacity='1';});
+    const resize=()=>{gc.width=window.innerWidth;gc.height=window.innerHeight;};
+    resize();window.addEventListener('resize',resize);
+    const COLS=Math.floor(window.innerWidth/28)+2;
+    const ROWS=Math.floor(window.innerHeight/32)+2;
+    const cells=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({
+      v:Math.floor(Math.random()*10),sz:1,op:.15,targetSz:1,targetOp:.1,changeTimer:Math.floor(Math.random()*120),
+    })));
+    let mx=window.innerWidth/2,my=window.innerHeight/2;
+    msg.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+    const ctx2=gc.getContext('2d');let running=true;
+    function drawGrid(){
+      if(!running)return;
+      ctx2.clearRect(0,0,gc.width,gc.height);
+      const cw=gc.width/COLS,ch=gc.height/ROWS;
+      cells.forEach((row,r)=>row.forEach((cell,c)=>{
+        const cx2=c*cw+cw/2,cy2=r*ch+ch/2;
+        const dist=Math.hypot(cx2-mx,cy2-my);
+        const inf=Math.max(0,1-dist/180);
+        cell.targetSz=1+inf*2.8;cell.targetOp=.12+inf*.88;
+        cell.sz+=(cell.targetSz-cell.sz)*.12;cell.op+=(cell.targetOp-cell.op)*.12;
+        cell.changeTimer--;
+        if(cell.changeTimer<=0){cell.v=Math.floor(Math.random()*10);cell.changeTimer=inf>.3?Math.floor(Math.random()*20)+5:Math.floor(Math.random()*200)+40;}
+        ctx2.font=`${cell.sz>1.5?'bold ':''} ${Math.round(13*cell.sz)}px "Courier New",monospace`;
+        ctx2.fillStyle=`rgba(0,180,255,${cell.op})`;ctx2.textAlign='center';ctx2.textBaseline='middle';
+        ctx2.fillText(cell.v,cx2,cy2);
+      }));
+      requestAnimationFrame(drawGrid);
+    }
+    drawGrid();
+    setTimeout(()=>{running=false;window.removeEventListener('resize',resize);msg.style.opacity='0';setTimeout(()=>msg.remove(),600);},3500);
+    draw();
+    if(renderer3&&scene3){renderer3.setClearColor(0x000d1a);if(scene3.fog)scene3.fog.color.setHex(0x000d1a);}
+    setTimeout(()=>window._lumonStart&&window._lumonStart(),3600);
+  }
+
+  window._deactivateLumon=()=>{
+    if(!lumonActive)return;
+    lumonActive=false;totalRotation=0;lastNorth=0;
+    window._lumonStop&&window._lumonStop();
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.removeItem('entro_theme');
+    if(renderer3&&scene3){renderer3.setClearColor(0xf0f2f5);if(scene3.fog)scene3.fog.color.setHex(0xf0f2f5);}
+    draw();
+  };
+
+  // Spor nord-rotasjon
+  // 3 fulle runder samanhengande (1080°) → Lumon
+  // 1 full runde (360°) i Lumon → tilbake til normalt
+  // Om nord-verdien hoppar (>45° delta utan å vere ein kontinuerleg rørsle) → nullstill
+  window._trackNorthRotation=(newNorth)=>{
+    let delta=newNorth-lastNorth;
+    if(delta>180)delta-=360;
+    if(delta<-180)delta+=360;
+    // Ikkje nullstill ved wrap rundt 0/360 — berre ved faktiske store hopp
+    // (t.d. brukaren klikka ein ny verdi direkte i inputfeltet)
+    // delta er allereie normalisert til [-180,180], så hopp >90° tyder på ikkje-kontinuerleg input
+    if(Math.abs(delta)>90){
+      totalRotation=0;lastNorth=newNorth;return;
+    }
+    totalRotation+=Math.abs(delta);
+    lastNorth=newNorth;
+    if(!lumonActive&&totalRotation>=1080){activateLumon();}
+    else if(lumonActive&&totalRotation>=360){window._deactivateLumon();}
+  };
+})();
 (()=>{
   const helpBtn=document.getElementById('helpBtn');
 
@@ -5305,10 +5697,51 @@ ${zonesXml}${emXml}
     document.body.appendChild(a);a.click();
     document.body.removeChild(a);URL.revokeObjectURL(url);
     dlg.style.display='none';
+    // 🎉 Konfetti!
+    launchConfetti();
   };
 })();
 
-// ── Sidebar resize drag ────────────────────────────────────────
+// ── Konfetti ved SXI-eksport ────────────────────────────────────
+function launchConfetti(){
+  const colors=['#0e6b5e','#10b69f','#2563eb','#f59e0b','#ec4899','#8b5cf6','#10b981'];
+  const count=90;
+  const particles=[];
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:99999;';
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  for(let i=0;i<count;i++){
+    particles.push({
+      x:Math.random()*canvas.width,y:Math.random()*-canvas.height*.5-20,
+      w:6+Math.random()*8,h:3+Math.random()*4,
+      r:Math.random()*Math.PI*2,
+      vx:(Math.random()-0.5)*4,vy:2+Math.random()*4,
+      vr:(Math.random()-0.5)*.15,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      opacity:1,
+    });
+  }
+  let t=0;
+  function step(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    t++;
+    let alive=false;
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.r+=p.vr;
+      if(t>80)p.opacity=Math.max(0,p.opacity-0.018);
+      if(p.y<canvas.height+20&&p.opacity>0){alive=true;}
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);
+      ctx.globalAlpha=p.opacity;ctx.fillStyle=p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+    });
+    if(alive&&t<200)requestAnimationFrame(step);
+    else canvas.remove();
+  }
+  requestAnimationFrame(step);
+}
 (function(){
   const handle=document.getElementById('sidebar-resize');
   const sidebar=document.getElementById('sidebar');
@@ -5330,8 +5763,9 @@ ${zonesXml}${emXml}
 })();
 
 // ── Corrected 3D scene builder (self-contained IIFE) ─────────
+let renderer3=null,scene3=null,camera3=null; // global — trengst for tema-toggle
 (function setup3D(){
-  let renderer3=null,scene3=null,camera3=null,animId3=null;
+  let animId3=null;
   let isWire=false;
   let orb=false,pan=false,lastM={x:0,y:0};
   let sph={theta:0.7,phi:1.05,radius:60};
@@ -5365,10 +5799,13 @@ ${zonesXml}${emXml}
       renderer3.shadowMap.type=THREE.PCFSoftShadowMap;
     }
     renderer3.setSize(W,H,false);
-    renderer3.setClearColor(0xf0f2f5);
+    const isDark3D=()=>document.documentElement.getAttribute('data-theme')==='dark';
+    const bg3Dlight=0xf0f2f5, bg3Ddark=0x0f172a;
+    const getBg3D=()=>isDark3D()?bg3Ddark:bg3Dlight;
+    renderer3.setClearColor(getBg3D());
 
     scene3=new THREE.Scene();
-    scene3.fog=new THREE.Fog(0xf0f2f5,150,400);
+    scene3.fog=new THREE.Fog(getBg3D(),150,400);
     camera3=new THREE.PerspectiveCamera(42,W/H,0.1,800);
 
     // Lights
@@ -5382,7 +5819,7 @@ ${zonesXml}${emXml}
     scene3.add(new THREE.HemisphereLight(0xdbeafe,0xd1fae5,0.6));
 
     // Ground
-    const grid=new THREE.GridHelper(200,50,0xc8cbd4,0xd8dbe2);
+    const grid=new THREE.GridHelper(200,50,isDark3D()?0x1e3a5f:0xc8cbd4,isDark3D()?0x162d4a:0xd8dbe2);
     grid.material.transparent=true;grid.material.opacity=0.7;scene3.add(grid);
 
     // World centre
