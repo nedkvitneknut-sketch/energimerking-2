@@ -610,7 +610,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       </div>
     </div>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.1</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.2</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -757,6 +757,14 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
             <option value="vindauge">Vindauge</option>
             <option value="dor">Dør</option>
           </select>
+        </div>
+        <div class="irow" id="winBrystRow">
+          <label>Brystningshøgde</label>
+          <div style="display:flex;align-items:center;gap:7px;flex:1">
+            <input type="checkbox" id="winBrystCb" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+            <input type="number" class="big-input" id="winBryst" value="900" min="0" step="10" style="display:none;flex:1">
+            <span id="winBrystUnit" style="display:none;color:var(--text3);font-size:13px">mm · kun 3D</span>
+          </div>
         </div>
         <div class="dbtns">
           <button class="dcancel" id="winCancel">Avbryt</button>
@@ -2424,7 +2432,10 @@ document.getElementById('winOk').onclick=()=>{
   const _typeL=type==='dor'?'Dør':'Vindauge';
   const _autoN=_typeL+' '+(_existW.filter(x=>x.type===type).length+1);
   const _wname=(document.getElementById('winName').value||'').trim()||_autoN;
-  _existW.push({segIdx:pendingWin.segIdx,dir:pendingWin.dir,t0:pendingWin.t0,t1:pendingWin.t1,breddeMm:w,hoyMm:h,antal:n,type,name:_wname});
+  const _brystCb=document.getElementById('winBrystCb');
+  const _brystVal=parseInt(document.getElementById('winBryst').value);
+  const _brystMm=(type!=='dor'&&_brystCb.checked&&!isNaN(_brystVal))?_brystVal:null;
+  _existW.push({segIdx:pendingWin.segIdx,dir:pendingWin.dir,t0:pendingWin.t0,t1:pendingWin.t1,breddeMm:w,hoyMm:h,antal:n,type,name:_wname,brystningMm:_brystMm});
   pendingWin=null;winPts=[];
   winOverlay.classList.remove('show');
   updateResults();renderTable();draw();
@@ -4115,12 +4126,36 @@ function showWindowEditDialog(w,wi,z,zi,fli){
   const antI=mkInput(w.antal,'number');antI.min=1;antI.max=999;antI.step=1;
   const uI=mkInput(w.uVerdi||'','number');uI.min=0;uI.step=0.01;uI.placeholder='standard';
 
+  // Brystningshøgde (berre 3D-modell, ikkje SXI)
+  const hasBrystning=w.brystningMm!=null;
+  const brystCb=document.createElement('input');
+  brystCb.type='checkbox';brystCb.checked=hasBrystning;
+  brystCb.style.cssText='width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0';
+  const brystI=mkInput(w.brystningMm??900,'number');brystI.min=0;brystI.step=10;
+  brystI.style.cssText=`flex:1;padding:6px 10px;font-size:13px;border:1.5px solid var(--border2);border-radius:7px;outline:none;font-family:'DM Mono',monospace;display:${hasBrystning?'block':'none'}`;
+  brystI.onfocus=()=>{brystI.style.borderColor='var(--accent)'};
+  brystI.onblur=()=>{brystI.style.borderColor='var(--border2)'};
+  brystCb.onchange=()=>{brystI.style.display=brystCb.checked?'block':'none';};
+  const brystRow=document.createElement('div');
+  brystRow.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:10px';
+  const brystLbl=document.createElement('label');
+  brystLbl.style.cssText='font-size:12px;color:var(--text3);width:110px;flex-shrink:0;font-weight:500';
+  brystLbl.textContent='Brystning (mm)';
+  const brystNote=document.createElement('span');
+  brystNote.style.cssText='font-size:10px;color:var(--text3);white-space:nowrap';
+  brystNote.textContent='kun 3D';
+  const brystRight=document.createElement('div');
+  brystRight.style.cssText='display:flex;align-items:center;gap:6px;flex:1';
+  brystRight.appendChild(brystCb);brystRight.appendChild(brystI);brystRight.appendChild(brystNote);
+  brystRow.appendChild(brystLbl);brystRow.appendChild(brystRight);
+
   box.innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px">${w.type==='dor'?'🚪':'▭'} Rediger ${typeL}</div>`;
   box.appendChild(mkRow('Namn',nameI));
   box.appendChild(mkRow('Breidde (mm)',brI));
   box.appendChild(mkRow('Høgde (mm)',hoI));
   box.appendChild(mkRow('Antal stk',antI));
   box.appendChild(mkRow('U-verdi W/m²K',uI));
+  if(w.type!=='dor') box.appendChild(brystRow);
 
   const errEl=document.createElement('div');
   errEl.style.cssText='display:none;background:#fef0ef;border:1px solid #f2b8b5;border-radius:7px;padding:8px 12px;font-size:12px;color:#c0302a;margin-bottom:10px';
@@ -4142,6 +4177,10 @@ function showWindowEditDialog(w,wi,z,zi,fli){
     w.name=nameI.value.trim()||typeL;
     w.breddeMm=br;w.hoyMm=ho;w.antal=ant;
     const uv=parseFloat(uI.value);w.uVerdi=isNaN(uv)?undefined:uv;
+    if(w.type!=='dor'){
+      if(brystCb.checked){const bv=parseInt(brystI.value);w.brystningMm=isNaN(bv)?null:bv;}
+      else w.brystningMm=null;
+    }
     dlg.remove();updateResults();renderTable();draw();
   };
 
@@ -4320,8 +4359,21 @@ cv.addEventListener('click',e=>{
       const _tl=_tval==='dor'?'Dør':'Vindauge';
       const _cnt=((_zt.windows||[]).filter(x=>x.type===_tval).length)+1;
       document.getElementById('winName').value=_tl+' '+_cnt;
+      // Skjul brystningshøgde for dør
+      const _brystRow=document.getElementById('winBrystRow');
+      _brystRow.style.display=_tval==='dor'?'none':'';
     };
     setAutoName();
+    // Checkbox og inputfelt for brystningshøgde
+    const _brystCb=document.getElementById('winBrystCb');
+    const _brystI=document.getElementById('winBryst');
+    const _brystUnit=document.getElementById('winBrystUnit');
+    _brystCb.checked=false;_brystI.style.display='none';_brystUnit.style.display='none';
+    _brystCb.onclick=()=>{
+      _brystI.style.display=_brystCb.checked?'':'none';
+      _brystUnit.style.display=_brystCb.checked?'':'none';
+      if(_brystCb.checked) setTimeout(()=>_brystI.focus(),10);
+    };
     document.getElementById('winType').onchange=setAutoName;
     winOverlay.classList.add('show');
     winPts=[];draw();
@@ -6573,8 +6625,9 @@ let renderer3=null,scene3=null,camera3=null; // global — trengst for tema-togg
           segWins.forEach(w=>{
             expandWindows(w,segLen).forEach(ew=>{
               const isDoor=ew.type==='dor';
-              const sillH=isDoor?0:0.9;
               const openH=ew.hoyMm/1000;
+              // Brystning: manuell (brystningMm) → midtstilt → 0 for dør
+              const sillH=isDoor?0:(ew.brystningMm!=null?ew.brystningMm/1000:Math.max(0,(fh-openH)/2));
               const openW=ew.breddeMm/1000; // alltid frå breddeMm, ikkje t1-t0
               const openCentreT=(ew.t0+ew.t1)/2;
               const ocx=p1.x+dx*openCentreT,ocz=p1.z+dz*openCentreT;
@@ -7263,7 +7316,7 @@ function printFasadeView(){
           expandWindows(w,segLenM).forEach(ew=>{
             const isDoor=ew.type==='dor';
             const wH=ew.hoyMm/1000;
-            const sillH=isDoor?0:0.9;
+            const sillH=isDoor?0:(ew.brystningMm!=null?ew.brystningMm/1000:Math.max(0,(flH-wH)/2));
             const tL=ew.t0, tR=ew.t1;
             // Lag 4 hjørner: ytste side av veggen, mellom tL og tR
             function wPt(t){
