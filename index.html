@@ -578,6 +578,9 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       <button class="btn" id="measureBtn" title="Kontrollmål avstand (påverkar ikkje SXI) — klikk start og slutt, Esc for å avslutte">📐 Mål</button>
     </div>
     <div class="tg">
+      <button class="btn" id="mergeBtn" title="Slå saman fasadar — kombiner fasadar med same himmelretning til eitt element i SXI-eksporten">⊞ Slå saman fasadar</button>
+    </div>
+    <div class="tg">
       <button class="btn" id="undoBtn" title="Angre (Ctrl+Z)" style="opacity:.4" disabled>↩</button>
       <button class="btn" id="redoBtn" title="Gjere om (Ctrl+Y / Ctrl+Shift+Z)" style="opacity:.4" disabled>↪</button>
       <button class="btn red" id="clrBtn" title="Slett alle soner og bilete på aktiv etasje">× Slett alt</button>
@@ -769,6 +772,48 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
         <div class="dbtns">
           <button class="dcancel" id="winCancel">Avbryt</button>
           <button class="dok" id="winOk">Legg til ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Merge facades dialog -->
+    <div class="dialog-overlay" id="mergeOverlay">
+      <div class="dialog" style="width:460px;max-height:80vh;display:flex;flex-direction:column">
+        <h3>⊞ Slå saman fasadar</h3>
+        <div style="overflow-y:auto;flex:1">
+          <div class="irow" style="margin-bottom:10px">
+            <label style="white-space:nowrap">Sone</label>
+            <select class="big-input" id="mergeZoneSel" style="flex:1;font-size:13px;padding:6px 8px"></select>
+          </div>
+          <div id="mergeExisting" style="margin-bottom:4px"></div>
+          <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Ny gruppe</div>
+            <div style="display:flex;gap:18px;margin-bottom:10px;font-size:12.5px">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer">
+                <input type="radio" name="mergeMode" id="mergeAutoRad" value="auto" checked> Automatisk
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer">
+                <input type="radio" name="mergeMode" id="mergeManualRad" value="manual"> Manuelt
+              </label>
+            </div>
+            <div id="mergeAutoSection">
+              <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Slår saman alle fasadar med same himmelretning (Nord, Sør osv.) til éitt element kvar.</p>
+              <button class="dok" id="mergeDoAuto" style="width:100%">Slå saman automatisk</button>
+            </div>
+            <div id="mergeManualSection" style="display:none">
+              <p style="font-size:12px;color:var(--text2);margin-bottom:6px">Vel fasadar som skal slåast saman:</p>
+              <div id="mergeFacadeList" style="display:flex;flex-direction:column;gap:2px;max-height:190px;overflow-y:auto;padding:5px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px"></div>
+              <div id="mergeWarning" style="display:none;padding:6px 8px;background:#fef3c7;border:1px solid #d97706;border-radius:5px;font-size:11.5px;color:#92400e;margin-bottom:8px"></div>
+              <div class="irow">
+                <label style="white-space:nowrap">Gruppenamn</label>
+                <input type="text" class="big-input" id="mergeGroupName" placeholder="t.d. Nord" style="flex:1">
+              </div>
+              <button class="dok" id="mergeDoManual" style="width:100%;margin-top:6px">+ Legg til gruppe</button>
+            </div>
+          </div>
+        </div>
+        <div class="dbtns" style="margin-top:12px;flex-shrink:0">
+          <button class="dcancel" id="mergeDone">Ferdig</button>
         </div>
       </div>
     </div>
@@ -1213,7 +1258,7 @@ function calcSegments(pts,fhM){
     const normalAz=((normalAngle-nd+90)%360+360)%360;
     const dirIdx=Math.round(normalAz/45)%8;
     const dir=DIRS[dirIdx>=0&&dirIdx<8?dirIdx:0];
-    return{idx:i,dir,lenM,lenPx,areaM2,midImgX:(p1.x+p2.x)/2,midImgY:(p1.y+p2.y)/2,wallAngle,p1,p2};
+    return{idx:i,dir,normalAz,lenM,lenPx,areaM2,midImgX:(p1.x+p2.x)/2,midImgY:(p1.y+p2.y)/2,wallAngle,p1,p2};
   });
 }
 function fmtM2(v){return v.toFixed(2)+' m²';}
@@ -1269,6 +1314,21 @@ function getSkAdjacentGroups(z, segs){
     }
   }
   return groups;
+}
+
+// ── YV-fasadesamanslåing ─────────────────────────────────────
+function circularMeanAz(azimuths){
+  if(!azimuths.length)return 0;
+  const sinSum=azimuths.reduce((s,a)=>s+Math.sin(a*Math.PI/180),0);
+  const cosSum=azimuths.reduce((s,a)=>s+Math.cos(a*Math.PI/180),0);
+  return((Math.atan2(sinSum,cosSum)*180/Math.PI)+360)%360;
+}
+function getYvDirectionGroups(z,segs){
+  if(!segs)return[];
+  const sk=z.skillevegg||new Set();
+  const byDir={};
+  segs.forEach(s=>{if(!sk.has(s.idx)){if(!byDir[s.dir])byDir[s.dir]=[];byDir[s.dir].push(s);}});
+  return Object.values(byDir).filter(g=>g.length>1);
 }
 
 // ── Standardverdiar ─────────────────────────────────────────
@@ -1453,6 +1513,157 @@ measureBtn.onclick=()=>{
   if(!mmPerImgPx){hintText.textContent='Kalibrer skalaen først for å måle avstandar.';return;}
   setMode('measure');measurePts=[];draw();
 };
+// ── Slå saman fasadar — dialog ────────────────────────────────
+const mergeBtn=document.getElementById('mergeBtn');
+const mergeOverlay=document.getElementById('mergeOverlay');
+
+function buildMergeDialog(){
+  const sel=document.getElementById('mergeZoneSel');
+  sel.innerHTML='';
+  // Aktiv etasje først, så resten
+  const orderedFloors=[activeFloor,...floors.map((_,i)=>i).filter(i=>i!==activeFloor)];
+  let defaultVal=null;
+  orderedFloors.forEach(fi=>{
+    const fl=floors[fi];
+    if(!fl)return;
+    fl.zones.forEach((z,zi)=>{
+      const opt=document.createElement('option');
+      opt.value=fi+','+zi;
+      opt.textContent=z.name+(floors.length>1?' ('+fl.name+')':'');
+      sel.appendChild(opt);
+      if(defaultVal===null)defaultVal=fi+','+zi;
+    });
+  });
+  if(defaultVal)sel.value=defaultVal;
+  sel.onchange=renderMergeForZone;
+  document.getElementById('mergeAutoRad').onchange=updateMergeModeUI;
+  document.getElementById('mergeManualRad').onchange=updateMergeModeUI;
+  renderMergeForZone();
+}
+
+function updateMergeModeUI(){
+  const isAuto=document.getElementById('mergeAutoRad').checked;
+  document.getElementById('mergeAutoSection').style.display=isAuto?'':'none';
+  document.getElementById('mergeManualSection').style.display=isAuto?'none':'';
+}
+
+function renderMergeForZone(){
+  const val=document.getElementById('mergeZoneSel').value;
+  if(!val)return;
+  const [fi,zi]=val.split(',').map(Number);
+  const z=floors[fi]?.zones[zi];
+  if(!z)return;
+  if(!z.yvMergedGroups)z.yvMergedGroups=[];
+  const segs=calcSegments(z.pts,getHoyde(z));
+  const sk=z.skillevegg||new Set();
+
+  // Eksisterande grupper
+  const existDiv=document.getElementById('mergeExisting');
+  existDiv.innerHTML='';
+  if(z.yvMergedGroups.length){
+    const hdr=document.createElement('div');
+    hdr.style.cssText='font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px';
+    hdr.textContent='Samanslåtte grupper';
+    existDiv.appendChild(hdr);
+    z.yvMergedGroups.forEach((g,gi)=>{
+      const grpSegs=segs?segs.filter(s=>g.segs.includes(s.idx)):[];
+      const totalA=grpSegs.reduce((s,s2)=>s+(s2.areaM2||0),0);
+      const winA=grpSegs.reduce((s,s2)=>(z.windows||[]).filter(w=>w.segIdx===s2.idx).reduce((ss,w)=>ss+(w.breddeMm/1000)*(w.hoyMm/1000)*w.antal,s),0);
+      const netA=mmPerImgPx?(totalA-winA):null;
+      const meanAz=grpSegs.length?Math.round(circularMeanAz(grpSegs.map(s=>s.normalAz))):null;
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;background:#dbeafe;border:1px solid #3b82f6;border-radius:6px;margin-bottom:4px';
+      const lbl=document.createElement('span');lbl.style.cssText='font-size:12px;font-weight:700;color:#1e40af;flex:1';
+      lbl.textContent=g.name+' — '+g.segs.length+' fasadar'+(netA!=null?' · '+fmtM2(netA):'')+(meanAz!=null?' · '+meanAz+'°':'');
+      const rmBtn=document.createElement('button');
+      rmBtn.style.cssText='font-size:11px;padding:2px 8px;border:1px solid #3b82f6;border-radius:4px;background:#fff;color:#1e40af;cursor:pointer;font-family:inherit;white-space:nowrap';
+      rmBtn.textContent='× Fjern';
+      rmBtn.onclick=()=>{z.yvMergedGroups.splice(gi,1);renderMergeForZone();updateResults();renderTable();draw();};
+      row.appendChild(lbl);row.appendChild(rmBtn);
+      existDiv.appendChild(row);
+    });
+  }
+
+  // Auto-samanslå
+  document.getElementById('mergeDoAuto').onclick=()=>{
+    if(!segs)return;
+    const alreadyMerged=new Set(z.yvMergedGroups.flatMap(g=>g.segs));
+    getYvDirectionGroups(z,segs).forEach(grp=>{
+      const available=grp.filter(s=>!alreadyMerged.has(s.idx));
+      if(available.length<2)return;
+      const key=available.map(s=>s.idx).sort((a,b)=>a-b).join(',');
+      if(!z.yvMergedGroups.find(g=>g.segs.slice().sort((a,b)=>a-b).join(',')===key)){
+        z.yvMergedGroups.push({segs:available.map(s=>s.idx),name:grp[0].dir});
+        available.forEach(s=>alreadyMerged.add(s.idx));
+      }
+    });
+    renderMergeForZone();updateResults();renderTable();draw();
+  };
+
+  // Manuel fasadeliste
+  const listDiv=document.getElementById('mergeFacadeList');
+  listDiv.innerHTML='';
+  const alreadyMergedIdx=new Set(z.yvMergedGroups.flatMap(g=>g.segs));
+  const labels=segs?getFacadeLabels(z,segs):[];
+  if(segs){
+    segs.forEach((seg,si)=>{
+      if(sk.has(seg.idx)||alreadyMergedIdx.has(seg.idx))return;
+      const nm=labels[si];
+      const lbl=document.createElement('label');
+      lbl.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px;user-select:none';
+      lbl.onmouseenter=()=>{lbl.style.background='var(--surface2)';};
+      lbl.onmouseleave=()=>{lbl.style.background='';};
+      const cb=document.createElement('input');cb.type='checkbox';cb.dataset.segIdx=seg.idx;cb.dataset.dir=seg.dir;
+      cb.style.cssText='accent-color:var(--accent);cursor:pointer;width:14px;height:14px;flex-shrink:0';
+      cb.onchange=updateMergeWarning;
+      const txt=document.createElement('span');
+      txt.innerHTML='<span style="font-weight:700;color:var(--accent)">'+nm+'</span>'+(seg.areaM2!=null?' <span style="color:#6b7280">'+fmtM2(seg.areaM2)+'</span>':'');
+      lbl.appendChild(cb);lbl.appendChild(txt);
+      listDiv.appendChild(lbl);
+    });
+  }
+  if(!listDiv.children.length){
+    listDiv.innerHTML='<span style="font-size:12px;color:var(--text3);padding:4px">Ingen usamanslåtte YV-fasadar</span>';
+  }
+  updateMergeWarning();
+
+  document.getElementById('mergeDoManual').onclick=()=>{
+    const checked=[...listDiv.querySelectorAll('input[type=checkbox]:checked')];
+    if(checked.length<2){alert('Vel minst 2 fasadar.');return;}
+    const segIdxs=checked.map(c=>parseInt(c.dataset.segIdx));
+    const dirs=[...new Set(checked.map(c=>c.dataset.dir))];
+    const nameInput=document.getElementById('mergeGroupName');
+    const name=nameInput.value.trim()||dirs[0];
+    const key=segIdxs.slice().sort((a,b)=>a-b).join(',');
+    if(!z.yvMergedGroups.find(g=>g.segs.slice().sort((a,b)=>a-b).join(',')===key)){
+      z.yvMergedGroups.push({segs:segIdxs,name});
+    }
+    nameInput.value='';
+    renderMergeForZone();updateResults();renderTable();draw();
+  };
+
+  updateMergeModeUI();
+}
+
+function updateMergeWarning(){
+  const listDiv=document.getElementById('mergeFacadeList');
+  const dirs=[...new Set([...listDiv.querySelectorAll('input:checked')].map(c=>c.dataset.dir))];
+  const warn=document.getElementById('mergeWarning');
+  if(dirs.length>1){
+    warn.style.display='block';
+    warn.textContent='⚠ Åtvaring: fasadane har ulik himmelretning ('+dirs.join(', ')+').';
+  } else {
+    warn.style.display='none';
+  }
+}
+
+mergeBtn.onclick=()=>{
+  buildMergeDialog();
+  mergeOverlay.classList.add('show');
+};
+document.getElementById('mergeDone').onclick=()=>mergeOverlay.classList.remove('show');
+mergeOverlay.addEventListener('click',e=>{if(e.target===mergeOverlay)mergeOverlay.classList.remove('show');});
+
 // ── Angre-historikk (Ctrl+Z) ──────────────────────────────────
 const MAX_HISTORY=50;
 const history=[];
@@ -1818,10 +2029,12 @@ function draw(){
     ctx.closePath();ctx.fillStyle=FILLS[ci];ctx.fill();
     const isEditing=mode==='edit'&&editZoneIdx===zi;
     const sk_set=z.skillevegg||new Set();
+    const yvMerged_set=new Set((z.yvMergedGroups||[]).flatMap(g=>g.segs));
     for(let si=0;si<z.pts.length;si++){
       const sp1=i2s(z.pts[si].x,z.pts[si].y);
       const sp2=i2s(z.pts[(si+1)%z.pts.length].x,z.pts[(si+1)%z.pts.length].y);
       const segIsSK=sk_set.has(si);
+      const segIsYvMerged=!segIsSK&&yvMerged_set.has(si);
       ctx.beginPath();ctx.moveTo(sp1.x,sp1.y);ctx.lineTo(sp2.x,sp2.y);
       if(segIsSK){
         ctx.strokeStyle='#d97706';ctx.lineWidth=isEditing?3:2.5;ctx.setLineDash([7,4]);
@@ -1829,6 +2042,12 @@ function draw(){
         ctx.strokeStyle=isEditing?COLORS[ci]:COLORS[ci]+'bb';ctx.lineWidth=isEditing?2.5:1.5;ctx.setLineDash([]);
       }
       ctx.stroke();
+      if(segIsYvMerged){
+        ctx.beginPath();ctx.moveTo(sp1.x,sp1.y);ctx.lineTo(sp2.x,sp2.y);
+        ctx.strokeStyle='rgba(10,85,73,0.55)';ctx.lineWidth=isEditing?5:3.5;ctx.setLineDash([4,4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
     ctx.setLineDash([]);
 
@@ -1887,8 +2106,10 @@ function draw(){
       if(segs){
         const labels=getFacadeLabels(z,segs);
         const sk=z.skillevegg||new Set();
+        const yvMergedSet=new Set((z.yvMergedGroups||[]).flatMap(g=>g.segs));
         segs.forEach((seg,si)=>{
           const isSK2=sk.has(seg.idx);
+          const isMergedYv=!isSK2&&yvMergedSet.has(seg.idx);
           const nm=labels[si];
           const mp=i2s(seg.midImgX,seg.midImgY);
           const dx=seg.midImgX-cxI,dy=seg.midImgY-cyI;
@@ -1896,13 +2117,15 @@ function draw(){
           const nx=mp.x+dx/dlen*16,ny=mp.y+dy/dlen*16;
           const wins=(z.windows||[]).filter(w=>w.segIdx===seg.idx);
           const winNote=wins.length?` [${wins.length}×▭]`:'';
+          const labelTxt=(isMergedYv?'⊞ ':'')+nm+winNote;
           ctx.font='bold 9px Inter,sans-serif';
-          const tw=ctx.measureText(nm+winNote).width+10;
-          ctx.fillStyle=isSK2?'#fef3c7':'rgba(255,255,255,.88)';
+          const tw=ctx.measureText(labelTxt).width+10;
+          ctx.fillStyle=isSK2?'#fef3c7':isMergedYv?'#dbeafe':'rgba(255,255,255,.88)';
           ctx.beginPath();ctx.roundRect(nx-tw/2,ny-9,tw,17,3);ctx.fill();
           if(isSK2){ctx.strokeStyle='#d97706';ctx.lineWidth=1;ctx.stroke();}
-          ctx.fillStyle=isSK2?'#92400e':COLORS[ci];ctx.textAlign='center';ctx.textBaseline='middle';
-          ctx.fillText(nm+winNote,nx,ny);
+          else if(isMergedYv){ctx.strokeStyle='#3b82f6';ctx.lineWidth=1;ctx.stroke();}
+          ctx.fillStyle=isSK2?'#92400e':isMergedYv?'#1e40af':COLORS[ci];ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(labelTxt,nx,ny);
         });
       }
     }
@@ -2800,6 +3023,7 @@ function updateResults(){
 
         if(!z.skillevegg)z.skillevegg=new Set();
         if(!z.skMergedGroups)z.skMergedGroups=[];
+        if(!z.yvMergedGroups)z.yvMergedGroups=[];
         const labels2=getFacadeLabels(z,segs);
 
         // Finn nabo-grupper av SK
@@ -2813,7 +3037,7 @@ function updateResults(){
           return -1;
         };
 
-        // Er ei gruppe slått saman?
+        // Er ei SK-gruppe slått saman?
         const groupKey=(gi)=>skGroups[gi].map(s=>s.idx).sort().join(',');
         const getMergedGroup=(gi)=>{
           if(!z.skMergedGroups||gi<0||gi>=skGroups.length)return null;
@@ -2827,7 +3051,6 @@ function updateResults(){
           const existingIdx=z.skMergedGroups.findIndex(g=>g.segs.slice().sort().join(',')===key);
           if(existingIdx>=0){
             z.skMergedGroups.splice(existingIdx,1);
-            // Renummer gjenverande grupper
             z.skMergedGroups.forEach((g,i)=>{g.name='SK '+(i+1);});
           } else {
             const nextN=z.skMergedGroups.length+1;
@@ -2836,7 +3059,21 @@ function updateResults(){
           updateResults();renderTable();
         };
 
+        // YV-samanslåing
+        const getYvMergedGroup=segIdx=>(z.yvMergedGroups||[]).find(g=>g.segs.includes(segIdx))||null;
+        const yvGroupKey=g=>g.segs.slice().sort((a,b)=>a-b).join(',');
+        const toggleYvMerge=(dir,dirSegObjs)=>{
+          if(!z.yvMergedGroups)z.yvMergedGroups=[];
+          const newSegs=dirSegObjs.map(s=>s.idx);
+          const key=newSegs.slice().sort((a,b)=>a-b).join(',');
+          const existingIdx=z.yvMergedGroups.findIndex(g=>g.segs.slice().sort((a,b)=>a-b).join(',')===key);
+          if(existingIdx>=0){z.yvMergedGroups.splice(existingIdx,1);}
+          else{z.yvMergedGroups.push({segs:newSegs,name:dir});}
+          updateResults();renderTable();
+        };
+
         const shownMergedGroups=new Set();
+        const shownMergedYvGroups=new Set();
         segs.forEach((seg,si)=>{
           const isSK=z.skillevegg.has(seg.idx);
           const nm=labels2[si];
@@ -2864,6 +3101,37 @@ function updateResults(){
             row.appendChild(nameTag);row.appendChild(statsSpan);row.appendChild(unmergeBtn);
             facSection.appendChild(row);
             return;
+          }
+
+          // Viss YV-fasade er slått saman med same himmelretning — vis berre éin rad
+          if(!isSK){
+            const yvMerged=getYvMergedGroup(seg.idx);
+            if(yvMerged){
+              const gk=yvGroupKey(yvMerged);
+              if(shownMergedYvGroups.has(gk))return;
+              shownMergedYvGroups.add(gk);
+              const grpSegs=segs.filter(s=>yvMerged.segs.includes(s.idx));
+              const totalLenM=grpSegs.reduce((s,s2)=>s+(s2.lenM||0),0);
+              const totalGrossA=grpSegs.reduce((s,s2)=>s+(s2.areaM2||0),0);
+              const winA=grpSegs.reduce((s,s2)=>{
+                return s+(z.windows||[]).filter(w=>w.segIdx===s2.idx).reduce((ss,w)=>ss+(w.breddeMm/1000)*(w.hoyMm/1000)*w.antal,0);
+              },0);
+              const netA=mmPerImgPx?(totalGrossA-winA):null;
+              const meanAz=Math.round(circularMeanAz(grpSegs.map(s=>s.normalAz)));
+              const row=document.createElement('div');
+              row.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 8px;margin:2px 0;border-radius:6px;background:#dbeafe;border:1px solid #3b82f6';
+              const nameTag=document.createElement('span');nameTag.style.cssText='font-size:11px;font-weight:700;color:#1e40af;white-space:nowrap';
+              nameTag.textContent=yvMerged.name;
+              const statsSpan=document.createElement('span');statsSpan.style.cssText="font-size:10.5px;color:#6b7280;font-family:'DM Mono',monospace;flex:1";
+              statsSpan.textContent=`${grpSegs.length} fasadar · ${mmPerImgPx?fmtM(totalLenM):'—'} · ${mmPerImgPx&&netA!=null?fmtM2(netA>0?netA:totalGrossA):'—'} · ${meanAz}°`;
+              const unmergeBtn=document.createElement('button');
+              unmergeBtn.style.cssText='font-size:10px;padding:2px 6px;border:1px solid #3b82f6;border-radius:4px;background:#fff;color:#1e40af;cursor:pointer;font-family:inherit;white-space:nowrap';
+              unmergeBtn.textContent='Del opp';
+              unmergeBtn.onclick=()=>toggleYvMerge(yvMerged.name,grpSegs);
+              row.appendChild(nameTag);row.appendChild(statsSpan);row.appendChild(unmergeBtn);
+              facSection.appendChild(row);
+              return;
+            }
           }
 
           const wins=(z.windows||[]).filter(w=>w.segIdx===seg.idx);
@@ -2902,10 +3170,11 @@ function updateResults(){
             if(!z.skillevegg)z.skillevegg=new Set();
             if(isSK){
               z.skillevegg.delete(seg.idx);
-              // Rydd opp skMergedGroups — fjern grupper som ikkje lenger er SK
               if(z.skMergedGroups)z.skMergedGroups=z.skMergedGroups.filter(g=>g.segs.every(idx=>z.skillevegg.has(idx)));
             } else {
               z.skillevegg.add(seg.idx);
+              // Fjern frå YV-samanslåingsgrupper når fasaden vert SK
+              if(z.yvMergedGroups)z.yvMergedGroups=z.yvMergedGroups.filter(g=>!g.segs.includes(seg.idx));
             }
             updateResults();renderTable();draw();
           };
@@ -6008,6 +6277,7 @@ function buildSXI(proj){
       // Finn slåtte-saman SK-nabo-grupper for SXI
       const sxiSkGroups=getSkAdjacentGroups(lz,segs);
       const sxiMergedGroupsShown=new Set();
+      const sxiYvShown=new Set();
 
       segs.forEach((seg,si)=>{
         const isSK=sk.has(seg.idx);
@@ -6039,6 +6309,42 @@ function buildSXI(proj){
             facXml+=`    <partition id="${iwId}" name="${nm}${flSuffix}" comment="" area="${grossA.toFixed(2)}" uvalue="${uSK}" thermal_cap="2.40" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
           }
         } else {
+          // Sjekk om denne YV-fasaden er slått saman med andre av same himmelretning
+          const yvMergedGroup=(lz.yvMergedGroups||[]).find(g=>g.segs.includes(seg.idx));
+          if(yvMergedGroup){
+            const yvKey=yvMergedGroup.segs.slice().sort((a,b)=>a-b).join(',');
+            if(sxiYvShown.has(yvKey))return;
+            sxiYvShown.add(yvKey);
+            const grpSegs=segs.filter(s=>yvMergedGroup.segs.includes(s.idx));
+            const totalGrossA=grpSegs.reduce((sum,gs)=>{
+              const gov=lz.segOverrides?.[gs.idx]||{};
+              return sum+(gov.areaM2??gs.areaM2??((gov.lenM??gs.lenM??0)*fhM)??0);
+            },0);
+            const meanAz=Math.round(circularMeanAz(grpSegs.map(s=>s.normalAz)));
+            const effectiveU=lz.uPerSeg?.['seg_'+seg.idx]??uVegg;
+            let openingsXml='';
+            grpSegs.forEach(gs=>{
+              (lz.windows||[]).filter(w=>w.segIdx===gs.idx).forEach(w=>{
+                const uW=w.type==='dor'?(w.uVerdi??lz.uDor??uDor):(w.uVerdi??lz.uVindu??uVindu);
+                const wName=(w.name||(w.type==='dor'?'Dør':'Vindauge'))+flSuffix;
+                if(w.type==='dor'){
+                  const dId=nextId('door');
+                  const dH=Math.max(0.1,(w.hoyMm||2100)/1000);
+                  const dW=Math.max(0.1,(w.breddeMm||900)/1000);
+                  const dArea=(dW*dH*(w.antal||1)).toFixed(2);
+                  openingsXml+=`      <door uvalue="${uW}" area="${dArea}" type="Standardvalg" gate="no" id="${dId}" name="${wName}" comment=""></door>\n`;
+                } else {
+                  const wId=nextId('window');
+                  const wH=Math.max(0.1,(w.hoyMm||1200)/1000).toFixed(3);
+                  const wW=Math.max(0.1,(w.breddeMm||1200)/1000).toFixed(3);
+                  openingsXml+=`      <window id="${wId}" name="${wName}" comment="" number="${w.antal||1}" height="${wH}" width="${wW}" given_frame_width="no" frame_width="0.08" frame_factor="0.20" total_uvalue="yes" uvalue="${uW}" window_type="Standardvalg" uvalue_pane="0.80" uvalue_frame="1.00" thermal_bridge_frame="0.10" pane_type="Standardvalg" frame_type="Standardvalg" spacer_type="Standardvalg" shading_type="konstant" const_solar_factor="0.50" const_sun_shading="Standardvalg" var_solar_factor="0.51" var_solar_factor_shaded="0.06" auto_shading="no" auto_shading_flux="100.00" var_sun_shading="Standardvalg" overhang="no" depth_overhang="1.20" distance_overhang="0.60" vert_extension_left="no" depth_extension_left="1.20" distance_extension_left="1.00" vert_extension_right="no" depth_extension_right="1.20" distance_extension_right="1.00" direction="${meanAz}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></window>\n`;
+                }
+              });
+            });
+            const faceId=nextId('facade');
+            facXml+=`    <facade id="${faceId}" name="${yvMergedGroup.name+flSuffix}" comment="" area="${totalGrossA.toFixed(2)}" uvalue="${effectiveU}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${meanAz}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0">\n${openingsXml}    </facade>\n`;
+            return;
+          }
           const effectiveU=lz.uPerSeg?.['seg_'+seg.idx]??uVegg;
           const faceId=nextId('facade');
           const dirDeg=seg.dir==='Nord'?0:seg.dir==='Nordøst'?45:seg.dir==='Øst'?90:seg.dir==='Sørøst'?135:seg.dir==='Sør'?180:seg.dir==='Sørvest'?225:seg.dir==='Vest'?270:315;
