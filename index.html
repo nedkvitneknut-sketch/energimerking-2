@@ -610,7 +610,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       </div>
     </div>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.2</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.3</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -6032,11 +6032,11 @@ function buildSXI(proj){
             const uSK=lz.uPerSeg?.['seg_'+seg.idx]??0.80;
             const iwId=nextId('partition');
             const grpName=(isMergedEntry?.name||'Skillekonstruksjon')+flSuffix;
-            facXml+=`    <partition id="${iwId}" name="${grpName}" comment="" area="${totalGrossA.toFixed(2)}" uvalue="${uSK}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+            facXml+=`    <partition id="${iwId}" name="${grpName}" comment="" area="${totalGrossA.toFixed(2)}" uvalue="${uSK}" thermal_cap="2.40" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
           } else {
             const uSK=lz.uPerSeg?.['seg_'+seg.idx]??0.80;
             const iwId=nextId('partition');
-            facXml+=`    <partition id="${iwId}" name="${nm}${flSuffix}" comment="" area="${grossA.toFixed(2)}" uvalue="${uSK}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+            facXml+=`    <partition id="${iwId}" name="${nm}${flSuffix}" comment="" area="${grossA.toFixed(2)}" uvalue="${uSK}" thermal_cap="2.40" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
           }
         } else {
           const effectiveU=lz.uPerSeg?.['seg_'+seg.idx]??uVegg;
@@ -6074,17 +6074,18 @@ function buildSXI(proj){
       const a=getAreaM2(lz);
       const aStr=(a??0).toFixed(2);
       const perim=getUtvOmkrets(lz)??getPerimM(lz)??0;
-      const thisTakId=nextId('roof');
-      const thisGulvId=nextId('floor');
       const flSuf2=instances.length>1?' ('+zoneFloorName.get(lz)+')':'';
 
       // ── TAK ──────────────────────────────────────────────────
       if(takType==='Himling mot uoppvarma sone'){
-        takXml+=`    <partition id="${thisTakId}" name="Himling mot uoppvarma sone${flSuf2}" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="himling" facing="unheated_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="Uklimatisert loftsrom eller kaldt luftet loft" heat_loss_coeff="0.93" zone_temperature="5.0"></partition>\n`;
+        const thisTakId=nextId('partition');
+        takXml+=`    <partition id="${thisTakId}" name="Himling mot uoppvarma sone${flSuf2}" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="2.40" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="himling" facing="unheated_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="Uklimatisert loftsrom eller kaldt luftet loft" heat_loss_coeff="0.93" zone_temperature="5.0"></partition>\n`;
       } else if(takType==='Himling mot varm sone'){
-        takXml+=`    <partition id="${thisTakId}" name="Himling mot varm sone${flSuf2}" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="vegg" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+        const thisTakId=nextId('partition');
+        takXml+=`    <partition id="${thisTakId}" name="Himling mot varm sone${flSuf2}" comment="" area="${aStr}" uvalue="${uTak}" thermal_cap="2.40" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="himling" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
       } else {
         // Standard tak mot det fri — bruk skrått areal og takvinkel
+        const thisTakId=nextId('roof');
         const tvDeg=getTakvinkel(lz);
         const skraaA=getTakAreal(lz);
         const takArealStr=(skraaA??0).toFixed(2);
@@ -6094,11 +6095,14 @@ function buildSXI(proj){
 
       // ── GULV ─────────────────────────────────────────────────
       if(gulvType==='Gulv mot uoppvarma sone'){
-        gulvXml+=`    <partition id="${thisGulvId}" name="Gulv mot uoppvarma sone${flSuf2}" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="63.00" construction="Standardvalg" internal_layer="Standardvalg" type="gulv" facing="unheated_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="Kald luftet kjeller eller parkeringskjeller" heat_loss_coeff="0.91" zone_temperature="5.0"></partition>\n`;
+        const thisGulvId=nextId('partition');
+        gulvXml+=`    <partition id="${thisGulvId}" name="Gulv mot uoppvarma sone${flSuf2}" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="63.00" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="gulv" facing="unheated_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="Kald luftet kjeller eller parkeringskjeller" heat_loss_coeff="0.91" zone_temperature="5.0"></partition>\n`;
       } else if(gulvType==='Gulv mot oppvarma sone'){
-        gulvXml+=`    <partition id="${thisGulvId}" name="Gulv mot oppvarma sone${flSuf2}" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="2.40" construction="Standardvalg" internal_layer="Standardvalg" type="gulv" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
+        const thisGulvId=nextId('partition');
+        gulvXml+=`    <partition id="${thisGulvId}" name="Gulv mot oppvarma sone${flSuf2}" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="2.40" construction="Betongvegg, 150 mm" internal_layer="Gips 13 mm" type="gulv" facing="same_temp_zone" summer_temp="25.0" winter_temp="21.0" summer_humidity="60.0" winter_humidity="40.0" co2="600" air_exchange="0" unheated_zone="" heat_loss_coeff="0.95" zone_temperature="5.0"></partition>\n`;
       } else {
         // Gulv på grunn (standard)
+        const thisGulvId=nextId('floor');
         gulvXml+=`    <floor id="${thisGulvId}" name="Gulv på grunn${flSuf2}" comment="" area="${aStr}" uvalue="${uGulv}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" floor_type="grunn" perimeter="${perim.toFixed(2)}" foundation="0.30" ground_condition="Standardvalg" ground_thermal_cond="1.50" ground_thermal_cap="556.00" edge_insulation="yes" edge_insulation_type="vertikal" edge_insulation_depth="0.60" edge_insulation_thickness="5.00" edge_insulation_product="Standardvalg" edge_insulation_lambda="0.037" unheated_zone="" heat_loss_coeff="0.95"></floor>\n`;
       }
     });
@@ -6161,7 +6165,7 @@ ${incl}
   }).join('\n');
 
   const sxi=`<?xml version="1.0" encoding="utf-8"?>
-<simien_project id="project#1" name="${prosjektnamn}" comment="" person="Knut H. Nedkvitne" user="Knut Nedkvitne" company="Entro AS" version="8.0.34.3">
+<simien_project id="project#1" name="${prosjektnamn}" comment="" person="Knut H. Nedkvitne" user="Knut Nedkvitne" company="Entro AS" version="8.1.0.15">
 ${klimaBlock(k,klimasted)}
   <input_documentation25></input_documentation25>
   <global_vars conv_share_lighting_gain="0.30" conv_share_equipment_gain="0.50" conv_share_person_gain="0.50" conv_share_solar_gain="0.50" heat_gain_pr_person="95" conv_thermal_transfer_coeff_wall="2.50" conv_thermal_transfer_coeff_ceiling="2.00" conv_thermal_transfer_coeff_floor="3.00" thermal_cond_acc_layer="20.00" bypass_cooling_coil="0.25" int_res_window_pane="0.13" air_velocity="0.15" distance_from_window="0.60" turbulence_intensity="25.00" el_energy_cost="1.50" export_energy_cost="1.00" el_co2_emission="130.00" min_cold_water_temp="6.00" max_cold_water_temp="13.00" transmissivity_jan="0.88" transmissivity_jul="0.71" co2_consentration="400.00" el_price="constant" primary_energy_factor_el="1.00" primary_energy_factor_bio_gas="0.45" primary_energy_factor_bio_solid="0.45" primary_energy_factor_district_heating="0.45" primary_energy_factor_district_cooling="0.45" primary_energy_factor_other="1.00" power_tariff="no" primary_energy_factor_fossil_oil="1.00" primary_energy_factor_fossil_gas="1.00" primary_energy_factor_fossil_solid="1.00" primary_energy_factor_bio_oil="0.45" weight_factor_el="1.00" weight_factor_fossil_oil="1.00" weight_factor_fossil_gas="1.00" weight_factor_fossil_solid="1.00" weight_factor_bio_oil="0.45" weight_factor_bio_gas="0.45" weight_factor_bio_solid="0.45" weight_factor_district_heating="0.45" weight_factor_district_cooling="0.45" weight_factor_other="1.00" weight_factor_el_export="0.00" el_export_co2_emission="65.00" primary_energy_factor_el_export="0.00">
