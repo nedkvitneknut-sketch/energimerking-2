@@ -613,7 +613,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       </div>
     </div>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.7</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.2.0</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -8809,9 +8809,11 @@ function printFasadeView(){
   });
 
   // ── Nord-synkronisering ───────────────────────────────────────
+  const _lumonTrack=window._trackNorthRotation;
   window._trackNorthRotation=function(deg){
     const el=document.getElementById('mapNordDeg');if(el)el.textContent=deg+'°';
     if(map&&mapLoaded){map.easeTo({bearing:-deg,duration:400});refreshZones();}
+    if(_lumonTrack)_lumonTrack(deg);
   };
 
 })();
