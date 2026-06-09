@@ -613,7 +613,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       </div>
     </div>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.5</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.1.7</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -908,7 +908,7 @@ let winSnapPreview=null;
 let takflatePts=[],activeTakflateZone=null;
 // Klippeverktøy for takflater — kode bevart, DEAKTIVERT (sett KLIPP_TAKFLATE_ENA=true for å aktivere)
 const KLIPP_TAKFLATE_ENA=true;
-let klippTakflatePts=[],klippTakflateTarget=null;
+let klippTakflatePts=[],klippTakflateTarget=null,klippSnap=null;
 let drawSnap=null;
 let calSnap=null;
 let pendingWin=null;
@@ -2530,23 +2530,39 @@ function draw(){
         ctx.strokeStyle='#ef4444';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
       }
     }
+    // Snap-indikator
+    if(klippSnap){
+      const ksp=i2s(klippSnap.x,klippSnap.y);
+      ctx.save();
+      if(klippSnap.type==='corner'||klippSnap.type==='zone'){
+        // Grønt kvadrat for hjørner
+        ctx.strokeStyle='#22c55e';ctx.lineWidth=2;ctx.strokeRect(ksp.x-7,ksp.y-7,14,14);
+        ctx.fillStyle='rgba(34,197,94,0.15)';ctx.fillRect(ksp.x-7,ksp.y-7,14,14);
+      } else {
+        // Grønt diamant for kantmidtpunkt
+        ctx.beginPath();
+        ctx.moveTo(ksp.x,ksp.y-8);ctx.lineTo(ksp.x+8,ksp.y);ctx.lineTo(ksp.x,ksp.y+8);ctx.lineTo(ksp.x-8,ksp.y);ctx.closePath();
+        ctx.strokeStyle='#22c55e';ctx.lineWidth=2;ctx.stroke();
+        ctx.fillStyle='rgba(34,197,94,0.15)';ctx.fill();
+      }
+      ctx.restore();
+    }
     if(klippTakflatePts.length>0){
       // Teikn eksisterande polylinje
       ctx.beginPath();
       const sp0=i2s(klippTakflatePts[0].x,klippTakflatePts[0].y);ctx.moveTo(sp0.x,sp0.y);
       klippTakflatePts.forEach((p,i)=>{if(i>0){const sp=i2s(p.x,p.y);ctx.lineTo(sp.x,sp.y);}});
-      // Live segment til mus
-      const lastPt=klippTakflatePts[klippTakflatePts.length-1];
-      const lastS=i2s(lastPt.x,lastPt.y);
-      if(mouse)ctx.lineTo(mouse.x,mouse.y);
+      // Live segment — snap-punkt eller mus
+      const liveEnd=klippSnap?i2s(klippSnap.x,klippSnap.y):(mouse||null);
+      if(liveEnd)ctx.lineTo(liveEnd.x,liveEnd.y);
       ctx.strokeStyle='#ef4444';ctx.lineWidth=2.5;ctx.stroke();
       // Forlengd retningslinje bak første segment og framfor siste
-      if(klippTakflatePts.length===1&&mouse){
-        const dx=mouse.x-sp0.x,dy=mouse.y-sp0.y,len=Math.hypot(dx,dy)||1;
+      if(klippTakflatePts.length===1&&liveEnd){
+        const dx=liveEnd.x-sp0.x,dy=liveEnd.y-sp0.y,len=Math.hypot(dx,dy)||1;
         const ext=Math.max(cv.width,cv.height)*3;
         ctx.beginPath();
         ctx.moveTo(sp0.x-dx/len*ext,sp0.y-dy/len*ext);
-        ctx.lineTo(mouse.x+dx/len*ext,mouse.y+dy/len*ext);
+        ctx.lineTo(liveEnd.x+dx/len*ext,liveEnd.y+dy/len*ext);
         ctx.strokeStyle='rgba(239,68,68,0.3)';ctx.lineWidth=1;ctx.setLineDash([8,5]);ctx.stroke();ctx.setLineDash([]);
       }
       // Punkt på polylinjen
@@ -2698,7 +2714,7 @@ document.getElementById('calAreaInput').addEventListener('keydown',e=>{
 function finishZone(){
   if(curPts.length<3)return;
   snapshot();markDirty();
-  zones.push({name:'Sone '+(++_nextZoneId),pts:[...curPts],windows:[],skillevegg:new Set(),takflater:[]});
+  zones.push({name:'Sone '+(++_nextZoneId),pts:[...curPts],windows:[],skillevegg:new Set(),takflater:[],gavlflater:[]});
   curPts=[];updateResults();renderTable();draw();
   hintText.textContent='Sone '+zones[zones.length-1].name+' lagt til!';
 }
@@ -2775,9 +2791,11 @@ function _segSegIntersect(a1,a2,b1,b2){
 }
 
 // Del polygon med polylinje — returnerer [poly1, poly2] eller null
+// Polygon-strukturen:
+//   poly1: c1 → polygon-verteksar (c1→c2) → c2 → klippelinje baklengs → (lukkar til c1)
+//   poly2: c2 → polygon-verteksar (c2→c1 rundt) → c1 → klippelinje framlengs → (lukkar til c2)
 function _splitPolygonByPolyline(poly,polyline){
   if(!poly||poly.length<3||!polyline||polyline.length<2)return null;
-  // Finn alle kryssingspunkt (polylinje-segment × polygon-kant)
   const crossings=[];
   for(let pi=0;pi<polyline.length-1;pi++){
     const lp1=polyline[pi],lp2=polyline[pi+1];
@@ -2788,26 +2806,92 @@ function _splitPolygonByPolyline(poly,polyline){
     }
   }
   if(crossings.length<2)return null;
-  // Første og siste kryss langs polylinjas traverseringsretning
+  // Sorter etter posisjon langs polylinjen
   crossings.sort((a,b)=>a.polyIdx!==b.polyIdx?a.polyIdx-b.polyIdx:a.tA-b.tA);
   const first=crossings[0],last=crossings[crossings.length-1];
   if(first.edgeIdx===last.edgeIdx)return null;
-  // Sortér etter polygon-kants indeks
+  // c1 = krysset med lågast polygon-kant-indeks, c2 = høgast
   const c1=first.edgeIdx<last.edgeIdx?first:last;
   const c2=first.edgeIdx<last.edgeIdx?last:first;
-  // Indre punkt på polylinjakuttet (mellom c1 og c2)
+  // Indre polylinje-punkt i retning c1→c2 (mellom dei to kryssepunkta)
   const innerFwd=[];
-  if(c1===first){for(let i=first.polyIdx+1;i<=last.polyIdx;i++)innerFwd.push({...polyline[i]});}
-  else{for(let i=last.polyIdx+1;i<=first.polyIdx;i++)innerFwd.push({...polyline[i]});innerFwd.reverse();}
-  // Bygg to polygon
-  const poly1=[{...c1.pt},...innerFwd,{...c2.pt}];
+  for(let i=first.polyIdx+1;i<=last.polyIdx;i++)innerFwd.push({...polyline[i]});
+  if(c1!==first)innerFwd.reverse(); // polylinjen gjekk c2→c1, snu til c1→c2
+  // poly1: c1 → polygon(c1→c2) → c2 → klipp baklengs → (lukkar til c1)
+  const poly1=[{...c1.pt}];
   for(let i=c1.edgeIdx+1;i<=c2.edgeIdx;i++)poly1.push({...poly[i]});
+  poly1.push({...c2.pt});
+  [...innerFwd].reverse().forEach(p=>poly1.push({...p}));
+  // poly2: c2 → polygon(c2→c1 rundt) → c1 → klipp framlengs → (lukkar til c2)
   const poly2=[{...c2.pt}];
   for(let i=c2.edgeIdx+1;i<poly.length;i++)poly2.push({...poly[i]});
   for(let i=0;i<=c1.edgeIdx;i++)poly2.push({...poly[i]});
-  poly2.push({...c1.pt});[...innerFwd].reverse().forEach(p=>poly2.push({...p}));
+  poly2.push({...c1.pt});
+  innerFwd.forEach(p=>poly2.push({...p}));
   if(poly1.length<3||poly2.length<3)return null;
   return[poly1,poly2];
+}
+
+// Held gavlflater i sync: om dei er berekna, oppdater dei. Kallast etter takflate-endringar.
+function _syncGavlflater(z){
+  if((z.gavlflater||[]).length>0)z.gavlflater=_calcGavlflater(z);
+}
+
+// Bereknar gavlflater (trekant-fasadar over veggtopp) ut frå sona sine takflater.
+// Returnerer array med {segIdx, profile:[{t,h}], area, lenM} per ytterfasade-segment.
+function _calcGavlflater(z){
+  if(!mmPerImgPx||(z.takflater||[]).length===0)return[];
+  const segs=calcSegments(z.pts,getHoyde(z))||[];
+  const sk=z.skillevegg||new Set();
+  const mpp=mmPerImgPx;
+  // Bestem innadpeikande normal for sona (for å offset testp. litt inni sona)
+  let area2=0;
+  z.pts.forEach((p1,i)=>{const p2=z.pts[(i+1)%z.pts.length];area2+=p1.x*p2.y-p2.x*p1.y;});
+  const gavlflater=[];
+  segs.forEach(seg=>{
+    if(sk.has(seg.idx))return;
+    const dx=seg.p2.x-seg.p1.x,dy=seg.p2.y-seg.p1.y;
+    const len=Math.hypot(dx,dy);if(len<1)return;
+    // Innadpeikande normallvektor (eps pixlar inn i sona)
+    const inX=area2>0?-dy/len:dy/len;
+    const inY=area2>0?dx/len:-dx/len;
+    const eps=3;
+    const T=16;
+    const profile=[];
+    for(let i=0;i<=T;i++){
+      const t=i/T;
+      const imgX=seg.p1.x+dx*t,imgY=seg.p1.y+dy*t;
+      const testX=imgX+inX*eps,testY=imgY+inY*eps;
+      let maxH=0;
+      (z.takflater||[]).forEach(tf=>{
+        if(!tf.pts||tf.pts.length<3)return;
+        if(!pointInPolygon({x:testX,y:testY},tf.pts))return;
+        const tanV=Math.tan((tf.vinkel||0)*Math.PI/180);
+        if(tanV<0.001)return;
+        const retRad=tf.retning*Math.PI/180;
+        const ux=-Math.sin(retRad),uz=Math.cos(retRad);
+        let minProj=Infinity;
+        tf.pts.forEach(p=>{
+          const proj=(p.x*mpp/1000)*ux+(p.y*mpp/1000)*uz;
+          if(proj<minProj)minProj=proj;
+        });
+        const proj=(imgX*mpp/1000)*ux+(imgY*mpp/1000)*uz;
+        const h=Math.max(0,(proj-minProj))*tanV;
+        if(h>maxH)maxH=h;
+      });
+      profile.push({t,h:maxH});
+    }
+    const maxH=Math.max(...profile.map(p=>p.h));
+    if(maxH<0.05)return; // Hopp over viss gavlhøgde < 5 cm
+    const lenM=seg.lenM||(len*mpp/1000);
+    let area=0;
+    for(let i=1;i<profile.length;i++){
+      const dt=(profile[i].t-profile[i-1].t)*lenM;
+      area+=(profile[i-1].h+profile[i].h)/2*dt;
+    }
+    gavlflater.push({segIdx:seg.idx,profile,area:Math.round(area*100)/100,lenM,dir:seg.dir});
+  });
+  return gavlflater;
 }
 
 // Auto-vel retning for ein takflate basert på næraste YV-fasade til polygonets tyngdepunkt
@@ -2848,6 +2932,7 @@ function _finishKlipp(){
     const tf2={...JSON.parse(JSON.stringify(tf)),pts:p2,name:baseName+' B',id:'tf_'+Date.now(),retning:ret2};
     tf.pts=p1;tf.name=baseName+' A';tf.retning=ret1;
     z.takflater.splice(tfi+1,0,tf2);
+    z.gavlflater=[]; // strukturendring — gavlflater må reberegnast
     updateResults();renderTable();draw();
     hintText.textContent='Takflata er klippt! Sjekk retning og juster om nødvendig.';
   }else{
@@ -3219,9 +3304,15 @@ function updateResults(){
           tfSec.style.cssText='margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)';
           const tfHdr=document.createElement('div');
           tfHdr.style.cssText='font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px';
-          tfHdr.textContent='Takflater';
+          tfHdr.innerHTML='Takflater&thinsp;<span style="font-size:8px;background:#fbbf24;color:#78350f;padding:1px 3px;border-radius:3px;font-weight:800;letter-spacing:.03em;vertical-align:middle">BETA</span>';
           tfSec.appendChild(tfHdr);
-          const RETNING_OPTS=[{v:0,l:'Nord (0°)'},{v:45,l:'Nordaust (45°)'},{v:90,l:'Aust (90°)'},{v:135,l:'Søraust (135°)'},{v:180,l:'Sør (180°)'},{v:225,l:'Sørvest (225°)'},{v:270,l:'Vest (270°)'},{v:315,l:'Nordvest (315°)'}];
+          const RETNING_OPTS_ALL=[{v:0,l:'Nord'},{v:45,l:'Nordaust'},{v:90,l:'Aust'},{v:135,l:'Søraust'},{v:180,l:'Sør'},{v:225,l:'Sørvest'},{v:270,l:'Vest'},{v:315,l:'Nordvest'}];
+          // Berre vis retningar som faktisk finst som YV-fasadar i denne sona, + den gjeldande verdien
+          const _tfSegs=calcSegments(z.pts,getHoyde(z))||[];
+          const _tfSk=z.skillevegg||new Set();
+          const _facadeAz=new Set();
+          _tfSegs.forEach(s=>{if(!_tfSk.has(s.idx))_facadeAz.add(Math.round(s.normalAz/45)*45%360);});
+          const RETNING_OPTS=RETNING_OPTS_ALL.filter(o=>_facadeAz.has(o.v)||(z.takflater||[]).some(tf=>tf.retning===o.v));
           const TF_PALETTE_CSS=['#f59e0b','#6366f1','#ec4899','#22c55e','#f97316','#14b8a6'];
           const tfList=z.takflater||[];
           if(tfList.length===0){
@@ -3239,6 +3330,7 @@ function updateResults(){
               if(z.pts.length<3){hintText.textContent='Sona har ikkje nok punkt.';return;}
               snapshot();
               if(!z.takflater)z.takflater=[];
+              z.gavlflater=[];
               // Auto-vel retning frå lengste YV-fasade
               const _segs=calcSegments(z.pts,getHoyde(z))||[];
               const _sk=z.skillevegg||new Set();
@@ -3261,9 +3353,10 @@ function updateResults(){
               const nInp=document.createElement('input');nInp.type='text';nInp.value=tf.name||('Takflate '+(tfi+1));
               nInp.style.cssText="flex:1;font-size:11px;border:1px solid var(--border2);border-radius:4px;padding:2px 5px;font-family:'DM Mono',monospace";
               nInp.onchange=()=>{tf.name=nInp.value;draw();};
-              // Klipp-knapp (inline i kortet)
+              // Klipp-knapp (inline i kortet) — Beta-funksjon
               const klippBtn=document.createElement('button');
-              klippBtn.textContent='✂';klippBtn.title='Klipp denne takflata med ei linje';
+              klippBtn.title='Klipp denne takflata med ei polylinje';
+              klippBtn.textContent='✂';
               klippBtn.style.cssText='background:none;border:1px solid #ef444466;border-radius:4px;color:#dc2626;cursor:pointer;font-size:12px;padding:1px 5px;flex-shrink:0;transition:all .1s';
               klippBtn.onmouseenter=()=>{klippBtn.style.background='#fef2f2';};
               klippBtn.onmouseleave=()=>{klippBtn.style.background='none';};
@@ -3276,22 +3369,73 @@ function updateResults(){
               };
               const delTf=document.createElement('button');delTf.textContent='✕';delTf.title='Slett takflate';
               delTf.style.cssText='background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 2px';
-              delTf.onclick=()=>{snapshot();z.takflater.splice(tfi,1);updateResults();renderTable();draw();};
+              delTf.onclick=()=>{snapshot();z.takflater.splice(tfi,1);z.gavlflater=[];updateResults();renderTable();draw();};
               r1.appendChild(dot);r1.appendChild(nInp);r1.appendChild(klippBtn);r1.appendChild(delTf);
               // Rad 2: vinkel + retning
               const r2=document.createElement('div');r2.style.cssText='display:flex;align-items:center;gap:6px';
               const vLbl=document.createElement('span');vLbl.style.cssText='font-size:10.5px;color:var(--text3)';vLbl.textContent='Vinkel';
               const vInp=document.createElement('input');vInp.type='number';vInp.min='1';vInp.max='89';vInp.value=tf.vinkel||30;
               vInp.style.cssText="width:46px;font-size:11px;border:1px solid var(--border2);border-radius:4px;padding:2px 5px;text-align:right;font-family:'DM Mono',monospace";
-              vInp.onchange=()=>{const v=parseFloat(vInp.value);tf.vinkel=(isNaN(v)||v<=0||v>=90)?30:v;updateResults();renderTable();draw();};
+              vInp.onchange=()=>{const v=parseFloat(vInp.value);tf.vinkel=(isNaN(v)||v<=0||v>=90)?30:v;_syncGavlflater(z);updateResults();renderTable();draw();};
               const rLbl=document.createElement('span');rLbl.style.cssText='font-size:10.5px;color:var(--text3)';rLbl.textContent='Retning';
               const rSel=document.createElement('select');rSel.style.cssText='font-size:11px;border:1px solid var(--border2);border-radius:4px;padding:2px 4px;flex:1';
-              RETNING_OPTS.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===(tf.retning??180))op.selected=true;rSel.appendChild(op);});
-              rSel.onchange=()=>{tf.retning=parseInt(rSel.value);updateResults();renderTable();draw();};
+              // Vis fasaderetningar + noverande retning om ho ikkje finst i lista
+              const thisRetning=tf.retning??180;
+              const optsForThisTf=[...RETNING_OPTS];
+              if(!optsForThisTf.some(o=>o.v===thisRetning)){
+                const extra=RETNING_OPTS_ALL.find(o=>o.v===thisRetning);
+                if(extra)optsForThisTf.push(extra);
+              }
+              optsForThisTf.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===thisRetning)op.selected=true;rSel.appendChild(op);});
+              rSel.onchange=()=>{tf.retning=parseInt(rSel.value);_syncGavlflater(z);updateResults();renderTable();draw();};
               r2.appendChild(vLbl);r2.appendChild(vInp);r2.appendChild(document.createTextNode('°'));r2.appendChild(rLbl);r2.appendChild(rSel);
               tfCard.appendChild(r1);tfCard.appendChild(r2);
               tfSec.appendChild(tfCard);
             });
+            // ── Gavlflater ──────────────────────────────────────
+            if(mmPerImgPx){
+              const gavlSec=document.createElement('div');
+              gavlSec.style.cssText='margin-top:8px;padding-top:6px;border-top:1px dashed var(--border)';
+              const gavlHdr=document.createElement('div');
+              gavlHdr.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:5px';
+              const gavlLbl=document.createElement('span');
+              gavlLbl.style.cssText='font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em';
+              gavlLbl.textContent='Gavlflater';
+              const calcGavlBtn=document.createElement('button');
+              calcGavlBtn.textContent='⊿ Berekn';
+              calcGavlBtn.title='Berekn trekantforma gavlveggar frå takflatene';
+              calcGavlBtn.style.cssText='padding:2px 7px;font-size:10px;border:1px solid var(--border2);border-radius:4px;background:#fff;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .1s';
+              calcGavlBtn.onmouseenter=()=>{calcGavlBtn.style.borderColor='var(--accent)';calcGavlBtn.style.color='var(--accent)';};
+              calcGavlBtn.onmouseleave=()=>{calcGavlBtn.style.borderColor='var(--border2)';calcGavlBtn.style.color='var(--text2)';};
+              calcGavlBtn.onclick=()=>{
+                snapshot();
+                z.gavlflater=_calcGavlflater(z);
+                if(!z.gavlflater.length)hintText.textContent='Ingen gavlflater funne — sjekk at sona har takflater med vinkel > 0°';
+                updateResults();renderTable();draw();
+              };
+              gavlHdr.appendChild(gavlLbl);gavlHdr.appendChild(calcGavlBtn);
+              gavlSec.appendChild(gavlHdr);
+              const gavlList=z.gavlflater||[];
+              if(gavlList.length){
+                gavlList.forEach(gf=>{
+                  const gRow=document.createElement('div');
+                  gRow.style.cssText='display:flex;justify-content:space-between;align-items:center;font-size:10.5px;padding:2px 0;color:var(--text2)';
+                  gRow.innerHTML=`<span>⊿ ${gf.dir||'Gavl'}</span><span style="font-family:'DM Mono',monospace;color:var(--text)">${gf.area.toFixed(2)} m²</span>`;
+                  gavlSec.appendChild(gRow);
+                });
+                const gavlTot=gavlList.reduce((s,g)=>s+g.area,0);
+                const gavlTotRow=document.createElement('div');
+                gavlTotRow.style.cssText='display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;padding-top:3px;border-top:1px solid var(--border);margin-top:2px;color:var(--text)';
+                gavlTotRow.innerHTML=`<span>Totalt</span><span style="font-family:'DM Mono',monospace">${gavlTot.toFixed(2)} m²</span>`;
+                gavlSec.appendChild(gavlTotRow);
+              } else {
+                const noGavl=document.createElement('div');
+                noGavl.style.cssText='font-size:10.5px;color:var(--text3)';
+                noGavl.textContent='Ikkje berekna — klikk ⊿ Berekn';
+                gavlSec.appendChild(noGavl);
+              }
+              tfSec.appendChild(gavlSec);
+            }
             // Tilbakestill-knapp
             const resetTfBtn=document.createElement('button');
             resetTfBtn.textContent='↺ Tilbakestill takflater';
@@ -3299,7 +3443,7 @@ function updateResults(){
             resetTfBtn.style.cssText='width:100%;padding:5px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:11px;margin-top:2px;transition:all .12s';
             resetTfBtn.onmouseenter=()=>{resetTfBtn.style.background='var(--surface2)';};
             resetTfBtn.onmouseleave=()=>{resetTfBtn.style.background='transparent';};
-            resetTfBtn.onclick=()=>{snapshot();z.takflater=[];updateResults();renderTable();draw();};
+            resetTfBtn.onclick=()=>{snapshot();z.takflater=[];z.gavlflater=[];updateResults();renderTable();draw();};
             tfSec.appendChild(resetTfBtn);
           }
           settings.appendChild(tfSec);
@@ -3346,6 +3490,27 @@ function updateResults(){
         });
         winSummary.appendChild(wl);
         cardBody.appendChild(winSummary);
+      }
+
+      // ── Gavlflater-oversikt (om dei er berekna) ──
+      if((z.gavlflater||[]).length>0){
+        const gavlSum=document.createElement('div');
+        gavlSum.style.cssText='margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
+        const gavlSumHdr=document.createElement('div');
+        gavlSumHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:5px';
+        gavlSumHdr.innerHTML=`<span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Gavlflater</span><span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--accent)">${z.gavlflater.reduce((s,g)=>s+g.area,0).toFixed(2)} m² tot.</span>`;
+        gavlSum.appendChild(gavlSumHdr);
+        const gavlList=document.createElement('div');gavlList.className='win-list';
+        z.gavlflater.forEach((gf,gfi)=>{
+          const gc=document.createElement('div');gc.className='win-card';
+          const gInfo=document.createElement('div');gInfo.className='win-card-info';
+          gInfo.innerHTML=`<strong style="color:var(--text)">⊿ ${gf.dir||'Gavl'}</strong> <span style="color:var(--text3)">${gf.lenM?.toFixed(1)||'?'} m · ${gf.area.toFixed(2)} m²</span>`;
+          const gDel=document.createElement('button');gDel.className='win-card-del';gDel.textContent='✕';
+          gDel.onclick=()=>{snapshot();z.gavlflater.splice(gfi,1);updateResults();renderTable();draw();};
+          gc.appendChild(gInfo);gc.appendChild(gDel);gavlList.appendChild(gc);
+        });
+        gavlSum.appendChild(gavlList);
+        cardBody.appendChild(gavlSum);
       }
 
       // ── Action buttons ──
@@ -3558,6 +3723,8 @@ function updateResults(){
   if(_spanel)_spanel.scrollTop=_savedScroll;
   // Oppdater collapse-all knapp
   _updateCollapseAllBtn();
+  // Live 3D-oppdatering om overlay er open
+  _rebuild3DDebounced();
 }
 
 window._toggleAllZcards=function(){
@@ -3989,6 +4156,24 @@ function renderTable(){
         })()}
       </tr>`;
     });
+    // Gavlflater — trekanta ytterveggar over veggtopp
+    (z.gavlflater||[]).forEach(gf=>{
+      if(!gf.area||gf.area<0.01)return;
+      const gseg=segs.find(s=>s.idx===gf.segIdx);
+      if(!gseg)return;
+      const gavlNm=(gf.dir||gseg.dir||'Gavl')+' gavl';
+      const effU=(z.uPerSeg?.['seg_'+gf.segIdx])??z.uVegg??stdZ?.uVegg;
+      const lenStr=gf.lenM!=null?gf.lenM.toFixed(2):'—';
+      html+=`<tr>
+        <td style="color:${zColor};font-weight:600">${gavlNm}</td>
+        <td style="color:#94a3b8;font-weight:400">Yttervegg</td>
+        <td>${lenStr}</td>
+        <td>${gf.area.toFixed(2)}</td>
+        <td>—</td>
+        <td>${gf.area.toFixed(2)}</td>
+        <td style="color:var(--text3)">${effU!=null?effU.toFixed(2):'—'}</td>
+      </tr>`;
+    });
     html+='</tbody></table>';
   });});
 
@@ -4196,6 +4381,32 @@ function renderTable(){
   });
 }
 
+// Snap-funksjon for klipp-takflate: hjørner og kantmidtpunkt på alle takflater i sona
+function _snapKlippPt(sx,sy){
+  if(!klippTakflateTarget)return null;
+  const{z}=klippTakflateTarget;
+  const THRESH=16; // skjermpikslar
+  let best=null,bestD=THRESH;
+  const check=(x,y,type)=>{
+    const sp=i2s(x,y);
+    const d=Math.hypot(sx-sp.x,sy-sp.y);
+    if(d<bestD){bestD=d;best={x,y,sx:sp.x,sy:sp.y,type};}
+  };
+  (z.takflater||[]).forEach(tf=>{
+    const pts=tf.pts||[];
+    // Hjørner
+    pts.forEach(p=>check(p.x,p.y,'corner'));
+    // Kantmidtpunkt
+    for(let i=0;i<pts.length;i++){
+      const p1=pts[i],p2=pts[(i+1)%pts.length];
+      check((p1.x+p2.x)/2,(p1.y+p2.y)/2,'mid');
+    }
+  });
+  // Snap også til sone-polygon-hjørner (for å starte/avslutte på ein kant)
+  (z.pts||[]).forEach(p=>check(p.x,p.y,'zone'));
+  return best;
+}
+
 // ── Ortho-snapping (Shift) ─────────────────────────────────────
 let shiftHeld=false;
 document.addEventListener('keydown',e=>{if(e.key==='Shift')shiftHeld=true;});
@@ -4256,6 +4467,8 @@ cwrap.addEventListener('mousemove',e=>{
       calSnap={x:s2i(snapped.x,snapped.y).x,y:s2i(snapped.x,snapped.y).y,_ortho:true};
     }
   }
+  if(mode==='klipp-takflate')klippSnap=_snapKlippPt(mouse.x,mouse.y);
+  else klippSnap=null;
   draw();
 });
 cwrap.addEventListener('mouseleave',()=>{mouse=null;dragging=false;draw();});
@@ -4914,7 +5127,7 @@ cv.addEventListener('click',e=>{
       if(klippTakflatePts.length>=2)_finishKlipp();
       return;
     }
-    const ip=s2i(sx,sy);
+    const ip=klippSnap?{x:klippSnap.x,y:klippSnap.y}:s2i(sx,sy);
     klippTakflatePts.push(ip);
     if(klippTakflatePts.length===1){
       hintText.textContent='Klikk neste punkt · legg til fleire punkt for polylinje · Enter eller dobbelklikk for å klippe · Esc for å avbryte';
@@ -6800,6 +7013,17 @@ function buildSXI(proj){
           facXml+=`    <facade id="${faceId}" name="${nm}${flSuffix}" comment="" area="${grossA.toFixed(2)}" uvalue="${effectiveU}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0">\n${openingsXml}    </facade>\n`;
         }
       });
+      // Gavlflater — trekantforma ytterveggar over veggtopp, eksportert som eigne <facade>-element
+      (lz.gavlflater||[]).forEach(gf=>{
+        if(!gf.area||gf.area<0.01)return;
+        const gseg=segs.find(s=>s.idx===gf.segIdx);
+        if(!gseg)return;
+        const dirDeg=Math.round(gseg.normalAz||0);
+        const effectiveUGavl=lz.uPerSeg?.['seg_'+gf.segIdx]??uVegg;
+        const gavlId=nextId('facade');
+        const gavlName=(gf.dir||gseg.dir||'Gavl')+' gavl'+flSuffix;
+        facXml+=`    <facade id="${gavlId}" name="${gavlName}" comment="" area="${gf.area.toFixed(2)}" uvalue="${effectiveUGavl}" thermal_cap="10.00" construction="Standardvalg" internal_layer="Standardvalg" exposed="no" ext_absorption_coeff="0.80" direction="${dirDeg}" horizon_sector1="9.0" horizon_sector2="9.0" horizon_sector3="9.0" horizon_sector4="9.0"></facade>\n`;
+      });
     });
 
     // Tak og gulv — per instans med eigne konstruksjonstypar
@@ -7435,8 +7659,10 @@ let renderer3=null,scene3=null,camera3=null; // global — trengst for tema-togg
             const tfGeo2d=new THREE.ShapeGeometry(tfShape);
             const tfPos=tfGeo2d.attributes.position;
             const n=tfPos.count;
-            const upRetRad=tf.retning*Math.PI/180; // retning = himmelretning skråninga peikar mot (ned-retning)
-            const ux=Math.sin(upRetRad),uz=Math.cos(upRetRad);
+            // retning = nedretning (dit vatn renn). Oppoverbakke = retning+180°.
+            // I 3D-modellen: x=aust(+), z=sør(+). Korrekt formel: ux=-sin(retning), uz=cos(retning)
+            const _retRad=tf.retning*Math.PI/180;
+            const ux=-Math.sin(_retRad),uz=Math.cos(_retRad);
             const tanV=Math.tan(Math.max(0,(tf.vinkel||0))*Math.PI/180);
             let minProj=Infinity;
             for(let i=0;i<n;i++){const proj=tfPos.getX(i)*ux+tfPos.getY(i)*uz;if(proj<minProj)minProj=proj;}
@@ -7471,6 +7697,44 @@ let renderer3=null,scene3=null,camera3=null; // global — trengst for tema-togg
           ceilEdgePts.push(ceilEdgePts[0].clone());
           scene3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ceilEdgePts),new THREE.LineBasicMaterial({color:col,linewidth:1})));
         }
+
+        // ── Gavlflater — trekantforma veggar over veggtopp ──
+        (z.gavlflater||[]).forEach(gavl=>{
+          const gseg=segs.find(s=>s.idx===gavl.segIdx);
+          if(!gseg||!gavl.profile||gavl.profile.length<2)return;
+          const gp1=toM(gseg.p1),gp2=toM(gseg.p2);
+          const n=gavl.profile.length;
+          // Bygger verteks-array: øvre profil + nedre kant (spegla)
+          const vArr=[];
+          gavl.profile.forEach(({t,h})=>{
+            vArr.push(gp1.x+(gp2.x-gp1.x)*t,baseY+fh+h,gp1.z+(gp2.z-gp1.z)*t);
+          });
+          for(let i=n-1;i>=0;i--){
+            const t=gavl.profile[i].t;
+            vArr.push(gp1.x+(gp2.x-gp1.x)*t,baseY+fh,gp1.z+(gp2.z-gp1.z)*t);
+          }
+          // Fan-triangulering frå vertex 0 (begge sider)
+          const totalV=vArr.length/3;
+          const idxArr=[];
+          for(let i=1;i<totalV-1;i++){idxArr.push(0,i,i+1);idxArr.push(0,i+1,i);}
+          const geo=new THREE.BufferGeometry();
+          geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(vArr),3));
+          geo.setIndex(idxArr);
+          geo.computeVertexNormals();
+          const gavlMat=new THREE.MeshLambertMaterial({color:col,side:THREE.DoubleSide});
+          gavlMat.userData={baseColor:col};
+          const mesh=new THREE.Mesh(geo,gavlMat);
+          mesh.castShadow=true;mesh.userData.w=true;
+          scene3.add(mesh);
+          // Kontur-linje
+          const contourPts=[
+            ...gavl.profile.map(({t,h})=>new THREE.Vector3(gp1.x+(gp2.x-gp1.x)*t,baseY+fh+h,gp1.z+(gp2.z-gp1.z)*t)),
+            new THREE.Vector3(gp2.x,baseY+fh,gp2.z),
+            new THREE.Vector3(gp1.x,baseY+fh,gp1.z),
+            new THREE.Vector3(gp1.x+(gp2.x-gp1.x)*gavl.profile[0].t,baseY+fh+gavl.profile[0].h,gp1.z+(gp2.z-gp1.z)*gavl.profile[0].t)
+          ];
+          scene3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(contourPts),new THREE.LineBasicMaterial({color:col,linewidth:1})));
+        });
 
         // ── Areal-label på golvet ──
         const area=getAreaM2(z);
@@ -7647,6 +7911,15 @@ let renderer3=null,scene3=null,camera3=null; // global — trengst for tema-togg
   };
 })();
 
+// Debounca 3D-rebuild — vert kalla frå updateResults() slik at 3D-modellen
+// oppdaterast live når brukaren gjer endringar, utan for mange dyre rebuilds.
+let _rebuild3DTimer=null;
+function _rebuild3DDebounced(){
+  if(document.getElementById('model3dOverlay')?.style.display!=='flex')return;
+  clearTimeout(_rebuild3DTimer);
+  _rebuild3DTimer=setTimeout(()=>{window._rebuild3D&&window._rebuild3D();},180);
+}
+
 // ── Vindauge-ekspansjon for fasade + 3D ───────────────────────
 // Tar eit vindaugsobjekt med antal>1 og segmentlengde i meter,
 // returnerer array med individuelle vindauge med eigne t0/t1,
@@ -7740,12 +8013,22 @@ function renderFasadeView(){
     },0);
     const totalBrutto=entries.reduce((s,e)=>s+(e.seg.areaM2||0),0);
     const totalNetto=totalBrutto-totalWinA;
+    // Gavlflater for denne retningen
+    const totalGavlA=entries.reduce((s,e)=>{
+      const gavl=(e.z.gavlflater||[]).find(g=>g.segIdx===e.seg.idx);
+      return s+(gavl?gavl.area:0);
+    },0);
+    const maxGavlH=Math.max(0,...entries.map(e=>{
+      const gavl=(e.z.gavlflater||[]).find(g=>g.segIdx===e.seg.idx);
+      return gavl?Math.max(...gavl.profile.map(p=>p.h)):0;
+    }));
 
     // Canvas dimensions — scale to fit sidebar (~280px wide typical)
     const CANVAS_W=268;
     const scale=totalLenM>0?Math.min((CANVAS_W-24)/totalLenM,60):30; // px per m, max 60
-    const canvasH=Math.round(maxH*scale)+40; // +40 for base/labels
+    const canvasH=Math.round((maxH+maxGavlH)*scale)+40; // +40 for base/labels
     const drawH=Math.round(maxH*scale);
+    const drawGavlH=Math.round(maxGavlH*scale);
 
     html+=`
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow-sm)">
@@ -7773,14 +8056,18 @@ function renderFasadeView(){
       <div style="display:flex;border-top:1px solid var(--border)">
         <div style="flex:1;padding:7px 10px;text-align:center;border-right:1px solid var(--border)">
           <div style="font-size:12px;font-weight:700;color:var(--text)">${totalBrutto.toFixed(1)}</div>
-          <div style="font-size:9.5px;color:var(--text3)">Brutto m²</div>
+          <div style="font-size:9.5px;color:var(--text3)">Vegg m²</div>
         </div>
+        ${totalGavlA>0?`<div style="flex:1;padding:7px 10px;text-align:center;border-right:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:700;color:#d97706">${totalGavlA.toFixed(1)}</div>
+          <div style="font-size:9.5px;color:var(--text3)">Gavl m²</div>
+        </div>`:''}
         <div style="flex:1;padding:7px 10px;text-align:center;border-right:1px solid var(--border)">
           <div style="font-size:12px;font-weight:700;color:#0891b2">${totalWinA.toFixed(1)}</div>
           <div style="font-size:9.5px;color:var(--text3)">Glas m²</div>
         </div>
         <div style="flex:1;padding:7px 10px;text-align:center">
-          <div style="font-size:12px;font-weight:700;color:var(--accent)">${totalNetto.toFixed(1)}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent)">${(totalNetto+totalGavlA).toFixed(1)}</div>
           <div style="font-size:9.5px;color:var(--text3)">Netto m²</div>
         </div>
       </div>
@@ -7789,11 +8076,16 @@ function renderFasadeView(){
 
   // Summary table
   const grandBrutto=dirs.reduce((s,d)=>s+byDir[d].reduce((ss,e)=>ss+(e.seg.areaM2||0),0),0);
+  const grandGavl=dirs.reduce((s,d)=>s+byDir[d].reduce((ss,e)=>{
+    const gavl=(e.z.gavlflater||[]).find(g=>g.segIdx===e.seg.idx);
+    return ss+(gavl?gavl.area:0);
+  },0),0);
   const grandWin=dirs.reduce((s,d)=>s+byDir[d].reduce((ss,e)=>{
     const wins=(e.z.windows||[]).filter(w=>w.segIdx===e.seg.idx);
     return ss+wins.reduce((ws,w)=>(w.breddeMm/1000)*(w.hoyMm/1000)*w.antal+ws,0);
   },0),0);
-  const glasPct=grandBrutto>0?(grandWin/grandBrutto*100):0;
+  const grandNetto=grandBrutto+grandGavl-grandWin;
+  const glasPct=(grandBrutto+grandGavl)>0?(grandWin/(grandBrutto+grandGavl)*100):0;
 
   html+=`
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 12px;margin-bottom:12px;box-shadow:var(--shadow-sm)">
@@ -7801,7 +8093,8 @@ function renderFasadeView(){
     <table style="width:100%;border-collapse:collapse;font-size:11.5px">
       <thead><tr>
         <th style="text-align:left;padding:4px 6px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border)">Retning</th>
-        <th style="text-align:right;padding:4px 6px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border)">Brutto</th>
+        <th style="text-align:right;padding:4px 6px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border)">Vegg</th>
+        <th style="text-align:right;padding:4px 6px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border)">Gavl</th>
         <th style="text-align:right;padding:4px 6px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border)">Glas</th>
         <th style="text-align:right;padding:4px 6px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border)">Netto</th>
       </tr></thead>
@@ -7810,14 +8103,19 @@ function renderFasadeView(){
   dirs.forEach(dir=>{
     const entries=byDir[dir];
     const brutto=entries.reduce((s,e)=>s+(e.seg.areaM2||0),0);
+    const gavlA=entries.reduce((s,e)=>{
+      const gavl=(e.z.gavlflater||[]).find(g=>g.segIdx===e.seg.idx);
+      return s+(gavl?gavl.area:0);
+    },0);
     const winA=entries.reduce((s,e)=>{
       const wins=(e.z.windows||[]).filter(w=>w.segIdx===e.seg.idx);
       return s+wins.reduce((ws,w)=>(w.breddeMm/1000)*(w.hoyMm/1000)*w.antal+ws,0);
     },0);
-    const netto=brutto-winA;
+    const netto=brutto+gavlA-winA;
     html+=`<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:5px 6px;font-weight:600;color:var(--accent)">${DIR_SHORT[dir]}</td>
       <td style="padding:5px 6px;text-align:right;font-family:'DM Mono',monospace;color:var(--text2)">${brutto.toFixed(1)}</td>
+      <td style="padding:5px 6px;text-align:right;font-family:'DM Mono',monospace;color:#d97706">${gavlA>0?gavlA.toFixed(1):'—'}</td>
       <td style="padding:5px 6px;text-align:right;font-family:'DM Mono',monospace;color:#0891b2">${winA.toFixed(1)}</td>
       <td style="padding:5px 6px;text-align:right;font-family:'DM Mono',monospace;color:var(--accent)">${netto.toFixed(1)}</td>
     </tr>`;
@@ -7826,8 +8124,9 @@ function renderFasadeView(){
   html+=`<tr style="background:var(--surface2)">
     <td style="padding:6px;font-weight:700;color:var(--text)">Totalt</td>
     <td style="padding:6px;text-align:right;font-weight:700;font-family:'DM Mono',monospace">${grandBrutto.toFixed(1)}</td>
+    <td style="padding:6px;text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:#d97706">${grandGavl>0?grandGavl.toFixed(1):'—'}</td>
     <td style="padding:6px;text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:#0891b2">${grandWin.toFixed(1)}</td>
-    <td style="padding:6px;text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${(grandBrutto-grandWin).toFixed(1)}</td>
+    <td style="padding:6px;text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)">${grandNetto.toFixed(1)}</td>
   </tr></tbody></table>
   <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
     <div style="flex:1;height:6px;border-radius:3px;background:var(--surface3);overflow:hidden">
@@ -7853,15 +8152,20 @@ function renderFasadeView(){
     const maxH=Math.max(...entries.map(e=>getHoyde(e.z)));
     const scale=totalLenM>0?Math.min((CANVAS_W-24)/totalLenM,60):30;
     const drawH=Math.round(maxH*scale);
-    const marginL=12,marginTop=6,groundY=marginTop+drawH;
+    const maxGavlH_c=Math.max(0,...entries.map(e=>{
+      const gavl=(e.z.gavlflater||[]).find(g=>g.segIdx===e.seg.idx);
+      return gavl?Math.max(...gavl.profile.map(p=>p.h)):0;
+    }));
+    const drawGavlH_c=Math.round(maxGavlH_c*scale);
+    const marginL=12,marginTop=6,groundY=marginTop+drawGavlH_c+drawH;
 
     cx.clearRect(0,0,W,H);
 
-    // Sky gradient
+    // Sky gradient (taller om det er gavlar)
     const skyGrad=cx.createLinearGradient(0,marginTop,0,groundY);
     skyGrad.addColorStop(0,'#dbeafe');skyGrad.addColorStop(1,'#f0f9ff');
     cx.fillStyle=skyGrad;
-    cx.fillRect(marginL,marginTop,totalLenM*scale,drawH);
+    cx.fillRect(marginL,marginTop,totalLenM*scale,drawGavlH_c+drawH);
 
     let curX=marginL;
     entries.forEach((e,ei)=>{
@@ -7877,6 +8181,32 @@ function renderFasadeView(){
       // Wall outline
       cx.strokeStyle=color+'99';cx.lineWidth=1.5;
       cx.strokeRect(curX+0.5,segTop+0.5,segW-1,segH-1);
+
+      // Gavlflate (trekant over veggtopp)
+      const _gavl=(e.z.gavlflater||[]).find(g=>g.segIdx===e.seg.idx);
+      if(_gavl&&_gavl.profile&&_gavl.profile.length>=2){
+        cx.beginPath();
+        // Øvre profil
+        cx.moveTo(curX+_gavl.profile[0].t*segW, segTop-_gavl.profile[0].h*scale);
+        for(let _pi=1;_pi<_gavl.profile.length;_pi++){
+          cx.lineTo(curX+_gavl.profile[_pi].t*segW, segTop-_gavl.profile[_pi].h*scale);
+        }
+        // Nedre kant (veggtopp)
+        cx.lineTo(curX+segW, segTop);
+        cx.lineTo(curX, segTop);
+        cx.closePath();
+        cx.fillStyle=color+'22';cx.fill();
+        cx.strokeStyle=color+'bb';cx.lineWidth=1.5;cx.stroke();
+        // Gavl-areal-label
+        if(segW>24&&_gavl.area>0){
+          const _gLabel='⊿ '+_gavl.area.toFixed(1)+'m²';
+          cx.font='7px "DM Mono",monospace';
+          cx.fillStyle=color;cx.textAlign='center';cx.textBaseline='middle';
+          const _apexY=segTop-Math.max(..._gavl.profile.map(p=>p.h))*scale;
+          const _midY=(_apexY+segTop)/2;
+          cx.fillText(_gLabel,curX+segW/2,_midY);
+        }
+      }
 
       // Segment separator
       if(ei>0){
