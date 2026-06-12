@@ -360,9 +360,9 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
 #hintbar span{background:var(--accent-dim);border:1px solid rgba(29,79,79,.15);border-radius:4px;padding:2px 8px;font-size:10.5px;color:var(--accent);white-space:nowrap;font-weight:600}
 
 /* ── Scale badge ── */
-#scaleBadge{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.95);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text2);pointer-events:none;box-shadow:var(--shadow-sm);backdrop-filter:blur(8px);font-weight:500;font-family:'JetBrains Mono',monospace;transition:all .2s}
-#scaleBadge.uncal{color:#92400e;border-color:#f59e0b;background:#fffbeb;pointer-events:all;cursor:pointer;font-size:12px;font-weight:700;padding:6px 14px;box-shadow:0 2px 8px rgba(245,158,11,.3);animation:pulseWarn 2s ease-in-out infinite}
-#scaleBadge.uncal:hover{background:#fef3c7;box-shadow:0 3px 12px rgba(245,158,11,.45);transform:scale(1.03)}
+#scaleBadge{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:11px;color:var(--text2);pointer-events:none;box-shadow:var(--shadow-sm);backdrop-filter:blur(8px);font-weight:500;font-family:inherit;font-variant-numeric:tabular-nums;transition:all .2s}
+#scaleBadge.uncal{color:#92400e;border-color:#fcd34d;background:#fffbeb;pointer-events:all;cursor:pointer;font-size:12px;font-weight:600;padding:6px 14px;box-shadow:0 1px 4px rgba(245,158,11,.25);animation:pulseWarn 2.5s ease-in-out infinite}
+#scaleBadge.uncal:hover{background:#fef3c7;box-shadow:0 2px 8px rgba(245,158,11,.35)}
 @keyframes pulseWarn{0%,100%{box-shadow:0 2px 8px rgba(245,158,11,.3)}50%{box-shadow:0 2px 16px rgba(245,158,11,.55)}}
 
 /* ── Dropzone ── */
@@ -555,8 +555,8 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
         <span class="lbl" id="pgLbl" style="font-size:11px">1/1</span>
         <button class="btn" id="nextPg">›</button>
       </div>
-      <button class="btn" id="saveBtn" title="Lagre prosjekt (Ctrl+S)">💾</button>
-      <button class="btn" id="loadBtn" title="Opne prosjekt (Ctrl+O)">📂</button>
+      <button class="btn" id="saveBtn" title="Lagre prosjekt (Ctrl+S)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 2.5h8l2.5 2.5v8a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5z"/><path d="M5 2.5h5V6H5z"/><path d="M4.5 13.5V10h7v3.5"/></svg></button>
+      <button class="btn" id="loadBtn" title="Opne prosjekt (Ctrl+O)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3.2l1.6 1.8H13a1 1 0 0 1 1 1v6.2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.5z"/></svg></button>
       <input type="file" id="loadFi" accept=".entro" style="display:none">
     </div>
     <div class="tg">
@@ -574,7 +574,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       <button class="btn" id="drawBtn" title="Teikn sone — klikk hjørner, Shift for 90°, Enter/dobbelklikk for å avslutte (Esc for å avbryte)">⬡ Sone</button>
       <button class="btn" id="editBtn" title="Rediger sonegeometri — dra hjørner, høgreklikk for å slette (Esc for å avslutte)">⊹ Rediger</button>
       <button class="btn" id="winBtn" title="Legg til vindauge/dør — klikk på ein fasade (Ctrl+C/V for å kopiere)">▭ Vindauge/dør</button>
-      <button class="btn" id="measureBtn" title="Kontrollmål avstand (påverkar ikkje SXI) — klikk start og slutt, Esc for å avslutte">📐 Mål</button>
+      <button class="btn" id="measureBtn" title="Kontrollmål avstand (påverkar ikkje SXI) — klikk start og slutt, Esc for å avslutte"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="1.5" y="6" width="13" height="4.5" rx="1"/><path d="M4.5 6v2M7.5 6v3M10.5 6v2"/></svg> Mål</button>
     </div>
     <div class="tg">
       <button class="btn" id="mergeBtn" title="Slå saman fasadar — kombiner fasadar med same himmelretning til eitt element i SXI-eksporten">⊞ Slå saman fasadar</button>
@@ -586,9 +586,9 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     </div>
     <div class="tg">
       <button class="btn" id="btn3d" title="Opne 3D-visualisering">⬡ 3D</button>
-      <button class="btn" id="nordBtn" title="Nord-sjekk — hald inne for å rotere planteikninga slik at nord peikar opp" style="user-select:none">🧭</button>
-      <button class="btn" id="exportImgBtn" title="Eksporter planteikning som PNG">🖼</button>
-      <button class="btn" id="helpBtn" title="Tastatursnarvegar (?)">⌨</button>
+      <button class="btn" id="nordBtn" title="Nord-sjekk — hald inne for å rotere planteikninga slik at nord peikar opp" style="user-select:none"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><path d="M10.5 5.5 9 9l-3.5 1.5L7 7z" stroke-linejoin="round"/></svg></button>
+      <button class="btn" id="exportImgBtn" title="Eksporter planteikning som PNG"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><circle cx="5.8" cy="6.5" r="1.1"/><path d="M2.5 11.5l3.5-3 3 2.5 2.5-2 2 2"/></svg></button>
+      <button class="btn" id="helpBtn" title="Tastatursnarvegar (?)" style="font-weight:700">?</button>
     </div>
     <div class="tg" style="margin-left:auto">
       <button class="btn teal" id="sxiBtn" style="font-weight:600" title="Eksporter SXI-fil til SIMIEN">⬇ Eksporter SXI</button>
@@ -612,7 +612,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       </div>
     </div>
     <div id="braSummary" style="margin-left:12px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:10px;white-space:nowrap"></div>
-    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.2.1</span>
+    <span style="margin-left:auto;padding:0 10px;font-size:10px;color:var(--text3);opacity:.6;font-family:'JetBrains Mono',monospace;user-select:none;white-space:nowrap">v2.3.0</span>
   </div>
   <div id="cwrap">
     <canvas id="cv"></canvas>
@@ -622,7 +622,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
     </div>
     <div id="scaleBadge" class="uncal">Ikkje kalibrert</div>
     <canvas id="compassCanvas" width="96" height="96"></canvas>
-    <button id="compassNordBtn" title="Hald inne for å sjå planteikninga med nord opp (som kart)" style="position:absolute;bottom:14px;right:122px;height:28px;padding:0 10px;font-size:11px;font-weight:600;font-family:inherit;background:rgba(255,255,255,.92);border:1px solid var(--border2);border-radius:7px;color:var(--text2);cursor:pointer;box-shadow:var(--shadow-sm);backdrop-filter:blur(6px);white-space:nowrap;transition:all .12s;display:flex;align-items:center;gap:5px">🧭 Nord-sjekk</button>
+    <button id="compassNordBtn" title="Hald inne for å sjå planteikninga med nord opp (som kart)" style="position:absolute;bottom:14px;right:122px;height:28px;padding:0 10px;font-size:11px;font-weight:600;font-family:inherit;background:rgba(255,255,255,.92);border:1px solid var(--border2);border-radius:7px;color:var(--text2);cursor:pointer;box-shadow:var(--shadow-sm);backdrop-filter:blur(6px);white-space:nowrap;transition:all .12s;display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><path d="M10.5 5.5 9 9l-3.5 1.5L7 7z" stroke-linejoin="round"/></svg> Nord-sjekk</button>
 
     <!-- Mapbox Kart Overlay — direkte barn av cwrap, eiga header -->
     <div id="mapboxPanel">
@@ -651,7 +651,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
       </div>
       <div id="mapboxGl"></div>
       <div id="mapNordInfo">
-        <strong>🧭 Nord: <span id="mapNordDeg">0°</span></strong><br>
+        <strong>Nord: <span id="mapNordDeg">0°</span></strong><br>
         Bygget er plassert frå teikningane<br>
         <span style="color:#9ca3af;font-size:10px">Dra den grøne markøren · Dobbelklikk for ny posisjon</span>
       </div>
