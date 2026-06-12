@@ -270,9 +270,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 /* ── Header ── */
 #header{display:flex;align-items:center;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--border);height:44px;flex-shrink:0;box-shadow:var(--shadow-xs);gap:0}
-#logo{display:flex;align-items:baseline;gap:5px;text-decoration:none;margin-right:14px;padding-right:14px;border-right:1px solid var(--border);user-select:none;flex-shrink:0}
-#logo-entro{font-size:19px;font-weight:700;letter-spacing:-.02em;color:var(--accent);line-height:1}
-#logo-app{font-size:13px;font-weight:500;color:var(--text2);line-height:1}
+#logo{display:none}
 #toolbar{display:flex;align-items:center;gap:2px;flex:1;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 #toolbar::-webkit-scrollbar{display:none}
 .tg{display:flex;align-items:center;gap:2px;padding:0 8px 0 0;border-right:1px solid var(--border);margin-right:6px;flex-shrink:0}
@@ -528,7 +526,7 @@ td.cell-overridden::after{content:"";position:absolute;top:4px;right:4px;width:4
 </head>
 <body>
 <div id="header">
-  <a id="logo"><span id="logo-entro">entro</span><span id="logo-app">SXI</span></a>
+  <a id="logo" style="display:none"></a>
   <!-- Entro Industries logo easter egg -->
   <svg id="lumonLogo" width="110" height="110" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="100" cy="100" rx="88" ry="88" fill="none" stroke="#00b4ff" stroke-width="3"/>
